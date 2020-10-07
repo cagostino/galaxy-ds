@@ -22,25 +22,32 @@ def conv_ra(ra):
         if copra[i] >270:
             copra[i] =-360+copra[i]
     return (copra)*(-1)
+sampleobsids = np.loadtxt('catalogs/sampleobstimes.txt', dtype=np.str)
 
-ragsw,decgsw = np.loadtxt('catalogs/gswgalsbpt.txt',unpack=True) #galaxies with BPT SNR > 2
+ragsw,decgsw = np.loadtxt('catalogs/gsw2galsbpt.txt') #galaxies with BPT SNR > 2
 '''
 -*8000*.ftz are the full-field images
 -Need them for the three diff. X-ray cameras
 '''
+
+'''
+print('M1')
 xmm3_m1 = glob.glob('xray_imgs/xmm3/m1/*/pps/*8000*.FTZ')
 uniq_m1, uniq_ind_m1=np.unique([xmm3_m1[i].split('/')[3] for i in range(len(xmm3_m1))],return_index=True)
-xmm3_m1 = np.array(xmm3_m1)[uniq_ind_m1] #only want one field per obs
-
+xmm3_m1 = np.array(xmm3_m1) 
+print('M2')
 xmm3_m2 = glob.glob('xray_imgs/xmm3/m2/*/pps/*8000*.FTZ')
 uniq_m2, uniq_ind_m2=np.unique([xmm3_m2[i].split('/')[3] for i in range(len(xmm3_m2))],return_index=True)
-xmm3_m2 = np.array(xmm3_m2)[uniq_ind_m2] #only want one field per obs2
-
+xmm3_m2 = np.array(xmm3_m2) 
+print('pn')
 xmm3_pn = glob.glob('xray_imgs/xmm3/pn/*/pps/*8000*.FTZ')
 uniq_pn, uniq_ind_pn=np.unique([xmm3_pn[i].split('/')[3] for i in range(len(xmm3_pn))],return_index=True)
-xmm3_pn = np.array(xmm3_pn)[uniq_ind_pn] #only want one field per obs
+xmm3_pn = np.array(xmm3_pn)  
 allimglists = np.hstack([xmm3_m1, xmm3_m2, xmm3_pn])
+'''
 
+#loading from file
+allimglists = np.loadtxt('xrayimglists.txt', dtype=np.str)
 def getxraycov_byimg(imglist, racomp, deccomp):
     '''
     Determines if a field contains galaxies for given ra/dec.
@@ -48,23 +55,40 @@ def getxraycov_byimg(imglist, racomp, deccomp):
     gswinds = np.arange(len(racomp))
     ra_centarr = []
     dec_centarr = []
+    ra_missarr = []
+    dec_missarr = []
     matchedgals = np.array([])
     matchedfields = []
+    unmatchedfields = []
     for i, img in enumerate(imglist):
         mos = Mosaic(img)
+        obsid = img.split('/')[3]         
+        if i%100==0:
+            print(i)
         matchedgalfield, matchedfield = findmatch1field(racomp, deccomp, mos)
         if matchedfield:
+            print('n gals:', len(matchedgalfield))
             matchedgals = np.append(matchedgals,matchedgalfield)
             matchedfields.append(i)
             ra_centarr.append(mos.ra_cent)
             dec_centarr.append(mos.dec_cent)
+        else:
+            unmatchedfields.append(i)
+            ra_missarr.append(mos.ra_cent)
+            dec_missarr.append(mos.dec_cent)
         del mos
+                
+        #elif obsid in sampleobsids:
+        #    print('CHECK')
+        #    print(i, img)
+            
+        
     unmatchedgals = []
     matchedgals = np.int64(np.unique(matchedgals))
     for j in range(len(racomp)):
         if gswinds[j] not in matchedgals:
             unmatchedgals.append(gswinds[j])
-    return matchedgals, np.array(matchedfields), unmatchedgals, np.array(ra_centarr), np.array(dec_centarr)
+    return matchedgals, np.array(matchedfields), unmatchedgals, np.array(ra_centarr), np.array(dec_centarr), unmatchedfields, np.array(ra_missarr), np.array(dec_missarr)
 class Mosaic:
     '''
     Class for opening an X-ray image and turning it into a binary mask.
@@ -73,6 +97,7 @@ class Mosaic:
         self.struct =np.array([[0,0,1,0,0],
                                [0,1,1,1,0],
                                [0,0,1,0,0]]) #kernel for dilation
+        self.obsid = filnam.split('/')[3]
         self.hdul = pf.open(filnam)
         self.hdu = pf.open(filnam)[0]
         self.hdul.close() #closing necessary for freeing memory
@@ -121,27 +146,36 @@ def findmatch1field(ra,dec,field):
     #extent of the field
     maxfielddist = ((field.dec.max() - field.dec.min())**2. +
                     ((field.ra.max()-field.ra.min())*np.cos( np.radians((field.dec.max()+field.dec.min())/2) ))**2)**(1./2)
-    if maxfielddist >350:
+    if maxfielddist >15:
         #if it's near the turnover, just set it to be 10
         #sort of overkill since FOV for XMM-Newton is <1 deg.
         print(field.ra.max(), field.ra.min())
-        maxfielddist = 10
-    print('maxfield dist', maxfielddist)
-    distfromfield = ((ra - ra_cent)**2+(dec-dec_cent)**2)**(1./2.)
-    nearbygals = np.where(distfromfield <maxfielddist*2)[0]
+        nearbygals=np.where( (ra>350)| (ra<10))[0]
+    else:
+        print('maxfield dist', maxfielddist, ra_cent, dec_cent)
+        distfromfield = (((ra - ra_cent)*np.cos(np.radians((dec+dec_cent)/2)))**2+(dec-dec_cent)**2)**(1./2.)
+        nearbygals = np.where(distfromfield <maxfielddist*5)[0]
+    matchedgswgals = np.array([])
+
     #if there is nothing nearby don't bother with calculating
     if len(nearbygals) !=0 :
         #dists = ((ragsw[nearbygals] - field.ra[field.dil][:, None])**2+(decgsw[nearbygals]-field.dec[field.dil][:, None])**2)**(1./2.)
-        dists = (((ra[nearbygals] - field.ra[field.dil][:, None])*np.cos(np.radians((dec[nearbygals]+field.dec[field.dil][:, None])/2) ))**2 +
-                  (dec[nearbygals]-field.dec[field.dil][:, None])**2)**(1./2.)
-        matched = np.where(dists < intpixdist)
+        for i in range(len(nearbygals)):
+            dists = (((ra[nearbygals][i] - field.ra[field.dil])*np.cos(np.radians((dec[nearbygals][i]+field.dec[field.dil])/2) ))**2 +
+                          (dec[nearbygals][i]-field.dec[field.dil])**2)**(1./2.)
+        #        dists = (((ra[nearbygals] - field.ra[field.dil][:, None])*np.cos(np.radians((dec[nearbygals]+field.dec[field.dil][:, None])/2) ))**2 +
+        #                  (dec[nearbygals]-field.dec[field.dil][:, None])**2)**(1./2.)
+            matched = np.where(dists < intpixdist+7./3600.)[0]
+            #print(dists.shape)
+            #print(np.unique(matched[1]))
+            if len(matched)>0:
+                matchedgswgals = np.append(matchedgswgals, galinds[nearbygals[i]])
+                
         #the first index will be the index in the field.ra/dec
         #second index will correspond to GSW
-        print(np.unique(matched[1]))
-        matchedgswgals = galinds[nearbygals[np.unique(matched[1])]]
-        if len(matchedgswgals) >0:
-            matchedgals = np.append(matchedgals,matchedgswgals)
-            matchedfield = True
+    if len(matchedgswgals) >0:
+        matchedgals = np.append(matchedgals,matchedgswgals)
+        matchedfield = True
     matchedgals = np.int64(np.unique(matchedgals))
     return matchedgals, matchedfield
 def getxrcov(imglist, ra, dec, fname):
@@ -149,24 +183,32 @@ def getxrcov(imglist, ra, dec, fname):
     Runs the X-ray coverage and saves out the results
     '''
     matched_ = getxraycov_byimg(imglist, ra, dec)
-    matched_gals, matched_fields,unmatched_gals,racent, deccent = matched_
+    matched_gals, matched_fields,unmatched_gals,racent, deccent, unmatched_fields, ramiss, decmiss = matched_
     np.savetxt('catalogs/xraycov/matched_gals_'+fname+'_xrcovg_fields_set.txt', matched_gals)
     np.savetxt('catalogs/xraycov/unmatched_gals_'+fname+'_xrcovg_fields_set.txt', unmatched_gals)#
     np.savetxt('catalogs/xraycov/matchedfields_'+fname+'_xrcovg_fields_set.txt', matched_fields)
     np.savetxt('catalogs/xraycov/racent_'+fname+'_xrcovg_fields_set.txt', racent)#
     np.savetxt('catalogs/xraycov/deccent_' +fname+'_xrcovg_fields_set.txt', deccent)
+    np.savetxt('catalogs/xraycov/unmatchedfields_'+fname+'_xrcovg_fields_set.txt', unmatched_fields)
+    np.savetxt('catalogs/xraycov/ramiss_'+fname+'_xrcovg_fields_set.txt', ramiss)#
+    np.savetxt('catalogs/xraycov/decmiss_' +fname+'_xrcovg_fields_set.txt', decmiss)
 
 
-#getxrcov(allimglists, ragsw, decgsw, fname,'xmm3') #to run the main parts
+getxrcov(allimglists, ragsw, decgsw, 'gsw2xmm3') #to run the main parts
     
 '''
 Below: If such X-ray coverage is already done, easier to load certain information for plotting
 '''
-matched_gals =np.int64(np.loadtxt('catalogs/xraycov/matched_gals_xmm3_xrcovg_fields_set.txt'))
-unmatched_gals = np.int64(np.loadtxt('catalogs/xraycov/unmatched_gals_xmm3_xrcovg_fields_set.txt'))
-matched_fields = np.int64(np.loadtxt('catalogs/xraycov/matchedfields_xmm3_xrcovg_fields_set.txt'))
-racent = np.int64(np.loadtxt('./catalogs/xraycov/racent_xmm3_xrcovg_fields_set.txt'))
-deccent = np.int64(np.loadtxt('./catalogs/xraycov/deccent_xmm3_xrcovg_fields_set.txt'))
+matched_gals =np.int64(np.loadtxt('catalogs/xraycov/matched_gals_gsw2xmm3_xrcovg_fields_set.txt'))
+unmatched_gals = np.int64(np.loadtxt('catalogs/xraycov/unmatched_gals_gsw2xmm3_xrcovg_fields_set.txt'))
+matched_fields = np.int64(np.loadtxt('catalogs/xraycov/matchedfields_gsw2xmm3_xrcovg_fields_set.txt'))
+unmatched_fields = np.int64(np.loadtxt('catalogs/xraycov/unmatchedfields_gsw2xmm3_xrcovg_fields_set.txt'))
+
+racent = np.float64(np.loadtxt('./catalogs/xraycov/racent_gsw2xmm3_xrcovg_fields_set.txt'))
+deccent = np.float64(np.loadtxt('./catalogs/xraycov/deccent_gsw2xmm3_xrcovg_fields_set.txt'))
+
+ramiss = np.float64(np.loadtxt('./catalogs/xraycov/ramiss_gsw2xmm3_xrcovg_fields_set.txt'))
+decmiss = np.float64(np.loadtxt('./catalogs/xraycov/decmiss_gsw2xmm3_xrcovg_fields_set.txt'))
 
 mydpi=48
 def plotcov( matched_fields, save=False,fname=''):
