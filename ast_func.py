@@ -13,6 +13,11 @@ def getlumfromflux(flux, z):
     distances=np.array(cosmo.luminosity_distance(z))* (3.086e+24) #Mpc to cm
     lum = 4*np.pi*(distances**2)*flux
     return lum
+def getfluxfromlum(lum,z):
+    distances=np.array(cosmo.luminosity_distance(z))* (3.086e+24) #Mpc to cm
+    flux = lum/(4*np.pi*(distances**2))
+    return flux
+    
 
 def comp_skydist(ra1,dec1,ra2,dec2):
     '''

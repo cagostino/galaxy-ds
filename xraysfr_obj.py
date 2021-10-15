@@ -28,14 +28,14 @@ class Xraysfr:
         self.ra_filt = gswcat.ra[self.filt]
         self.dec = gswcat.dec
         self.dec_filt = gswcat.dec[self.filt]
-        self.xrayra = gswcat.matchxrayra
-        self.xrayra_filt = gswcat.matchxrayra[self.filt]
-        self.xraydec = gswcat.matchxraydec
-        self.xraydec_filt = gswcat.matchxraydec[self.filt]
-        self.lum_mass =  xraylums-gswcat.mass #mass_m2_match
+        #self.xrayra = gswcat.matchxrayra
+        #self.xrayra_filt = gswcat.matchxrayra[self.filt]
+        #self.xraydec = gswcat.matchxraydec
+        #self.xraydec_filt = gswcat.matchxraydec[self.filt]
+        self.lum_mass =  xraylums-np.array(gswcat.gsw_df.mass) #mass_m2_match
         self.lum = xraylums
-        self.sfr_mass = gswcat.sfr-gswcat.mass# sfr_m2_match-mass_m2_match
-        self.sfr = gswcat.sfr
+        self.sfr_mass = np.array(gswcat.gsw_df.sfr)-np.array(gswcat.gsw_df.mass)# sfr_m2_match-mass_m2_match
+        self.sfr = np.array(gswcat.gsw_df.sfr)
         self.lxsfr = np.log10(xrayranallidict[typ]*10**(self.sfr))
         self.lxsfr_filt = np.log10(xrayranallidict[typ]*10**(self.sfr[self.filt]))
  

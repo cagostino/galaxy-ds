@@ -1,10 +1,14 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Made for loading in Fits files by name and to make it easy to grab column data.
 """
 import astropy.io.fits as pf
 import numpy as np
+import matplotlib.pyplot as plt
+plt.rc('font',family='serif')
+plt.rc('text',usetex=True)
+
+from scipy.constants import c
+
 class Fits_set:
     '''
     Made for loading in binary fits tables
@@ -19,3 +23,4 @@ class Fits_set:
             return np.array([self.data.field(col) for col in colnum])
         else:
             return self.data.field(colnum)
+

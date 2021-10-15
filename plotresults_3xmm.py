@@ -9,6 +9,121 @@ import matplotlib
 from matplotlib.colors import LogNorm
 from sklearn import mixture
 from ast_func import *
+from xraysfr_obj import *
+from demarcations import *
+
+
+'''
+#paper one figs
+
+
+EL_m = EL_m2
+fname = '_gsw2'
+
+plt.hist(xmm3eldiagmed_xrfilt.bpt_EL_gsw_df.exptimes, bins=20, histtype='step')
+plt.xlabel(r'log(t$_{\mathrm{exp}}$)')
+plt.ylabel('Counts')
+plt.tight_layout()
+plt.savefig('./plots/sfrmatch/pdf/diagnostic/texp_hist_'+fname+'.pdf', format='pdf', bbox_inches='tight', dpi=250)
+
+
+plotbpt(xmm3eldiagmed_xrfilt.bpt_EL_gsw_df.niiha,xmm3eldiagmed_xrfilt.bpt_EL_gsw_df.oiiihb,
+         xmm3eldiagmed_xrfilt.bptsf,
+         xmm3eldiagmed_xrfilt.bptagn,
+         EL_m2.bpt_EL_gsw_df.niiha,EL_m2.bpt_EL_gsw_df.oiiihb,save=False, filename='xrfrac2', leg=False)
+plt.savefig('./plots/sfrmatch/pdf/diagnostic/BPT_xragn_'+fname+'.pdf', format='pdf', bbox_inches='tight', dpi=250)
+plt.savefig('./plots/sfrmatch/png/diagnostic/BPT_xragn_'+fname+'.png', format='png', bbox_inches='tight', dpi=250)
+
+plotbpt(xmm3eldiagmed_xrfilt.bpt_EL_gsw_df.niiha,xmm3eldiagmed_xrfilt.bpt_EL_gsw_df.oiiihb,
+         xmm3eldiagmed_xrfilt.bptsf,
+         xmm3eldiagmed_xrfilt.bptagn,
+         EL_m2.bpt_EL_gsw_df.niiha,EL_m2.bpt_EL_gsw_df.oiiihb,save=False, ccode=contaminations_xmm3_25,
+         filename='xrfrac2', leg=False)
+plt.savefig('./plots/sfrmatch/pdf/diagnostic/BPT_xrfrac_'+fname+'.pdf', format='pdf', bbox_inches='tight', dpi=250)
+plt.savefig('./plots/sfrmatch/png/diagnostic/BPT_xrfrac_'+fname+'.png', format='png', bbox_inches='tight', dpi=250)
+
+
+
+
+plotssfrm(xmm3eldiagmed_xrfilt.bpt_EL_gsw_df.mass,xmm3eldiagmed_xrfilt.bpt_EL_gsw_df.ssfr,
+          xmm3eldiagmed_xrfilt.bptsf, [],
+          EL_m2.bpt_EL_gsw_df.mass, EL_m2.bpt_EL_gsw_df.ssfr,   save=False,
+          weakel = fullxray_xmm_no, filename='weakelbpthii' )
+plt.tick_params(axis='both', which='major', labelsize=20, length=10, top=True, right=True)
+plt.tick_params(axis='both', which='minor', labelsize=15, length=5, top=True, right=True)
+plt.minorticks_on()
+
+plt.savefig('./plots/sfrmatch/pdf/diagnostic/ssfrm_weak_'+fname+'.pdf', format='pdf', bbox_inches='tight', dpi=250)
+plt.savefig('./plots/sfrmatch/png/diagnostic/ssfrm_weak_'+fname+'.png', format='png', bbox_inches='tight', dpi=250)
+
+plotssfrm(xmm3eldiagmed_xrfilt.bpt_EL_gsw_df.mass,xmm3eldiagmed_xrfilt.bpt_EL_gsw_df.ssfr,
+          xmm3eldiagmed_xrfilt.bptsf, xmm3eldiagmed_xrfilt.bptagn,
+          EL_m2.bpt_EL_gsw_df.mass, EL_m2.bpt_EL_gsw_df.ssfr,   save=False, filename='weakelbpthii' )
+plt.tick_params(axis='both', which='major', labelsize=20, length=10, top=True, right=True)
+plt.tick_params(axis='both', which='minor', labelsize=15, length=5, top=True, right=True)
+plt.minorticks_on()
+plt.savefig('./plots/sfrmatch/pdf/diagnostic/ssfrm_xragn_'+fname+'.pdf', format='pdf', bbox_inches='tight', dpi=250)
+plt.savefig('./plots/sfrmatch/png/diagnostic/ssfrm_xragn_'+fname+'.png', format='png', bbox_inches='tight', dpi=250)
+
+
+fig = plotoiiimasscomb(xmm3eldiagmed_xrfilt.bpt_EL_gsw_df.mass,xmm3eldiagmed_xrfilt.bpt_EL_gsw_df.oiiilum_p1,
+          xmm3eldiagmed_xrfilt.bptsf,
+          xmm3eldiagmed_xrfilt.bptagn,
+          EL_m .bpt_EL_gsw_df.mass.iloc[EL_m1.bptsf], EL_m .bpt_EL_gsw_df.oiiilum_p1.iloc[EL_m1.bptsf],
+          EL_m .bpt_EL_gsw_df.mass.iloc[EL_m1.bptagn], EL_m .bpt_EL_gsw_df.oiiilum_p1.iloc[EL_m1.bptagn],
+          save=False,leg=False)
+plt.subplots_adjust(wspace=0, hspace=0)
+plt.savefig('./plots/sfrmatch/pdf/diagnostic/oiii_mass_p1_xragn_'+fname+'.pdf', format='pdf', bbox_inches='tight', dpi=250)
+
+fig = plotoiiidispcomb(xmm3eldiagmed_xrfilt.bpt_EL_gsw_df.mass,xmm3eldiagmed_xrfilt.bpt_EL_gsw_df.oiiilum_p1 - 
+                       np.log10((xmm3eldiagmed_xrfilt.bpt_EL_gsw_df.vdisp*1e5)**4),
+          xmm3eldiagmed_xrfilt.bptsf, xmm3eldiagmed_xrfilt.bptagn,
+          EL_m .bpt_EL_gsw_df.mass.iloc[EL_m1.bptsf], EL_m .bpt_EL_gsw_df.oiiilum_p1.iloc[EL_m .bptsf]-
+              np.log10((EL_m .bpt_EL_gsw_df.vdisp.iloc[EL_m .bptsf]*1e5)**4),
+          EL_m .bpt_EL_gsw_df.mass.iloc[EL_m1.bptagn], EL_m .bpt_EL_gsw_df.oiiilum_p1.iloc[EL_m .bptagn]-
+              np.log10((EL_m .bpt_EL_gsw_df.vdisp.iloc[EL_m .bptagn]*1e5)**4),
+          save=False,leg=False)
+plt.subplots_adjust(wspace=0, hspace=0)
+plt.savefig('./plots/sfrmatch/pdf/diagnostic/oiiidisp_mass_p1_xragn_'+fname+'.pdf', format='pdf', bbox_inches='tight', dpi=250)
+
+
+mass_z(xmm3eldiagmed_xrfilt.bpt_EL_gsw_df.z,xmm3eldiagmed_xrfilt.bpt_EL_gsw_df.mass,
+         [],
+         [],
+         EL_m .bpt_EL_gsw_df.z,EL_m .bpt_EL_gsw_df.mass,save=False, filename='weakel', leg=True, weakel=fullxray_xmm_no)
+plt.tick_params(axis='both', which='major', labelsize=20, length=10, top=True, right=True)
+plt.tick_params(axis='both', which='minor', labelsize=15, length=5, top=True, right=True)
+plt.minorticks_on()
+
+plt.savefig('./plots/sfrmatch/pdf/diagnostic/mass_z_xragn_weak_'+fname+'.pdf', format='pdf', bbox_inches='tight', dpi=250)
+plt.savefig('./plots/sfrmatch/png/diagnostic/mass_z_xragn_weak_'+fname+'.png', format='png', bbox_inches='tight', dpi=250)
+
+mass_z(xmm3eldiagmed_xrfilt.bpt_EL_gsw_df.z,xmm3eldiagmed_xrfilt.bpt_EL_gsw_df.mass,
+         xmm3eldiagmed_xrfilt.bptsf,
+         xmm3eldiagmed_xrfilt.bptagn,
+         EL_m .bpt_EL_gsw_df.z,EL_m .bpt_EL_gsw_df.mass,save=False)
+plt.tick_params(axis='both', which='major', labelsize=20, length=10, top=True, right=True)
+plt.tick_params(axis='both', which='minor', labelsize=15, length=5, top=True, right=True)
+plt.minorticks_on()
+
+plt.savefig('./plots/sfrmatch/pdf/diagnostic/mass_z_xragn_'+fname+'.pdf', format='pdf', bbox_inches='tight', dpi=250)
+plt.savefig('./plots/sfrmatch/png/diagnostic/mass_z_xragn_'+fname+'.png', format='png', bbox_inches='tight', dpi=250)
+
+plotfwhmbalmerforbid(xmm3eldiagmed_xrfilt.bpt_EL_gsw_df, EL_m2.bpt_EL_gsw_df.balmerfwhm, EL_m2.bpt_EL_gsw_df.forbiddenfwhm,
+                     xmm3eldiagmed_xrfilt.bptagn,
+                     xmm3eldiagmed_xrfilt.bptsf, save=False)
+plt.tick_params(axis='both', which='major', labelsize=20, length=10, top=True, right=True)
+plt.tick_params(axis='both', which='minor', labelsize=15, length=5, top=True, right=True)
+plt.minorticks_on()
+plt.xlabel(r'FWHM$_{\mathrm{Balmer}} (\mathrm{km\ s}^{-1}$)', fontsize=20)
+plt.ylabel(r'FWHM$_{\mathrm{Forbidden}}(\mathrm{km\ s}^{-1})$',fontsize=20)
+plt.tight_layout()
+plt.savefig('./plots/sfrmatch/pdf/diagnostic/fwhms_'+fname+'.pdf', format='pdf', bbox_inches='tight', dpi=250)
+plt.savefig('./plots/sfrmatch/png/diagnostic/fwhms_'+fname+'.png', format='png', bbox_inches='tight', dpi=250)
+
+'''
+
+
 #from mpl_toolkits.basemap import Basemap
 mydpi = 96
 plt.rc('font',family='serif')
@@ -16,11 +131,10 @@ plt.rc('text',usetex=True)
 #plt.rc('text',usetex=False)
 def plot2dhist(x,y,nx,ny, nan=False, ax=None):
     if nan:
-        xfin = np.where(np.isfinite(x))[0]
         yfin = np.where(np.isfinite(y))[0]
         x= np.copy(x[xfin])
         y=np.copy(y[yfin])
-    hist, xedges, yedges = np.histogram2d(x,y,bins = (nx,ny))
+    hist, xedges, yedges = np.histogram2d(x,y,bins = (int(nx),int(ny)))
     extent= [np.min(xedges),np.max(xedges),np.min(yedges),np.max(yedges)]
     print(extent)
     if ax:
@@ -92,8 +206,7 @@ def pairs(data_mat,cols,title=''):
     plt.suptitle(title)
     #plt.tight_layout()
 
-def ratiogdiff(frac,agnfilt, nonagnfilt,filename='',save=False):
-    bins = np.copy(s82gdiff.bins)
+def ratiogdiff(frac,agnfilt, nonagnfilt,bins,filename='',save=False):
     fig = plt.figure()
     for i in agnfilt:
         plt.plot(bins,frac[i],'k--',linewidth=0.5)
@@ -125,9 +238,9 @@ def ratiogdiff(frac,agnfilt, nonagnfilt,filename='',save=False):
         plt.show()
     #plt.title('Ratios fo')
 '''
-ratiogdiff(xmm3gdiff.xrgswfracs,[],nonagn_3xmmm_xrfilt,filename='bpthii')
-ratiogdiff(xmm3gdiff.xrgswfracs,agn_3xmmm_xrfilt,[],filename='agn')
-ratiogdiff(xmm3gdiff.xrgswfracs,agn_3xmmm_xrfilt,nonagn_3xmmm_xrfilt,filename='all')
+ratiogdiff(xmm3gdiff.xrgswfracs,[],xmm3eldiagmed_xrfilt.bptsf,xmm3gdiff.bins,filename='bpthii')
+ratiogdiff(xmm3gdiff.xrgswfracs,xmm3eldiagmed_xrfilt.bptagn,[],xmm3gdiff.bins,filename='agn')
+ratiogdiff(xmm3gdiff.xrgswfracs,xmm3eldiagmed_xrfilt.bptagn,xmm3eldiagmed_xrfilt.bptsf,xmm3gdiff.bins,filename='all')
 
 ratiogdiff(xmm3gdiff.xrgswfracs,[],nonagn_3xmmm_xrfilt,filename='bpthii', save=True)
 ratiogdiff(xmm3gdiff.xrgswfracs,agn_3xmmm_xrfilt,[],filename='agn', save=True)
@@ -246,10 +359,18 @@ def xrayhists(prop,propname,nbins=20):
     plt.tight_layout()
 
 def plotbpt(xvals,yvals, nonagnfilt, agnfilt, bgx,bgy,save=False,filename='',labels=True,
-            leg=True,title=None,alph=0.1,ccode=[],ccodegsw=[],cont=None,ccodename='X-ray AGN Fraction',ccodecolor='Blues',levs=[0,0.2], fibssfr=False):
+            leg=True,title=None,alph=0.1,ccode=[],ccodegsw=[],cont=None,
+            ccodename='X-ray AGN Fraction',ccodecolor='Blues',levs=[0,0.2], fibssfr=False,
+            ccodemin=0.0025940337224383916, ccodemax= 0.1569767441860465, nx=300, ny=240, minx =-2, maxx=1, maxy=1.2, miny=-1.2  ):
     '''
     for doing bpt diagram with sdss galaxies scatter plotted
     '''
+    xvals  = np.copy(np.array(xvals))
+    yvals  = np.copy(np.array(yvals))
+    bgx = np.copy(np.array(bgx))
+    bgy = np.copy(np.array(bgy))
+    
+    
     if save:
         fig = plt.figure()
     if len(ccodegsw)!=0:
@@ -258,16 +379,22 @@ def plotbpt(xvals,yvals, nonagnfilt, agnfilt, bgx,bgy,save=False,filename='',lab
         plt.colorbar(sc)
     else:
         valbg = np.where((np.isfinite(bgx) & (np.isfinite(bgy))) &
-                (bgy > -1.2) &( bgy < 1.2) & (bgx<1)&(bgx > -2) )[0]
-        nx = 3/0.01
-        ny = 2.4/0.01
+                (bgy > miny) &( bgy < maxy) & (bgx<maxx)&(bgx > minx) )[0]
         plot2dhist(bgx[valbg],bgy[valbg],nx,ny)
         #plt.scatter(bgx, bgy,color='gray',marker='.',alpha=alph,label='SDSS DR7',edgecolors='none')
 
     plt.tick_params(axis='both', which='major', labelsize=20)
     plt.tick_params(axis='both', which='minor', labelsize=15)
     plt.tick_params(direction='in',axis='both',which='both')
-    plt.plot(np.log10(xline1_kauffman),np.log10(yline1_kauffman),c='k',ls='-.')#,label='Kauffman Line')
+    plt.tick_params(axis='both', which='major', labelsize=20, length=10, top=True, right=True, direction='in')
+    plt.tick_params(axis='both', which='minor', labelsize=15, length=5, top=True, right=True, direction='in')
+    plt.plot(np.log10(xline1_kauffmann),np.log10(yline1_kauffmann),c='k',ls='-.')#,label='kauffmann Line')
+    #plt.plot(np.log10(xline1_kauffmann_plus),np.log10(yline1_kauffmann_plus),c='k',ls='-.')#,label='kauffmann Line')
+    #ax.plot(np.log10(xline1_kauffmann), np.log10(yline1_kauffmann), c='k')
+    #ax.plot(np.log10(xline1_kewley), np.log10(yline1_kewley), 'k--')
+    #plt.plot([-0.4, -0.4], [np.log10(yline1_kauffmann_plus[-1]), miny-0.1], c='k',ls='-.')
+    plt.minorticks_on()
+
     if len(ccode) !=0: #for the contamination
         if fibssfr:
             finnonagn = np.where(np.isfinite(ccode[nonagnfilt]) &(ccode[nonagnfilt]<-5))[0]
@@ -283,7 +410,7 @@ def plotbpt(xvals,yvals, nonagnfilt, agnfilt, bgx,bgy,save=False,filename='',lab
             #finnonagn = np.where(np.isfinite(ccode[nonagnfilt]) &(ccode[nonagnfilt]<-5))[0]
             #finagn = np.where(np.isfinite(ccode[agnfilt])&(ccode[agnfilt]<-5))[0]
             #fin = np.where(np.isfinite(ccode)&(ccode<-5))[0]
-            mn, mx = ccode.min(), ccode.max()       
+            mn, mx = ccodemin,ccodemax#contaminations_xmm3_3.min(), contaminations_xmm3_3.max()       
             sc =plt.scatter(xvals[nonagnfilt], yvals[nonagnfilt], c=ccode[nonagnfilt], s=20, cmap=ccodecolor,marker='^',label='X-Ray AGN (BPT-HII)')
             plt.clim(mn, mx)
 
@@ -294,11 +421,11 @@ def plotbpt(xvals,yvals, nonagnfilt, agnfilt, bgx,bgy,save=False,filename='',lab
             
         cbar.set_label(ccodename,fontsize=20)
         cbar.ax.tick_params(labelsize=20)
-
+        #cbar.set_ticks(np.arange(0.02, 0.16,0.02))
     else:
         if len(list(nonagnfilt))!=0:
             plt.scatter(xvals[nonagnfilt],yvals[nonagnfilt],
-                marker='^',color='b',label='X-Ray AGN (BPT-HII)',s=20)
+                marker='^',color='cyan',label='X-Ray AGN (BPT-HII)',s=20)
         if len(list(agnfilt)) !=0:
             plt.scatter(xvals[agnfilt],yvals[agnfilt],
                 marker='o',facecolors='none',color='k',label='X-Ray AGN (BPT-AGN)',s=20)
@@ -320,11 +447,11 @@ def plotbpt(xvals,yvals, nonagnfilt, agnfilt, bgx,bgy,save=False,filename='',lab
         '''
     if labels:
         plt.text(0.6,0.75,'AGN', fontsize=15)
-        plt.text(-1.15,-0.3,'HII',fontsize=15)
+        plt.text(-1.15,-0.3,'SF',fontsize=15)
     plt.ylabel(r'log([OIII]/H$\rm \beta$)',fontsize=20)
     plt.xlabel(r'log([NII]/H$\rm \alpha$)',fontsize=20)
-    plt.ylim([-1.3,1.2])
-    plt.xlim([-2.1,1])
+    plt.ylim([miny, maxy])
+    plt.xlim([minx, maxx])
     if leg:
         plt.legend(fontsize=15,frameon=False,loc=3,bbox_to_anchor=(-0.02, -0.02))
     if title:
@@ -355,11 +482,11 @@ def plotbptnormal(bgx,bgy,save=False,filename='',labels=True, title=None):
     plt.tick_params(axis='both', which='major', labelsize=20)
     plt.tick_params(axis='both', which='minor', labelsize=15)
     plt.tick_params(direction='in',axis='both',which='both')
-    plt.plot(np.log10(xline1_kauffman),np.log10(yline1_kauffman),c='k',ls='-.')#,label='Kauffman Line')
+    plt.plot(np.log10(xline1_kauffmann),np.log10(yline1_kauffmann),c='k',ls='-.')#,label='kauffmann Line')
     plt.text(-1.7, -1, r"N$_{\mathrm{obj}}$: "+str(len(bgx)), fontsize=20)
     if labels:
         plt.text(0.6,0.75,'AGN', fontsize=15)
-        plt.text(-1.15,-0.3,'HII',fontsize=15)
+        plt.text(-1.15,-0.3,'SF',fontsize=15)
     plt.ylabel(r'log([OIII]/H$\rm \beta$)',fontsize=20)
     plt.xlabel(r'log([NII]/H$\rm \alpha$)',fontsize=20)
     plt.ylim([-1.3,1.2])
@@ -376,7 +503,7 @@ def plotbptnormal(bgx,bgy,save=False,filename='',labels=True, title=None):
     else:
         plt.show()
 '''
-plotbptnormal(np.log10(EL_m2.xvals1_bpt[EL_m2.bpt_sn_filt]) , np.log10(EL_m2.yvals_bpt[EL_m2.bpt_sn_filt]),filename='sn2', save=False)
+plotbptnormal(EL_m1.bpt_EL_gsw_df.niiha ,EL_m1.bpt_EL_gsw_df.oiiihb,filename='sn2', save=False)
 
 
 plotbptnormal(np.log10(EL_m2.xvals1_bpt[EL_m2.bpt_sn_filt][sfrm_gsw2.agns]) , np.log10(EL_m2.yvals_bpt[EL_m2.bpt_sn_filt][sfrm_gsw2.agns]),filename='agns_plus', save=False)
@@ -385,6 +512,7 @@ plotbptnormal(np.log10(EL_m2.xvals1_bpt[EL_m2.bpt_sn_filt][sfrm_gsw2.sfs]) , np.
 plotbptnormal(np.log10(EL_m2.xvals1_bpt[EL_m2.bpt_snlr_filt]) , np.log10(EL_m2.yvals_bpt[EL_m2.bpt_snlr_filt]),filename='sn_lr3', save=True)
     
 '''
+nii_bound=0.4
 def plotbptplus(bgx, bgy, bgxhist, unclass, nonagn=[], agn=[], save=False,filename='',labels=True, title=None,nii_bound=nii_bound):
     '''
     for doing bpt diagram with sdss galaxies scatter plotted
@@ -405,8 +533,8 @@ def plotbptplus(bgx, bgy, bgxhist, unclass, nonagn=[], agn=[], save=False,filena
     ax1.tick_params(axis='both', which='major', labelsize=20)
     ax1.tick_params(axis='both', which='minor', labelsize=15)
     ax1.tick_params(direction='in',axis='both',which='both')
-    ax1.plot(np.log10(xline1_kauffman),np.log10(yline1_kauffman),c='k',ls='-.')#,label='Kauffman Line')
-    ax1.plot(np.log10(xline1_kauffman),np.log10(yline_stasinska),c='k',ls='-.')#,label='Kauffman Line')
+    ax1.plot(np.log10(xline1_kauffmann),np.log10(yline1_kauffmann),c='k',ls='-.')#,label='kauffmann Line')
+    ax1.plot(np.log10(xline1_kauffmann),np.log10(yline_stasinska),c='k',ls='-.')#,label='kauffmann Line')
 
     ax1.set_xlim([-2.1,1])
     ax1.set_ylim([-1.3,1.2])
@@ -507,7 +635,7 @@ plotbptplus( EL_m2.niiha,EL_m2.oiiihb, EL_m2.niihaplus, save=False)
 plotbpt(EL_3xmm.niiha,EL_3xmm.oiiihb,
          nonagn_3xmmm,
          agn_3xmmm,
-         EL_m1.niiha,EL_m1.oiiihb,save=False)
+         EL_m2.niiha,EL_m2.oiiihb,save=False)
 
 plotbpt(EL_qsos.niiha,EL_qsos.oiiihb,
          nonagn_qsos,
@@ -534,17 +662,32 @@ plotbpt(xmm3eldiagmed_xrsffilt.niiha,xmm3eldiagmed_xrsffilt.oiiihb,
          agn_3xmmm_xrsffilt,
          EL_m1.niiha,EL_m1.oiiihb,save=False, filename='xray-sf')
 
+plotbpt(xmm3eldiagmed_xrfilt.bpt_EL_gsw_df.niiha,xmm3eldiagmed_xrfilt.bpt_EL_gsw_df.oiiihb,
+         xmm3eldiagmed_xrfilt.bptsf,
+         xmm3eldiagmed_xrfilt.bptagn,
+         EL_m1.bpt_EL_gsw_df.niiha,EL_m1.bpt_EL_gsw_df.oiiihb,save=False, filename='xrfrac2', leg=False)
 
 
 #xrayAGN
+
+plotbpt(xmm3eldiagmed_xrfilt.bpt_EL_gsw_df.niiha,xmm3eldiagmed_xrfilt.bpt_EL_gsw_df.oiiihb,
+         xmm3eldiagmed_xrfilt.bptsf,
+         xmm3eldiagmed_xrfilt.bptagn,
+         EL_m1.bpt_EL_gsw_df.niiha,EL_m1.bpt_EL_gsw_df.oiiihb,save=False, filename='xrfrac2', leg=False,ccode=contaminations_xmm3_25)
+
+
 plotbpt(xmm3eldiagmed_xrfilt.niiha,xmm3eldiagmed_xrfilt.oiiihb,
          nonagn_3xmmm_xrfilt,
          agn_3xmmm_xrfilt,
-         EL_m1.niiha,EL_m1.oiiihb,save=False, filename='xrfilt')
+         EL_m2.niiha,EL_m2.oiiihb,save=False, filename='xrfilt')
 plotbpt(xmm3eldiagmed_xrfilt_all.niiha,xmm3eldiagmed_xrfilt_all.oiiihb,
          nonagn_3xmmm_all_xrfilt,
          agn_3xmmm_all_xrfilt,
-         EL_m1.niiha,EL_m1.oiiihb,save=False, filename='xrfilt')
+         EL_m2.niiha,EL_m2.oiiihb,save=False, filename='xrfilt')
+plotbpt(xmm3eldiagmed_xrfilt_all.niiha,xmm3eldiagmed_xrfilt_all.oiiihb,
+         nonagn_3xmmm_all_xrfilt,
+         agn_3xmmm_all_xrfilt,
+         EL_m2.niiha,EL_m2.oiiihb,save=False, filename='xrfilt')
 #low sSFR
 plotbpt(xmm3eldiagmed_xrfilt.niiha,xmm3eldiagmed_xrfilt.oiiihb,
          nonagn_3xmmm_xrfilt[lowssfr],
@@ -556,7 +699,7 @@ plotbpt(xmm3eldiagmed_xrfilt.niiha,xmm3eldiagmed_xrfilt.oiiihb,
 plotbpt(xmm3eldiagmed_xrfilt.niiha,xmm3eldiagmed_xrfilt.oiiihb,
          nonagn_3xmmm_xrfilt,
          agn_3xmmm_xrfilt,
-         EL_m1.niiha,EL_m1.oiiihb,save=True, filename='xrfrac3', leg=False,ccode=contaminations_xmm3_3)
+         EL_m1.niiha,EL_m1.oiiihb,save=False, filename='xrfrac3', leg=False,ccode=contaminations_xmm3_3)
 
 plotbpt(xmm3eldiagmed_xrfilt.niiha,xmm3eldiagmed_xrfilt.oiiihb,
          nonagn_3xmmm_xrfilt,
@@ -564,10 +707,53 @@ plotbpt(xmm3eldiagmed_xrfilt.niiha,xmm3eldiagmed_xrfilt.oiiihb,
          EL_m1.niiha,EL_m1.oiiihb,save=True, filename='xrfrac2', leg=False,ccode=contaminations_xmm3_2)
 
 #THESE HAVE TO BE COLOR CODED BY THE MIN MAX OF d=3
-plotbpt(xmm3eldiagmed_xrfilt.niiha,xmm3eldiagmed_xrfilt.oiiihb,
-         nonagn_3xmmm_xrfilt,
-         agn_3xmmm_xrfilt,
-         EL_m1.niiha,EL_m1.oiiihb,save=False, filename='xrfrac25', leg=False,ccode=contaminations_xmm3_25)
+plotbpt(np.array(xmm3eldiagmed_xrfilt.bpt_EL_gsw_df.niiha),np.array(xmm3eldiagmed_xrfilt.bpt_EL_gsw_df.oiiihb),
+         xmm3eldiagmed_xrfilt.bptsf,
+         xmm3eldiagmed_xrfilt.bptagn,
+         EL_m2.bpt_EL_gsw_df.niiha,EL_m2.bpt_EL_gsw_df.oiiihb,save=False, filename='xrfrac25', leg=False,ccode=contaminations_xmm3_25)
+
+plotbpt(merged_xr.niiha,merged_xr.oiiihb,
+         [],
+         np.arange(len(merged_xr)),
+         EL_m2.bpt_EL_gsw_df.niiha,EL_m2.bpt_EL_gsw_df.oiiihb,save=False, filename='xrfrac25', 
+         leg=False,ccode=merged_xr.lx_agn, ccodemin=40, ccodemax=43, ccodename=r'L$_{\mathrm{X, AGN}}$')
+
+
+
+# postsub paper2
+plotbpt(merged_xr.niiha,merged_xr.oiiihb,
+         [],
+         np.arange(len(merged_xr)),
+         EL_m2.bpt_EL_gsw_df.niiha,EL_m2.bpt_EL_gsw_df.oiiihb,save=False, filename='xrfrac25', 
+         leg=False,ccode=merged_xr.lx_agn, ccodemin=40, ccodemax=43, ccodename=r'L$_{\mathrm{X, AGN}}$')
+plotbpt(merged_xr.niiha,merged_xr.oiiihb,
+         [],
+         np.arange(len(merged_xr)),
+         EL_m2.bpt_EL_gsw_df.niiha,EL_m2.bpt_EL_gsw_df.oiiihb,save=False, filename='xrfrac25', 
+         leg=False,ccode=merged_xr.full_xraylum, ccodemin=40, ccodemax=43, ccodename=r'L$_{\mathrm{X, TOT}}$')
+
+plotbpt(merged_xr.niiha,merged_xr.oiiihb,
+         [],
+         np.arange(len(merged_xr)),
+         EL_m2.bpt_EL_gsw_df.niiha,EL_m2.bpt_EL_gsw_df.oiiihb,save=False, filename='xrfrac25', 
+         leg=False,ccode=merged_xr.full_xraylum-merged_xr.lx_agn, ccodemin=-0., ccodemax=0.1, ccodename=r'L$_{\mathrm{X, TOT}}$')
+
+
+plotbpt(merged_xr.niiha_sub,merged_xr.oiiihb_sub,
+         [],
+         np.arange(len(merged_xr)),
+         EL_m2.bpt_EL_gsw_df.niiha,EL_m2.bpt_EL_gsw_df.oiiihb,save=False, filename='xrfrac25', 
+         leg=False,ccode=merged_xr.full_xraylum, ccodemin=40, ccodemax=43, ccodename=r'L$_{\mathrm{X, TOT}}$')
+plotbpt(merged_xr.niiha_sub,merged_xr.oiiihb_sub,
+         [],
+         np.arange(len(merged_xr)),
+         EL_m2.bpt_EL_gsw_df.niiha,EL_m2.bpt_EL_gsw_df.oiiihb,save=False, filename='xrfrac25', 
+         leg=False,ccode=merged_xr.lx_agn, ccodemin=40, ccodemax=43, ccodename=r'L$_{\mathrm{X, AGN}}$')
+
+
+
+
+
 #ssfr
 plotbpt(xmm3eldiagmed_xrfilt.niiha,xmm3eldiagmed_xrfilt.oiiihb,
          nonagn_3xmmm_xrfilt,
@@ -673,7 +859,11 @@ def mass_z(xvals,yvals,nonagnfilt, agnfilt, bgx,bgy,save=True,filename='',title=
     for doing mass against z with sdss galaxies scatter plotted
     '''
 
-
+    xvals = np.copy(np.array(xvals))
+    yvals = np.copy(np.array(yvals))
+    bgx = np.copy(np.array(bgx))
+    bgy = np.copy(np.array(bgy))
+    
 
     if save:
         fig = plt.figure()
@@ -706,7 +896,7 @@ def mass_z(xvals,yvals,nonagnfilt, agnfilt, bgx,bgy,save=True,filename='',title=
     else:
         if len(list(nonagnfilt)) !=0:
             plt.scatter(xvals[nonagnfilt],yvals[nonagnfilt],
-                marker='^',color='b',label='X-Ray AGN (BPT-HII)',s=20)
+                marker='^',color='cyan',label='X-Ray AGN (BPT-HII)',s=20)
         if len(list(agnfilt)) !=0:
             plt.scatter(xvals[agnfilt],yvals[agnfilt],
                 marker='o',facecolors='none',color='k',label='X-Ray AGN (BPT-AGN)',s=20)
@@ -734,16 +924,23 @@ def mass_z(xvals,yvals,nonagnfilt, agnfilt, bgx,bgy,save=True,filename='',title=
 #general
 
 
+mass_z(xmm3eldiagmed_xrfilt.bpt_EL_gsw_df.z,xmm3eldiagmed_xrfilt.bpt_EL_gsw_df.mass,
+         xmm3eldiagmed_xrfilt.bptsf,
+         xmm3eldiagmed_xrfilt.bptagn,
+         EL_m1.bpt_EL_gsw_df.z,EL_m1.bpt_EL_gsw_df.mass,save=False)
+
 mass_z(xmm3eldiagmed_xrfilt.z,xmm3eldiagmed_xrfilt.mass,
          nonagn_3xmmm_xrfilt,
          agn_3xmmm_xrfilt,
          EL_m1.z,EL_m1.mass,save=True)
 
 
-mass_z(xmm3eldiagmed_xrfilt.z,xmm3eldiagmed_xrfilt.mass,
+
+mass_z(xmm3eldiagmed_xrfilt.bpt_EL_gsw_df.z,xmm3eldiagmed_xrfilt.bpt_EL_gsw_df.mass,
          [],
-         [], 
-         EL_m1.z,EL_m1.mass,save=True, filename='weakel', leg=True, weakel=fullxray_xmm_no)
+         [],
+         EL_m1.bpt_EL_gsw_df.z,EL_m1.bpt_EL_gsw_df.mass,save=False, filename='weakel', leg=True, weakel=fullxray_xmm_no)
+
 mass_z(xmm3eldiagmed_xrfilt.z,xmm3eldiagmed_xrfilt.mass,
          nonagn_3xmmm_xrfilt,
          [], 
@@ -786,7 +983,7 @@ def massfrac_z(xvals,yvals,nonagnfilt, agnfilt, bgx,bgy,save=True,filename='',ti
     else:
         if len(list(nonagnfilt)) !=0:
             plt.scatter(xvals[nonagnfilt],yvals[nonagnfilt],
-                marker='^',color='b',label='X-Ray AGN (BPT-HII)',s=20)
+                marker='^',color='cyan',label='X-Ray AGN (BPT-HII)',s=20)
         if len(list(agnfilt)) !=0:
             plt.scatter(xvals[agnfilt],yvals[agnfilt],
                 marker='o',facecolors='none',color='k',label='X-Ray AGN (BPT-AGN)',s=20)
@@ -820,7 +1017,11 @@ def plotssfrm(xvals,yvals, nonagnfilt, agnfilt, bgx,bgy,save=True,filename='',
     '''
     for doing ssfrmass diagram with sdss galaxies scatter plotted
     '''
-
+    xvals=np.copy(np.array(xvals))
+    yvals=np.copy(np.array(yvals))
+    bgx=np.copy(np.array(bgx))
+    bgy=np.copy(np.array(bgy))
+    
     if save:
         fig = plt.figure()
     #counts1,xbins1,ybins1= np.histogram2d(np.log10(bgx), np.log10(bgy), bins=(50,50))#,cmap='gray',cmin=2)#marker='.',alpha=0.15,label='SDSS DR7')
@@ -850,7 +1051,7 @@ def plotssfrm(xvals,yvals, nonagnfilt, agnfilt, bgx,bgy,save=True,filename='',
     else:
         if len(list(nonagnfilt))!=0:
             plt.scatter(xvals[nonagnfilt],yvals[nonagnfilt],
-                marker='^',color='b',label='X-Ray AGN (BPT-HII)',s=20,zorder=11)
+                marker='^',color='cyan',label='X-Ray AGN (BPT-HII)',s=20,zorder=11)
         if len(list(agnfilt)) !=0:
             plt.scatter(xvals[agnfilt],yvals[agnfilt],
                 marker='o',facecolors='none',color='k',label='X-Ray AGN (BPT-AGN)',s=20,zorder=10)
@@ -878,21 +1079,24 @@ def plotssfrm(xvals,yvals, nonagnfilt, agnfilt, bgx,bgy,save=True,filename='',
 '''
 plotssfrm(xmm3eldiagmed_xrfilt.mass,xmm3eldiagmed_xrfilt.ssfr,
           nonagn_3xmmm_xrfilt, agn_3xmmm_xrfilt,
-          EL_m1.mass, EL_m1.ssfr,   save=True, alph=0.1)
+          EL_m2.mass, EL_m2.ssfr,   save=False, alph=0.1)
 
 
 plotssfrm(xmm3eldiagmed_xrfilt.mass,xmm3eldiagmed_xrfilt.ssfr,
           nonagn_3xmmm_xrfilt, agn_3xmmm_xrfilt,
-          EL_m1.mass, EL_m1.ssfr,   save=False,alph=0.1, weakha_xxray = EL_3xmm.weakmass,
-          weakha_yxray = EL_3xmm.weakssfr )
+          EL_m2.mass, EL_m2.ssfr,   save=False,alph=0.1, weakel=fullxray_xmm_no )
 plotssfrm(xmm3eldiagmed_xrfilt.mass,xmm3eldiagmed_xrfilt.ssfr,
           [], [],
           EL_m1.mass, EL_m1.ssfr,   save=True, filename='weakel',
           weakel = fullxray_xmm_no )
-plotssfrm(xmm3eldiagmed_xrfilt.mass,xmm3eldiagmed_xrfilt.ssfr,
-          nonagn_3xmmm_xrfilt, [],
-          EL_m1.mass, EL_m1.ssfr,   save=True,
+plotssfrm(xmm3eldiagmed_xrfilt.bpt_EL_gsw_df.mass,xmm3eldiagmed_xrfilt.bpt_EL_gsw_df.ssfr,
+          xmm3eldiagmed_xrfilt.bptsf, [],
+          EL_m1.bpt_EL_gsw_df.mass, EL_m1.bpt_EL_gsw_df.ssfr,   save=False,
           weakel = fullxray_xmm_no, filename='weakelbpthii' )
+plotssfrm(xmm3eldiagmed_xrfilt_all.mass,xmm3eldiagmed_xrfilt_all.ssfr,
+          nonagn_3xmmm_all_xrfilt, agn_3xmmm_all_xrfilt,
+          EL_m2.mass, EL_m2.ssfr,   save=False, alph=0.1)
+
 
 '''
 
@@ -923,7 +1127,7 @@ def plotssfrtbt(xvals,yvals, nonagnfilt, agnfilt, bgx,bgy,save=True,filename='',
     else:
         if len(list(nonagnfilt))!=0:
             plt.scatter(xvals[nonagnfilt],yvals[nonagnfilt],
-                marker='^',color='b',label='X-Ray AGN (BPT-HII)',s=20,zorder=11)
+                marker='^',color='cyan',label='X-Ray AGN (BPT-HII)',s=20,zorder=11)
         if len(list(agnfilt)) !=0:
             plt.scatter(xvals[agnfilt],yvals[agnfilt],
                 marker='o',facecolors='none',color='k',label='X-Ray AGN (BPT-AGN)',s=20,zorder=10)
@@ -1036,7 +1240,7 @@ def plotfibssfrm(xvals,yvals, nonagnfilt, agnfilt, bgx,bgy,save=True,filename=''
     else:
         if len(list(nonagnfilt))!=0:
             plt.scatter(xvals[nonagnfilt],yvals[nonagnfilt],
-                marker='^',color='b',label='X-Ray AGN (BPT-HII)',s=20,zorder=10)
+                marker='^',color='cyan',label='X-Ray AGN (BPT-HII)',s=20,zorder=10)
         if len(list(agnfilt)) !=0:
             plt.scatter(xvals[agnfilt],yvals[agnfilt],
                 marker='o',facecolors='none',color='k',label='X-Ray AGN (BPT-AGN)',s=20,zorder=11)
@@ -1086,6 +1290,11 @@ def plotoiiimass(xvals, yvals, nonagnfilt, agnfilt, bgx, bgy, save=True, filenam
     '''
     for doing bpt diagram with sdss galaxies scatter plotted
     '''
+    xvals = np.copy(np.array(xvals))
+    yvals = np.copy(np.array(yvals))
+    bgx = np.copy(np.array(bgx))
+    bgy = np.copy(np.array(bgy))
+    
     nonzero_oiii_agn = np.where(yvals[agnfilt] >0)
     nonzero_oiii_hii = np.where(yvals[nonagnfilt] >0)
     print('BPT-HII mass avg:',np.mean(xvals[nonagnfilt][nonzero_oiii_hii]))
@@ -1120,7 +1329,7 @@ def plotoiiimass(xvals, yvals, nonagnfilt, agnfilt, bgx, bgy, save=True, filenam
     plt.tick_params(axis='both', which='major', labelsize=20)
     plt.tick_params(axis='both', which='minor', labelsize=15)
     plt.tick_params(direction='in',axis='both',which='both')
-    plt.plot(np.log10(xline1_kauffman),np.log10(yline1_kauffman),c='k',ls='-.')#,label='Kauffman Line')
+    plt.plot(np.log10(xline1_kauffmann),np.log10(yline1_kauffmann),c='k',ls='-.')#,label='kauffmann Line')
     if len(ccode) !=0: #for the contamination
         mn, mx = ccode.min(), ccode.max()
 
@@ -1132,7 +1341,7 @@ def plotoiiimass(xvals, yvals, nonagnfilt, agnfilt, bgx, bgy, save=True, filenam
     else:
         if len(list(nonagnfilt))!=0:
             plt.scatter(xvals[nonagnfilt],yvals[nonagnfilt],
-                marker='^',color='b',label='X-Ray AGN (BPT-HII)',s=20)
+                marker='^',color='cyan',label='X-Ray AGN (BPT-HII)',s=20)
         if len(list(agnfilt)) !=0:
             plt.scatter(xvals[agnfilt],yvals[agnfilt],
                 marker='o',facecolors='none',color='k',label='X-Ray AGN (BPT-AGN)',s=20)
@@ -1199,6 +1408,10 @@ def plotoiiihalpmass(xvals, yvals, nonagnfilt, agnfilt, bgx, bgy, save=True, fil
     '''
     for doing bpt diagram with sdss galaxies scatter plotted
     '''
+    xvals = np.copy(np.array(xvals))
+    yvals = np.copy(np.array(yvals))
+    bgx = np.copy(np.array(bgx))
+    bgy = np.copy(np.array(bgy))
     nonzero_oiii_agn = np.where(yvals[agnfilt] >0)
     nonzero_oiii_hii = np.where(yvals[nonagnfilt] >0)
     print('BPT-HII mass avg:',np.mean(xvals[nonagnfilt][nonzero_oiii_hii]))
@@ -1233,7 +1446,7 @@ def plotoiiihalpmass(xvals, yvals, nonagnfilt, agnfilt, bgx, bgy, save=True, fil
     plt.tick_params(axis='both', which='major', labelsize=20)
     plt.tick_params(axis='both', which='minor', labelsize=15)
     plt.tick_params(direction='in',axis='both',which='both')
-    plt.plot(np.log10(xline1_kauffman),np.log10(yline1_kauffman),c='k',ls='-.')#,label='Kauffman Line')
+    plt.plot(np.log10(xline1_kauffmann),np.log10(yline1_kauffmann),c='k',ls='-.')#,label='kauffmann Line')
     if len(ccode) !=0: #for the contamination
         mn, mx = ccode.min(), ccode.max()
 
@@ -1245,7 +1458,7 @@ def plotoiiihalpmass(xvals, yvals, nonagnfilt, agnfilt, bgx, bgy, save=True, fil
     else:
         if len(list(nonagnfilt))!=0:
             plt.scatter(xvals[nonagnfilt],yvals[nonagnfilt],
-                marker='^',color='b',label='X-Ray AGN (BPT-HII)',s=20)
+                marker='^',color='cyan',label='X-Ray AGN (BPT-HII)',s=20)
         if len(list(agnfilt)) !=0:
             plt.scatter(xvals[agnfilt],yvals[agnfilt],
                 marker='o',facecolors='none',color='k',label='X-Ray AGN (BPT-AGN)',s=20)
@@ -1295,6 +1508,10 @@ def plotoiiisfrmass(xvals, yvals, nonagnfilt, agnfilt, bgx, bgy, save=True, file
     '''
     for doing bpt diagram with sdss galaxies scatter plotted
     '''
+    xvals = np.copy(np.array(xvals))
+    yvals = np.copy(np.array(yvals))
+    bgx = np.copy(np.array(bgx))
+    bgy = np.copy(np.array(bgy))
     nonzero_oiii_agn = np.where(yvals[agnfilt] >0)
     nonzero_oiii_hii = np.where(yvals[nonagnfilt] >0)
     print('BPT-HII mass avg:',np.mean(xvals[nonagnfilt][nonzero_oiii_hii]))
@@ -1329,7 +1546,7 @@ def plotoiiisfrmass(xvals, yvals, nonagnfilt, agnfilt, bgx, bgy, save=True, file
     plt.tick_params(axis='both', which='major', labelsize=20)
     plt.tick_params(axis='both', which='minor', labelsize=15)
     plt.tick_params(direction='in',axis='both',which='both')
-    plt.plot(np.log10(xline1_kauffman),np.log10(yline1_kauffman),c='k',ls='-.')#,label='Kauffman Line')
+    plt.plot(np.log10(xline1_kauffmann),np.log10(yline1_kauffmann),c='k',ls='-.')#,label='kauffmann Line')
     if len(ccode) !=0: #for the contamination
         mn, mx = ccode.min(), ccode.max()
 
@@ -1341,7 +1558,7 @@ def plotoiiisfrmass(xvals, yvals, nonagnfilt, agnfilt, bgx, bgy, save=True, file
     else:
         if len(list(nonagnfilt))!=0:
             plt.scatter(xvals[nonagnfilt],yvals[nonagnfilt],
-                marker='^',color='b',label='X-Ray AGN (BPT-HII)',s=20)
+                marker='^',color='cyan',label='X-Ray AGN (BPT-HII)',s=20)
         if len(list(agnfilt)) !=0:
             plt.scatter(xvals[agnfilt],yvals[agnfilt],
                 marker='o',facecolors='none',color='k',label='X-Ray AGN (BPT-AGN)',s=20)
@@ -1379,7 +1596,13 @@ def plotoiiimasscomb(xvals, yvals, nonagnfilt, agnfilt, bgx1, bgy1, bgx2, bgy2, 
     '''
     for doing bpt diagram with sdss galaxies scatter plotted
     '''
-   
+    xvals = np.copy(np.array(xvals))
+    yvals = np.copy(np.array(yvals))
+    bgx1 = np.copy(np.array(bgx1))
+    bgy1 = np.copy(np.array(bgy1))
+    bgx2 = np.copy(np.array(bgx2))
+    bgy2 = np.copy(np.array(bgy2))
+    
     fig = plt.figure()
     #counts1,xbins1,ybins1= np.histogram2d(np.log10(bgx), np.log10(bgy), bins=(50,50))#,cmap='gray',cmin=2)#marker='.',alpha=0.15,label='SDSS DR7')
     ax1 = fig.add_subplot(121)
@@ -1395,14 +1618,14 @@ def plotoiiimasscomb(xvals, yvals, nonagnfilt, agnfilt, bgx1, bgy1, bgx2, bgy2, 
     plt.tick_params(direction='in',axis='both',which='both')
     if len(list(nonagnfilt))!=0:
         plt.scatter(xvals[nonagnfilt],yvals[nonagnfilt],
-            marker='^',color='b',label='X-Ray AGN (BPT-HII)',s=20)
+            marker='^',color='cyan',label='X-Ray AGN (BPT-HII)',s=20)
     #if len(list(agnfilt)) !=0:
     #    plt.scatter(xvals[agnfilt],yvals[agnfilt],
     #        marker='o',facecolors='none',color='k',label='X-Ray AGN (BPT-AGN)',s=20)
     plt.ylabel(r'log(L$_\mathrm{[OIII]}$)',fontsize=20)
     plt.xlabel(r'log(M$_{\mathrm{*}}$)',fontsize=20)
     plt.ylim([37,43])
-    plt.xlim([8,12])
+    plt.xlim([7.8,12.2])
     ax2 = fig.add_subplot(122, sharey = ax1, sharex=ax1)
     plt.setp(ax2.get_yticklabels(), visible=False)
     #plt.ylabel(r'log(L$_\mathrm{[OIII]/SFR}$)',fontsize=20)
@@ -1421,7 +1644,7 @@ def plotoiiimasscomb(xvals, yvals, nonagnfilt, agnfilt, bgx1, bgy1, bgx2, bgy2, 
 
     #if len(list(nonagnfilt))!=0:
     #    plt.scatter(xvals[nonagnfilt],yvals[nonagnfilt],
-    #        marker='^',color='b',label='X-Ray AGN (BPT-HII)',s=20)
+    #        marker='^',color='cyan',label='X-Ray AGN (BPT-HII)',s=20)
     if len(list(agnfilt)) !=0:
         plt.scatter(xvals[agnfilt],yvals[agnfilt],
             marker='o',facecolors='none',color='k',label='X-Ray AGN (BPT-AGN)',s=20)
@@ -1445,6 +1668,11 @@ fig = plotoiiimasscomb(xmm3eldiagmed_xrfilt.mass,np.log10(xmm3eldiagmed_xrfilt.o
           agn_3xmmm_xrfilt,
           EL_m1.mass[nonagn_gsw], np.log10(EL_m1.oiiilum[nonagn_gsw]),EL_m1.mass[agn_gsw], np.log10(EL_m1.oiiilum[agn_gsw]),
         save=False,leg=False)
+fig = plotoiiimasscomb(xmm3eldiagmed_xrfilt_all.mass,np.log10(xmm3eldiagmed_xrfilt_all.oiiilum),
+          nonagn_3xmmm_all_xrfilt,
+          agn_3xmmm_all_xrfilt,
+          EL_m2.mass[nonagn_gsw], np.log10(EL_m2.oiiilum[nonagn_gsw]),EL_m2.mass[agn_gsw], np.log10(EL_m2.oiiilum[agn_gsw]),
+        save=False,leg=False)
 
 '''
 
@@ -1454,7 +1682,13 @@ def plotoiiidispcomb(xvals, yvals, nonagnfilt, agnfilt, bgx1, bgy1, bgx2, bgy2, 
     '''
     for doing bpt diagram with sdss galaxies scatter plotted
     '''
-   
+    xvals = np.copy(np.array(xvals))
+    yvals = np.copy(np.array(yvals))
+    bgx1 = np.copy(np.array(bgx1))
+    bgy1 = np.copy(np.array(bgy1))
+    bgx2 = np.copy(np.array(bgx2))
+    bgy2 = np.copy(np.array(bgy2))
+    
     fig = plt.figure()
     #counts1,xbins1,ybins1= np.histogram2d(np.log10(bgx), np.log10(bgy), bins=(50,50))#,cmap='gray',cmin=2)#marker='.',alpha=0.15,label='SDSS DR7')
     ax1 = fig.add_subplot(121)
@@ -1470,7 +1704,7 @@ def plotoiiidispcomb(xvals, yvals, nonagnfilt, agnfilt, bgx1, bgy1, bgx2, bgy2, 
     plt.tick_params(direction='in',axis='both',which='both')
     if len(list(nonagnfilt))!=0:
         plt.scatter(xvals[nonagnfilt],yvals[nonagnfilt],
-            marker='^',color='b',label='X-Ray AGN (BPT-HII)',s=20)
+            marker='^',color='cyan',label='X-Ray AGN (BPT-HII)',s=20)
     #if len(list(agnfilt)) !=0:
     #    plt.scatter(xvals[agnfilt],yvals[agnfilt],
     #        marker='o',facecolors='none',color='k',label='X-Ray AGN (BPT-AGN)',s=20)
@@ -1496,7 +1730,7 @@ def plotoiiidispcomb(xvals, yvals, nonagnfilt, agnfilt, bgx1, bgy1, bgx2, bgy2, 
 
     #if len(list(nonagnfilt))!=0:
     #    plt.scatter(xvals[nonagnfilt],yvals[nonagnfilt],
-    #        marker='^',color='b',label='X-Ray AGN (BPT-HII)',s=20)
+    #        marker='^',color='cyan',label='X-Ray AGN (BPT-HII)',s=20)
     if len(list(agnfilt)) !=0:
         plt.scatter(xvals[agnfilt],yvals[agnfilt],
             marker='o',facecolors='none',color='k',label='X-Ray AGN (BPT-AGN)',s=20)
@@ -1515,6 +1749,14 @@ def plotoiiidispcomb(xvals, yvals, nonagnfilt, agnfilt, bgx1, bgy1, bgx2, bgy2, 
         plt.show()
     return fig
 '''
+fig = plotoiiidispcomb(xmm3eldiagmed_xrfilt.bpt_EL_gsw_df.mass,xmm3eldiagmed_xrfilt.bpt_EL_gsw_df.oiiilum_p1 - 
+                       np.log10((xmm3eldiagmed_xrfilt.bpt_EL_gsw_df.vdisp*1e5)**4),
+          xmm3eldiagmed_xrfilt.bptsf, xmm3eldiagmed_xrfilt.bptagn,
+          EL_m1.bpt_EL_gsw_df.mass.iloc[EL_m1.bptsf], EL_m1.bpt_EL_gsw_df.oiiilum_p1.iloc[EL_m1.bptsf]-
+              np.log10((EL_m1.bpt_EL_gsw_df.vdisp.iloc[EL_m1.bptsf]*1e5)**4),
+          EL_m1.bpt_EL_gsw_df.mass.iloc[EL_m1.bptagn], EL_m1.bpt_EL_gsw_df.oiiilum_p1.iloc[EL_m1.bptagn]-
+              np.log10((EL_m1.bpt_EL_gsw_df.vdisp.iloc[EL_m1.bptagn]*1e5)**4),
+          save=False,leg=False)
 fig = plotoiiidispcomb(xmm3eldiagmed_xrfilt.mass,np.log10(xmm3eldiagmed_xrfilt.oiiilum/(xmm3eldiagmed_xrfilt.vdisp*1e5)**4),
           nonagn_3xmmm_xrfilt,
           agn_3xmmm_xrfilt,
@@ -1569,7 +1811,7 @@ def plotoiiissfr(xvals, yvals, nonagnfilt, agnfilt, bgx, bgy, save=True, filenam
     plt.tick_params(axis='both', which='major', labelsize=20)
     plt.tick_params(axis='both', which='minor', labelsize=15)
     plt.tick_params(direction='in',axis='both',which='both')
-    #plt.plot(np.log10(xline1_kauffman),np.log10(yline1_kauffman),c='k',ls='-.')#,label='Kauffman Line')
+    #plt.plot(np.log10(xline1_kauffmann),np.log10(yline1_kauffmann),c='k',ls='-.')#,label='kauffmann Line')
     if len(ccode) !=0: #for the contamination
         mn, mx = ccode.min(), ccode.max()
         
@@ -1586,14 +1828,14 @@ def plotoiiissfr(xvals, yvals, nonagnfilt, agnfilt, bgx, bgy, save=True, filenam
 
             if len(list(nonagnfilt))!=0:
                 plt.scatter(xvals[nonagnfilt][m10nonagn],yvals[nonagnfilt][m10nonagn],
-                      marker='^',color='b',label='X-Ray AGN (BPT-HII)',s=20)
+                      marker='^',color='cyan',label='X-Ray AGN (BPT-HII)',s=20)
             if len(list(agnfilt)) !=0:
                 plt.scatter(xvals[agnfilt][m10agn],yvals[agnfilt][m10agn],
                       marker='o',facecolors='none',color='k',label='X-Ray AGN (BPT-AGN)',s=20)
         else:
             if len(list(nonagnfilt))!=0:
                 plt.scatter(xvals[nonagnfilt],yvals[nonagnfilt],
-                      marker='^',color='b',label='X-Ray AGN (BPT-HII)',s=20)
+                      marker='^',color='cyan',label='X-Ray AGN (BPT-HII)',s=20)
             if len(list(agnfilt)) !=0:
                 plt.scatter(xvals[agnfilt],yvals[agnfilt],
                       marker='o',facecolors='none',color='k',label='X-Ray AGN (BPT-AGN)',s=20)
@@ -1688,7 +1930,7 @@ def plotoiiisfr(xvals, yvals, nonagnfilt, agnfilt, bgx, bgy, save=True, filename
     plt.tick_params(axis='both', which='major', labelsize=20)
     plt.tick_params(axis='both', which='minor', labelsize=15)
     plt.tick_params(direction='in',axis='both',which='both')
-    #plt.plot(np.log10(xline1_kauffman),np.log10(yline1_kauffman),c='k',ls='-.')#,label='Kauffman Line')
+    #plt.plot(np.log10(xline1_kauffmann),np.log10(yline1_kauffmann),c='k',ls='-.')#,label='kauffmann Line')
     if len(ccode) !=0: #for the contamination
         mn, mx = ccode.min(), ccode.max()
         
@@ -1705,14 +1947,14 @@ def plotoiiisfr(xvals, yvals, nonagnfilt, agnfilt, bgx, bgy, save=True, filename
 
             if len(list(nonagnfilt))!=0:
                 plt.scatter(xvals[nonagnfilt][m10nonagn],yvals[nonagnfilt][m10nonagn],
-                      marker='^',color='b',label='X-Ray AGN (BPT-HII)',s=20)
+                      marker='^',color='cyan',label='X-Ray AGN (BPT-HII)',s=20)
             if len(list(agnfilt)) !=0:
                 plt.scatter(xvals[agnfilt][m10agn],yvals[agnfilt][m10agn],
                       marker='o',facecolors='none',color='k',label='X-Ray AGN (BPT-AGN)',s=20)
         else:
             if len(list(nonagnfilt))!=0:
                 plt.scatter(xvals[nonagnfilt],yvals[nonagnfilt],
-                      marker='^',color='b',label='X-Ray AGN (BPT-HII)',s=20)
+                      marker='^',color='cyan',label='X-Ray AGN (BPT-HII)',s=20)
             if len(list(agnfilt)) !=0:
                 plt.scatter(xvals[agnfilt],yvals[agnfilt],
                       marker='o',facecolors='none',color='k',label='X-Ray AGN (BPT-AGN)',s=20)
@@ -1807,7 +2049,7 @@ def plotlxissfr(xvals, yvals, nonagnfilt, agnfilt, bgx, bgy, save=True, filename
     plt.tick_params(axis='both', which='major', labelsize=20)
     plt.tick_params(axis='both', which='minor', labelsize=15)
     plt.tick_params(direction='in',axis='both',which='both')
-    #plt.plot(np.log10(xline1_kauffman),np.log10(yline1_kauffman),c='k',ls='-.')#,label='Kauffman Line')
+    #plt.plot(np.log10(xline1_kauffmann),np.log10(yline1_kauffmann),c='k',ls='-.')#,label='kauffmann Line')
     if len(ccode) !=0: #for the contamination
         mn, mx = ccode.min(), ccode.max()
         
@@ -1824,14 +2066,14 @@ def plotlxissfr(xvals, yvals, nonagnfilt, agnfilt, bgx, bgy, save=True, filename
 
             if len(list(nonagnfilt))!=0:
                 plt.scatter(xvals[nonagnfilt][m10nonagn],yvals[nonagnfilt][m10nonagn],
-                      marker='^',color='b',label='X-Ray AGN (BPT-HII)',s=20)
+                      marker='^',color='cyan',label='X-Ray AGN (BPT-HII)',s=20)
             if len(list(agnfilt)) !=0:
                 plt.scatter(xvals[agnfilt][m10agn],yvals[agnfilt][m10agn],
                       marker='o',facecolors='none',color='k',label='X-Ray AGN (BPT-AGN)',s=20)
         else:
             if len(list(nonagnfilt))!=0:
                 plt.scatter(xvals[nonagnfilt],yvals[nonagnfilt],
-                      marker='^',color='b',label='X-Ray AGN (BPT-HII)',s=20)
+                      marker='^',color='cyan',label='X-Ray AGN (BPT-HII)',s=20)
             if len(list(agnfilt)) !=0:
                 plt.scatter(xvals[agnfilt],yvals[agnfilt],
                       marker='o',facecolors='none',color='k',label='X-Ray AGN (BPT-AGN)',s=20)
@@ -1879,6 +2121,10 @@ def plotoiiimassedd(xvals, yvals, nonagnfilt, agnfilt, bgx, bgy, save=True, file
     '''
     for doing bpt diagram with sdss galaxies scatter plotted
     '''
+    xvals = np.copy(np.array(xvals))
+    yvals = np.copy(np.array(yvals))
+    bgx = np.copy(np.array(bgx))
+    bgy = np.copy(np.array(bgy))
     nonzero_oiii_agn = np.where(yvals[agnfilt] >0)
     nonzero_oiii_hii = np.where(yvals[nonagnfilt] >0)
     print('BPT-HII mass avg:',np.mean(xvals[nonagnfilt][nonzero_oiii_hii]))
@@ -1913,7 +2159,7 @@ def plotoiiimassedd(xvals, yvals, nonagnfilt, agnfilt, bgx, bgy, save=True, file
     plt.tick_params(axis='both', which='major', labelsize=20)
     plt.tick_params(axis='both', which='minor', labelsize=15)
     plt.tick_params(direction='in',axis='both',which='both')
-    #plt.plot(np.log10(xline1_kauffman),np.log10(yline1_kauffman),c='k',ls='-.')#,label='Kauffman Line')
+    #plt.plot(np.log10(xline1_kauffmann),np.log10(yline1_kauffmann),c='k',ls='-.')#,label='kauffmann Line')
     if len(ccode) !=0: #for the contamination
         mn, mx = ccode.min(), ccode.max()
 
@@ -1925,46 +2171,10 @@ def plotoiiimassedd(xvals, yvals, nonagnfilt, agnfilt, bgx, bgy, save=True, file
     else:
         if len(list(nonagnfilt))!=0:
             plt.scatter(xvals[nonagnfilt],yvals[nonagnfilt],
-                marker='^',color='b',label='X-Ray AGN (BPT-HII)',s=20)
+                marker='^',color='cyan',label='X-Ray AGN (BPT-HII)',s=20)
         if len(list(agnfilt)) !=0:
             plt.scatter(xvals[agnfilt],yvals[agnfilt],
                 marker='o',facecolors='none',color='k',label='X-Ray AGN (BPT-AGN)',s=20)
-    if cont:
-        #extent = [np.min(cont.rangex),np.max(cont.rangex),np.min(cont.rangey), np.max(cont.rangey)]
-        #plt.imshow(cont.grid, extent=extent,origin='lower')
-        '''
-        levs=[0.02,0.04,0.07,0.11,0.13]
-        locs = np.vstack([posx,posy]).transpose()
-        CS = plt.contour(cont.meshx, cont.meshy, cont.grid,cmap='Blues',levels=levs)
-        norm= matplotlib.colors.Normalize(vmin=contaminations.min(), vmax=contaminations.max())
-        sm = plt.cm.ScalarMappable(norm=norm, cmap = CS.cmap)
-        sm.set_array([])
-        plt.colorbar(sm).set_label('Xray Fraction')
-        plt.text(-0.19,-0.379,'0.02',fontsize=15)
-        plt.text(0.005,-0.21,'0.04',fontsize=15)
-        plt.text(0.18,-0.0267,'0.07',fontsize=15)
-        plt.text(0.294,0.12,'0.11',fontsize=15)
-        plt.text(0.294,0.2768,'0.13',fontsize=15)
-        '''
-        levs = [0.02,0.04,0.07,0.11,0.15]
-
-        locs = np.vstack([posx,posy]).transpose()
-
-        CS = plt.contour(cont.meshx, cont.meshy, cont.grid,cmap='Blues',levels=levs)
-
-        norm= matplotlib.colors.Normalize(vmin=contaminations.min(), vmax=contaminations.max())
-        sm = plt.cm.ScalarMappable(norm=norm, cmap = CS.cmap)
-        sm.set_array([])
-        #plt.clim(contaminations.min(),contaminations.max())
-
-        plt.colorbar(sm).set_label('Xray Fraction')
-
-        plt.text(-0.27,-0.56,'0.02',fontsize=15)
-        plt.text(-0.033,-0.349,'0.04',fontsize=15)
-        plt.text(0.18,-0.12,'0.07',fontsize=15)
-        plt.text(0.28,0.09,'0.11',fontsize=15)
-        plt.text(0.325,0.371,'0.15',fontsize=15)
-
     plt.ylabel(r'log(L$_\mathrm{[OIII]}$/M$_{\mathrm{*}}$)',fontsize=20)
     plt.xlabel(r'log(M$_{\mathrm{*}}$)',fontsize=20)
     #plt.ylim([37,43])
@@ -2011,6 +2221,10 @@ def plotoiiidispmass(xvals, yvals, nonagnfilt, agnfilt, bgx, bgy, save=True, fil
     '''
     for doing bpt diagram with sdss galaxies scatter plotted
     '''
+    xvals = np.copy(np.array(xvals))
+    yvals = np.copy(np.array(yvals))
+    bgx = np.copy(np.array(bgx))
+    bgy = np.copy(np.array(bgy))
     nonzero_oiii_agn = np.where(yvals[agnfilt] >0 )[0]
     nonzero_oiii_hii = np.where((yvals[nonagnfilt] >0) &(np.isfinite(yvals[nonagnfilt])))[0]
     print('BPT-HII mass avg:',np.mean(xvals[nonagnfilt][nonzero_oiii_hii]))
@@ -2046,7 +2260,7 @@ def plotoiiidispmass(xvals, yvals, nonagnfilt, agnfilt, bgx, bgy, save=True, fil
     plt.tick_params(axis='both', which='major', labelsize=20)
     plt.tick_params(axis='both', which='minor', labelsize=15)
     plt.tick_params(direction='in',axis='both',which='both')
-    plt.plot(np.log10(xline1_kauffman),np.log10(yline1_kauffman),c='k',ls='-.')#,label='Kauffman Line')
+    plt.plot(np.log10(xline1_kauffmann),np.log10(yline1_kauffmann),c='k',ls='-.')#,label='kauffmann Line')
     if len(ccode) !=0: #for the contamination
         mn, mx = ccode.min(), ccode.max()
 
@@ -2058,30 +2272,10 @@ def plotoiiidispmass(xvals, yvals, nonagnfilt, agnfilt, bgx, bgy, save=True, fil
     else:
         if len(list(nonagnfilt))!=0:
             plt.scatter(xvals[nonagnfilt],yvals[nonagnfilt],
-                marker='^',color='b',label='X-Ray AGN (BPT-HII)',s=20)
+                marker='^',color='cyan',label='X-Ray AGN (BPT-HII)',s=20)
         if len(list(agnfilt)) !=0:
             plt.scatter(xvals[agnfilt],yvals[agnfilt],
                 marker='o',facecolors='none',color='k',label='X-Ray AGN (BPT-AGN)',s=20)
-    if cont:
-
-        levs = [0.02,0.04,0.07,0.11,0.15]
-
-        locs = np.vstack([posx,posy]).transpose()
-
-        CS = plt.contour(cont.meshx, cont.meshy, cont.grid,cmap='Blues',levels=levs)
-
-        norm= matplotlib.colors.Normalize(vmin=contaminations.min(), vmax=contaminations.max())
-        sm = plt.cm.ScalarMappable(norm=norm, cmap = CS.cmap)
-        sm.set_array([])
-        #plt.clim(contaminations.min(),contaminations.max())
-
-        plt.colorbar(sm).set_label('Xray Fraction')
-
-        plt.text(-0.27,-0.56,'0.02',fontsize=15)
-        plt.text(-0.033,-0.349,'0.04',fontsize=15)
-        plt.text(0.18,-0.12,'0.07',fontsize=15)
-        plt.text(0.28,0.09,'0.11',fontsize=15)
-        plt.text(0.325,0.371,'0.15',fontsize=15)
 
     plt.ylabel(r'log(L$_\mathrm{[OIII]}/\sigma_{*}^4$)',fontsize=20)
     plt.xlabel(r'log(M$_{\mathrm{*}}$)',fontsize=20)
@@ -2163,7 +2357,7 @@ def plotoiiidispfibsfr(xvals, yvals, nonagnfilt, agnfilt, bgx, bgy, save=True, f
     plt.tick_params(axis='both', which='major', labelsize=20)
     plt.tick_params(axis='both', which='minor', labelsize=15)
     plt.tick_params(direction='in',axis='both',which='both')
-    plt.plot(np.log10(xline1_kauffman),np.log10(yline1_kauffman),c='k',ls='-.')#,label='Kauffman Line')
+    plt.plot(np.log10(xline1_kauffmann),np.log10(yline1_kauffmann),c='k',ls='-.')#,label='kauffmann Line')
     if len(ccode) !=0: #for the contamination
         mn, mx = ccode.min(), ccode.max()
 
@@ -2175,31 +2369,10 @@ def plotoiiidispfibsfr(xvals, yvals, nonagnfilt, agnfilt, bgx, bgy, save=True, f
     else:
         if len(list(nonagnfilt))!=0:
             plt.scatter(xvals[nonagnfilt],yvals[nonagnfilt],
-                marker='^',color='b',label='X-Ray AGN (BPT-HII)',s=20)
+                marker='^',color='cyan',label='X-Ray AGN (BPT-HII)',s=20)
         if len(list(agnfilt)) !=0:
             plt.scatter(xvals[agnfilt],yvals[agnfilt],
                 marker='o',facecolors='none',color='k',label='X-Ray AGN (BPT-AGN)',s=20)
-    if cont:
-
-        levs = [0.02,0.04,0.07,0.11,0.15]
-
-        locs = np.vstack([posx,posy]).transpose()
-
-        CS = plt.contour(cont.meshx, cont.meshy, cont.grid,cmap='Blues',levels=levs)
-
-        norm= matplotlib.colors.Normalize(vmin=contaminations.min(), vmax=contaminations.max())
-        sm = plt.cm.ScalarMappable(norm=norm, cmap = CS.cmap)
-        sm.set_array([])
-        #plt.clim(contaminations.min(),contaminations.max())
-
-        plt.colorbar(sm).set_label('Xray Fraction')
-
-        plt.text(-0.27,-0.56,'0.02',fontsize=15)
-        plt.text(-0.033,-0.349,'0.04',fontsize=15)
-        plt.text(0.18,-0.12,'0.07',fontsize=15)
-        plt.text(0.28,0.09,'0.11',fontsize=15)
-        plt.text(0.325,0.371,'0.15',fontsize=15)
-
     plt.ylabel(r'log(L$_\mathrm{[OIII]}/\sigma_{*}^4$)',fontsize=20)
     plt.xlabel(r'log(Fiber SFR)',fontsize=20)
     plt.ylim([7.5,15.5])
@@ -2237,6 +2410,10 @@ def plotbpt_sii(xvals,yvals, nonagnfilt, agnfilt, bgx,bgy,save=False,filename=''
     '''
     for doing bpt diagram with sdss galaxies scatter plotted
     '''
+    xvals = np.copy(np.array(xvals))
+    yvals = np.copy(np.array(yvals))
+    bgx = np.copy(np.array(bgx))
+    bgy = np.copy(np.array(bgy))
     if save:
         fig = plt.figure()
     if len(ccodegsw)!=0:
@@ -2271,7 +2448,7 @@ def plotbpt_sii(xvals,yvals, nonagnfilt, agnfilt, bgx,bgy,save=False,filename=''
     else:
         if len(list(nonagnfilt))!=0:
             plt.scatter(xvals[nonagnfilt],yvals[nonagnfilt],
-                marker='^',color='b',label='X-Ray AGN (BPT-HII)',s=20)
+                marker='^',color='cyan',label='X-Ray AGN (BPT-HII)',s=20)
         if len(list(agnfilt)) !=0:
             plt.scatter(xvals[agnfilt],yvals[agnfilt],
                 marker='o',facecolors='none',color='k',label='X-Ray AGN (BPT-AGN)',s=20)
@@ -2311,6 +2488,10 @@ def plotbpt_oi(xvals,yvals, nonagnfilt, agnfilt, bgx,bgy,save=False,filename='',
     '''
     for doing bpt diagram with sdss galaxies scatter plotted
     '''
+    xvals = np.copy(np.array(xvals))
+    yvals = np.copy(np.array(yvals))
+    bgx = np.copy(np.array(bgx))
+    bgy = np.copy(np.array(bgy))
     if save:
         fig = plt.figure()
     if len(ccodegsw)!=0:
@@ -2343,7 +2524,7 @@ def plotbpt_oi(xvals,yvals, nonagnfilt, agnfilt, bgx,bgy,save=False,filename='',
     else:
         if len(list(nonagnfilt))!=0:
             plt.scatter(xvals[nonagnfilt],yvals[nonagnfilt],
-                marker='^',color='b',label='X-Ray AGN (BPT-HII)',s=20)
+                marker='^',color='cyan',label='X-Ray AGN (BPT-HII)',s=20)
         if len(list(agnfilt)) !=0:
             plt.scatter(xvals[agnfilt],yvals[agnfilt],
                 marker='o',facecolors='none',color='k',label='X-Ray AGN (BPT-AGN)',s=20)
@@ -2391,7 +2572,7 @@ def plot_mex(xvals, yvals,nonagnfilt,agnfilt, bgx,bgy,save=True, filename='',tit
 
     plt.scatter(bgx,np.log10(bgy),color='gray',marker='.',alpha=0.1,edgecolors='none',label='SDSS DR7')
     plt.scatter(xvals[nonagnfilt],np.log10(yvals[nonagnfilt]),
-                 marker='^',color='b', label='X-Ray AGN (BPT-HII)')
+                 marker='^',color='cyan', label='X-Ray AGN (BPT-HII)')
     plt.scatter(xvals[agnfilt],np.log10(yvals[agnfilt]),
                 marker='o',facecolors='none',color='k',label='X-Ray AGN (BPT-AGN)')
     plt.xlim([8,12])
@@ -2452,7 +2633,7 @@ def plot_lxmsfrm(xraysfr, label, save=False, filtagn=[], filtnonagn=[],filename=
     if len(filtagn) != 0 or len(filtnonagn) != 0:
         plt.scatter(xraysfr.lum_mass[make_m1[halp_filt_s82]][nonagn][filtnonagn],
                     xraysfr.sfr_mass[make_m1[halp_filt_s82]][nonagn][filtnonagn],
-                    marker='^', color='b',label='BPT-HII')
+                    marker='^', color='cyan',label='BPT-HII')
         plt.scatter(xraysfr.lum_mass[make_m1[halp_filt_s82]][agn][filtagn],
                     xraysfr.sfr_mass[make_m1[halp_filt_s82]][agn][filtagn],
                     marker='o',facecolors='none',color='k',
@@ -2461,7 +2642,7 @@ def plot_lxmsfrm(xraysfr, label, save=False, filtagn=[], filtnonagn=[],filename=
         plt.scatter(xraysfr.lum_mass_val_filt, xraysfr.sfr_mass_val_filt, marker='x', color='k')
     else:
         plt.scatter(xraysfr.lum_mass_val_filtnoagn,xraysfr.sfr_mass_val_filtnoagn,
-                    marker='^', color='b',label='BPT-HII',zorder=2)
+                    marker='^', color='cyan',label='BPT-HII',zorder=2)
         plt.scatter(xraysfr.lum_mass_val_filtagn,xraysfr.sfr_mass_val_filtagn,
                     marker='o',facecolors='none',color='k',label='BPT-AGN',zorder=1)
     if weakem:
@@ -2516,7 +2697,7 @@ def plot_lxsfr(xraysfr, label, save=False, filtagn=[], filtnonagn=[],filename=''
         plt.scatter(xraysfr.lum_val_filt, xraysfr.sfr_val_filt, marker='x', color='k')
     else:
         plt.scatter(xraysfr.lum_val_filtnoagn,xraysfr.sfr_val_filtnoagn,
-                    marker='^', color='b',label='BPT-HII',zorder=3)
+                    marker='^', color='cyan',label='BPT-HII',zorder=3)
         plt.scatter(xraysfr.lum_val_filtagn,xraysfr.sfr_val_filtagn,
                     marker='o',facecolors='none',color='k',label='BPT-AGN',zorder=2)
     if weakem:
@@ -2532,7 +2713,7 @@ def plot_lxsfr(xraysfr, label, save=False, filtagn=[], filtnonagn=[],filename=''
     plt.text(42.8,-1.2,'X-ray AGN', fontsize=15,rotation=45)
     plt.xlim([37.5,44.5])
     plt.ylim([-2.5,4.5])
-    ax.set(adjustable='box-forced', aspect='equal')
+    ax.set(adjustable='box', aspect='equal')
     plt.tight_layout() 
     if save:
         plt.savefig("plots/xmm3/png/xraylum/"+label+filename+"_lx_vs_sfr.png",dpi=250)
@@ -2561,7 +2742,7 @@ def plot_lxfibsfr(xraysfr, label, save=False, filtagn=[], filtnonagn=[],filename
 
         else:
             plt.scatter(xraysfr.lum_mass_val_filtnoagn_xrayagn,fibssfr[nonagn_3xmmm_xrfilt],
-                    marker='^', color='b',label='BPT-HII',zorder=3)
+                    marker='^', color='cyan',label='BPT-HII',zorder=3)
             plt.scatter(xraysfr.lum_mass_val_filtagn_xrayagn, fibssfr[agn_3xmmm_xrfilt],
                     marker='o',facecolors='none',color='k',label='BPT-AGN',zorder=2)
         #plt.plot(loglum_arr,lsfrrelat[label][2],'k--',label=lsfrrelat[label][1],zorder=3)
@@ -2596,7 +2777,7 @@ def plot_lxfibsfr(xraysfr, label, save=False, filtagn=[], filtnonagn=[],filename
 
         else:
             plt.scatter(xraysfr.lum_val_filtnoagn_xrayagn-2*np.log10(xmm3eldiagmed_xrfilt.distances[nonagn_3xmmm_xrfilt]),fibssfr[nonagn_3xmmm_xrfilt]-2*np.log10(xmm3eldiagmed_xrfilt.distances[nonagn_3xmmm_xrfilt]),
-                    marker='^', color='b',label='BPT-HII',zorder=3)
+                    marker='^', color='cyan',label='BPT-HII',zorder=3)
             plt.scatter(xraysfr.lum_val_filtagn_xrayagn-2*np.log10(xmm3eldiagmed_xrfilt.distances[agn_3xmmm_xrfilt]), fibssfr[agn_3xmmm_xrfilt]-2*np.log10(xmm3eldiagmed_xrfilt.distances[agn_3xmmm_xrfilt]),
                     marker='o',facecolors='none',color='k',label='BPT-AGN',zorder=2)
         if scat:
@@ -2622,7 +2803,7 @@ plot_lxsfr(fullxray_xmm,'full',save=False, weakem = fullxray_xmm_no, filename='w
 plot_lxsfr(fullxray_xmm,'full',save=False, nofilt=True, filename='nofiltall_shade', scat = 0.6, fibsfr= xmm3eldiagmed_xrfilt.fibsfr)
 
 plot_lxsfr(fullxray_xmm,'full',save=True, filename='weakem_shade', scat = 0.6, fibsfr= xmm3eldiagmed_xrfilt.fibsfr,weakem = fullxray_xmm_no)
-plot_lxsfr(fullxray_xmm,'full',save=True, filename='shade', fibsfr= xmm3eldiagmed_xrfilt.fibsfr, scat=0.6)
+plot_lxsfr(fullxray_xmm,'full',save=False, filename='shade', fibsfr= xmm3eldiagmed_xrfilt.fibsfr, scat=0.6)
 
 plot_lxsfr(fullxray_xmm,'full',save=True, filename='weakem_shade', scat = 0.6, fibsfr= xmm3eldiagmed_xrfilt.fibsfrgsw,weakem = fullxray_xmm_no)
 plot_lxfibsfr(fullxray_xmm,'full',save=False, filename='shade', fibssfr= xmm3eldiagmed_xrfilt.fibsfrgsw, scat=0.6)
@@ -2640,7 +2821,7 @@ plot_lxsfr(softxray_xmm,'soft',save=False,scat=0.6)
 plot_lxsfr(hardxray_xmm,'hard',save=False,scat=0.6)
 
 
-plot_lxsfr(fullxray_xmm,'full',scat=0.6, save=True)
+plot_lxsfr(fullxray_xmm,'full',scat=0.6, save=False, nofilt=True)
 
 plot_lxsfr(softxray_xmm,'soft',save=False,scat=0.6, nofilt=True)
 plot_lxsfr(hardxray_xmm,'hard',save=False,scat=0.6, nofilt=True)
@@ -2701,7 +2882,7 @@ def plotfwhmbalmerforbid(eldiag,gswbalm, gswforb, agnfilt,nonagnfilt,save=False,
     
     realvalxrhii = np.where((eldiag.balmerfwhm[nonagnfilt] <1170)& (eldiag.forbiddenfwhm[nonagnfilt] <1170) &(eldiag.balmerfwhm[nonagnfilt]>2.4) &(eldiag.forbiddenfwhm[nonagnfilt]>2.4))[0]
     #[realvalxragn][realvalxragn]
-    plt.scatter(eldiag.balmerfwhm[nonagnfilt],eldiag.forbiddenfwhm[nonagnfilt],marker='^',color='b',label='BPT-HII', zorder=11)
+    plt.scatter(eldiag.balmerfwhm[nonagnfilt],eldiag.forbiddenfwhm[nonagnfilt],marker='^',color='cyan',label='BPT-HII', zorder=11)
 
     plt.scatter(eldiag.balmerfwhm[agnfilt],eldiag.forbiddenfwhm[agnfilt],marker='o',label='BPT-AGN',color='k',facecolor='none', zorder=10)
     #[realvalxrhii][realvalxrhii]
@@ -2721,7 +2902,7 @@ def plotfwhmbalmerforbid(eldiag,gswbalm, gswforb, agnfilt,nonagnfilt,save=False,
     #plt.xlim([40.5,43.5])
     plt.xlim([0,1100])
     plt.ylim([0,1100])
-    ax.set(adjustable='box-forced', aspect='equal')
+    ax.set(adjustable='box', aspect='equal')
 
     plt.legend(frameon=False,fontsize=15,loc=2,bbox_to_anchor=(0, 0.95))
     plt.tight_layout()
@@ -2731,9 +2912,10 @@ def plotfwhmbalmerforbid(eldiag,gswbalm, gswforb, agnfilt,nonagnfilt,save=False,
         plt.savefig("plots/xmm3/eps/diagnostic/fwhm_balmer_forbid"+filename+".eps",dpi=250,format='eps')
         
 '''
-plotfwhmbalmerforbid(xmm3eldiagmed_xrfilt, EL_m1.balmerfwhm, EL_m1.forbiddenfwhm,
-                     agn_3xmmm_xrfilt,
-                     nonagn_3xmmm_xrfilt, save=True)
+plotfwhmbalmerforbid(xmm3eldiagmed_xrfilt.bpt_EL_gsw_df, EL_m1.bpt_EL_gsw_df.balmerfwhm, EL_m1.bpt_EL_gsw_df.forbiddenfwhm,
+                     xmm3eldiagmed_xrfilt.bptagn,
+                     xmm3eldiagmed_xrfilt.bptsf, save=False)
+
 plotfwhmbalmerforbid(EL_qsos, EL_m1.balmerfwhm, EL_m1.forbiddenfwhm,
                      agn_qsos,
                      nonagn_qsos, save=False)

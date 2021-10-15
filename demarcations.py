@@ -2,6 +2,8 @@ import numpy as np
 def y1_kauffmann(xvals):
     yline1_kauffmann = 10**(0.61 / (xvals - 0.05) + 1.3) 
     return yline1_kauffmann
+def y1_schawinski(xvals):
+    return 10**(1.05*xvals+0.45)
 def y1_kewley(xvals):
     yline1_kewley = 10**(0.61 / (xvals - 0.47) + 1.19) 
     return yline1_kewley
@@ -13,6 +15,12 @@ def y3_agn(xvals):
     return 10**(0.73/(xvals+0.59)+1.33)
 def y3_linersy2(xvals):
     return 10**(1.18*xvals+1.30)
+
+def ooo_agn(xvals):
+    return 10**(-1.701*xvals-2.163)
+def ooo_linersy2(xvals):
+    return 10**(1.0*xvals+0.7)
+
 def mex_main(xvals):
     return 0.375 / (xvals-10.5) + 1.14
 def y_stasinska(xvals):
@@ -44,7 +52,7 @@ def mex_lower(xvals):
 xline1_kewley =np.log10(np.logspace(-2.5,1,num=100))
 xline1_kauffmann =np.log10(np.logspace(np.log10(0.007),0,num=100))
 
-xline1_kauffmann_plus = np.log10(np.logspace(np.log10(0.007), -0.4, num=100))
+xline1_kauffmann_plus = np.log10(np.logspace(np.log10(0.007), -0.35, num=100))
 
 yline1_kewley= y1_kewley(xline1_kewley)
 yline1_kauffmann=y1_kauffmann(xline1_kauffmann)

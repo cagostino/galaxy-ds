@@ -2,52 +2,48 @@
 # -*- coding: utf-8 -*-
 
 """
-To be used within the main program, matchgal.py
+To be used within the main program, matchgal
 """
 import numpy as np
 from sklearn import linear_model
 from scipy.interpolate import griddata
 
 class Gdiffs:
-    def __init__(self, m1ids, gswids, xray, gsw):
-        self.m1ids = m1ids
+    def __init__(self, xrids, gswids, xray, gsw, quantities, filt=[]):
+        '''
+        xrids and gswids are lists of SDSS ids, used to make sure that the 
+        X-ray fractions are not including the galaxy itself
+        '''
+        self.xrids = xrids
         self.gswids = gswids
         self.xray = xray
         self.gsw = gsw
-        self.dists, self.massd, self.zd, self.bptxd, self.bptyd = self.galaxy_diffs()
-    def galaxy_diffs(self, filt = []):
+        self.quantities = quantities
+        self.filt = filt
+        
+        self.dists, self.q_diffs = self.galaxy_diffs_bpt()
+    def galaxy_diffs_bpt(self):
         dists = []
         #ra dec
         #mass redshift
-        lenloop = len(self.xray.mass)
-        varmass = np.var(self.xray.mass)#(np.max(self.xray.mass)-np.min(self.xray.mass))**2
-        varz = np.var(self.xray.z)#(np.max(self.xray.z)-np.min(self.xray.z))**2
-        varbptx = np.var(self.xray.niiha)#(np.max(self.xray.niiha)-np.min(self.xray.niiha))**2
-        varbpty = np.var(self.xray.oiiihb)#(np.max(self.xray.oiiihb)-np.min(self.xray.oiiihb))**2
-        bptxd =[]
-        bptyd = []
-        massd =[]
-        zd =[]
+        lenloop = len(self.xray['mass'])
+        var_qs = [np.var(self.xray[quantity]) for quantity in self.quantities]
+
+        quantity_diffs =  [ [] for i in range(len(self.quantities))]
+        
+        dists = []
         for i in range(lenloop):
-            val = np.where(self.gswids == self.m1ids[i])[0]
-            massdiffs = (self.xray.mass[i] - self.gsw.mass)**2/varmass #massdiff
-            zdiffs  =   (self.xray.z[i] - self.gsw.z)**2/varz
-            bptxdiffs = (self.xray.niiha[i] - self.gsw.niiha)**2/varbptx
-            bptydiffs = (self.xray.oiiihb[i] - self.gsw.oiiihb)**2/varbpty
-            dist = np.sqrt(massdiffs + zdiffs + bptxdiffs + bptydiffs)
-            dists.append(dist)
-            massd.append(massdiffs)
-            bptxd.append(bptxdiffs)
-            bptyd.append(bptydiffs)
-            zd.append(zdiffs)
-        return np.array(dists), np.array(massd), np.array(zd), np.array(bptxd), np.array(bptyd)
+            distsq_i = 0
+            for j, quantity in enumerate(self.quantities):
+                q_diff = (self.xray[quantity].iloc[i] - self.gsw[quantity])**2/var_qs[j]
+                quantity_diffs[j].append(q_diff)
+                distsq_i+=q_diff
+            dists.append(np.sqrt(distsq_i))
+        return np.array(dists), np.array(quantity_diffs)
     def get_filt(self,filt):
         self.filt = filt
         self.dists_filt = np.copy(self.dists[:, filt])
-        self.massd_filt = np.copy(self.massd[:, filt])
-        self.bptxd_filt = np.copy(self.bptxd[:, filt])
-        self.bptyd_filt = np.copy(self.bptyd[:, filt])
-        self.zd_filt = np.copy(self.zd[:,filt])
+        self.q_diffs_filt = np.copy(quantity[:, filt] for quantity in self.quantities)
     def nearbyx(self, comminds):
         nclones = []
         mindists = []
@@ -89,7 +85,7 @@ class Gdiffs:
             alldists.append(diff[comminds])
         self.nrx = np.array(nclones)
         self.mindx = np.array(mindists)
-        self.alls82dists = np.array(alldists)
+        self.alldists = np.array(alldists)
         self.xrgswfracs = np.array(allfracs)
         self.xrfrac = np.array(allfracx)
         self.gswfrac = np.array(allfracgsw)
@@ -105,8 +101,8 @@ class Gdiffs:
             self.x = xrfracs.meshx
             self.y = xrfracs.meshy
         else:
-            self.xrfracs = self.xrgswfracs[:,binnum].reshape((self.xray.niiha.size, 1))
-        x, y = self.xray.niiha, self.xray.oiiihb
+            self.xrfracs = self.xrgswfracs[:,binnum].reshape((self.x_xr.size, 1))
+        x, y = self.x_xr, self.y_xr
         mnx, mxx = np.min(x), np.max(x)
         mny, mxy = np.min(y), np.max(y)
         X = np.vstack([x, y]).transpose()#, x*x, y*y
@@ -120,21 +116,3 @@ class Gdiffs:
         points = np.vstack([x, y]).transpose()
         self.grid = griddata(points, self.xrfracs, (self.meshx, self.meshy),method=method).reshape((nx, ny))
         #self.grid = griddata(points, self.predxrfrac, (self.meshx, self.meshy),method='linear').reshape((nx, ny))
-    def maskgrid(self):
-        x = self.xray.niiha
-        y = self.xray.oiiihb
-        interdistx = self.rangex[1]-self.rangex[0]
-        interdisty = self.rangey[1]-self.rangey[0]
-        invaly = []
-        invalx = []
-        for i in range(len(self.rangex)):
-            distx =(self.rangex[i] -x)
-
-            for j in range(len(self.rangey)):
-                disty = (self.rangey[j] - y)
-                dists = np.sqrt(distx**2+disty**2)
-                ad = np.where(dists < np.sqrt((interdistx**2+interdisty**2))/np.sqrt(2))[0]
-                if len(ad) == 0:
-                    invaly.append(j)
-                    invalx.append(i)
-        return invalx,invaly

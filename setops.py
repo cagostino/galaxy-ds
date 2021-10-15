@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
+from astropy.stats import bootstrap as apy_bootstrap
+
 def commonpts1d(arr1, arr2):
     '''
     """
@@ -51,3 +53,41 @@ def combine_arrs(lst_arr):
     for arr in lst_arr:
         new_arr =np.append(new_arr, arr)
     return new_arr
+
+def bin_quantity( quantity, binsize, mn, mx, threshold=0):
+    '''
+    bins a quantity based on min, max, binsize
+    -if a threshold is specified, only bins with a certain minimum number of objects will be produced
+    '''
+    bn_edges = np.arange(mn, mx, binsize)
+    bncenters = (bn_edges[1:]+bn_edges[:-1])/2
+    bns = []
+    bn_inds = []
+    valid_bns = []
+    for i in range(len(bn_edges)-1):
+        val = np.where((quantity>bn_edges[i]) & (quantity <= bn_edges[i+1]))[0]
+        if val.size > threshold:
+            bns.append(quantity[val])
+            bn_inds.append(val)
+            valid_bns.append(i)
+    return bn_edges, bncenters, bns, bn_inds, valid_bns
+def bin_by_ind( quantity, inds, bncenters):
+    '''
+    putting other quantities into bins specified by some quantity produced by bin_quantity^
+    '''
+    binned_quantity = []
+    for ind_set in inds:
+        binned_quantity.append(quantity[ind_set])
+    return binned_quantity
+def bootstrap( data, bootnum, data_only=False):
+    '''
+    bootstraping a data set using astropy.bootstrap
+    return stats about it if desired
+    '''
+    bootstrap_results = apy_bootstrap(data, bootnum=bootnum)
+    if data_only:
+        return bootstrap_results
+    means = np.mean(bootstrap_results, axis=1)
+    std_mean = np.std(means)
+    mean_means = np.mean(means)
+    return bootstrap_results, means, std_mean, mean_means

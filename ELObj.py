@@ -10,6 +10,7 @@ from plotresults_sfrm import plot2dhist
 import extinction as ext
 
 ext.ccm89(np.array([3727.0]), 1.0, 3.1)/ext.ccm89(np.array([6563.0]), 1.0, 3.1)
+xrayranallidict = {'soft':1/(1.39e-40),'hard':1/(1.26e-40),'full':1/(0.66e-40)}
 
 
 def extinction(ha, hb, agn=False, dustlaw='cardelli', zeroed=False, ha_hb_err =[]):
@@ -25,6 +26,8 @@ def extinction(ha, hb, agn=False, dustlaw='cardelli', zeroed=False, ha_hb_err =[
     if zeroed:
         zeroav = np.where(av<0)[0]
         av[zeroav] = 0
+        maxed = np.where(av>3)[0]
+        av[maxed]=3
     if len(ha_hb_err) != 0:
         sigma = 7.23*ha_hb_err/(np.log(10)*ha/hb )
         return np.array(av), np.array(sigma)
@@ -36,6 +39,13 @@ def dustcorrect(flux, av, wl):
     '''
     fact = ext.ccm89(np.array([wl]), 1.0, 3.1)
     return np.array(flux*10**(0.4*av*fact))
+def redden(flux, av, wl):
+    '''
+    Need to adjust so that the factor is dependent on the different lines
+    '''
+    fact = ext.ccm89(np.array([wl]), 1.0, 3.1)
+    return np.array(flux/(10**(0.4*av*fact)))
+
 def halptofibsfr_corr( halplum):
     logsfrfib = np.log10(7.9e-42) + np.log10(halplum) - 0.24 #+0.4*A(H_alpha)
     return np.array(logsfrfib)
@@ -51,28 +61,40 @@ def get_deltassfr( mass, ssfr):
 
 def nii_oii_to_oh( nii, oii):
     '''
-    Uses Sanchez et al 2017 method for relating NII/OII to metallicity
+    Uses castro et al 2017 method for relating NII/OII to metallicity
     for Sy2.
     '''
     z = 1.08*(np.log10(nii/oii)**2) + 1.78*(np.log10(nii/oii)) + 1.24
     logoh = 12+np.log10(z*10**(-3.31))
     return np.array(logoh)
 
+def nii_oii_to_oh_ke02(nii,oii):
+    logoh = np.log10(1.54020+1.26602*nii/oii+0.167977*(nii/oii)**2)+8.93
+    return logoh
 
 def nii_logoh_o32_to_q(logoh, o32):
     return (32.81-1.153*o32**2+(logoh)*(-3.396-0.025*o32+0.1444*o32**2))* ((4.603-0.3119*o32-0.163*o32**2)+(logoh)*(-0.48+0.0271*o32+0.02037*o32**2))**(-1)
 def oiii_oii_to_U(oiii_oii):
     return 0.57*(oiii_oii**2)+1.38*(oiii_oii)-3.14
+def sii_doub_to_ne(sii_doub, te=10000):
+    ne = 0.0543*np.tan(-3.0553*sii_doub+2.8506)+6.98-10.6905*sii_doub+9.9186*sii_doub**2-3.5442*sii_doub**3
+    ne_te_scaled = ne*(10000/te)**(-1./2)
+    return ne_te_scaled
 
-
-def correct_av(reg, x_test, av_balm, hb_sn):
+def correct_av(reg, x_test, av_balm, hb_sn, empirdust=False, sub = False):
     #x_test = av_gsw.transpose()
     av_balm_fixed = []
     for i in range(len(hb_sn)):
 
         if hb_sn[i] <10:
             x_samp = x_test[i].reshape(1,-1)
-            av_fix = np.float64(reg.predict(x_samp))
+            if empirdust:
+                av_fix = np.float64(reg.predict(x_samp))
+            else:
+                if sub:
+                    av_fix = np.float64(1.43431072*x_samp+0.34834144657321453)
+                else:
+                    av_fix = np.float64(1.78281143*x_samp+0.2085823945997035)
             if av_fix<0:
                 av_fix=0
             if av_fix>3:
@@ -104,7 +126,26 @@ def get_pardist( x, y):
     bot = np.sqrt(agn_branch_vec[0]**2+1)
     return np.array(top/bot)
 
-def get_bpt1_groups(x,y):
+def get_thom_dist(x,y):
+    slope = (-0.408-0.979)/(-0.466-0.003)
+    #xmix = np.arange(-0.566, 0.003, 0.001)
+    #ymix = slope*(xmix)+0.97013
+    ke_x = -0.22321
+    ke_y= 0.310
+    top = -slope*(x-ke_x)-ke_y+y
+    bot= np.sqrt(slope**2+1)
+    perp = np.abs(top)/bot
+    d_obj = np.sqrt( (x-ke_x)**2 + (y-ke_y)**2)
+    theta = np.arcsin(perp/ d_obj)
+    
+    slope_inv = -0.327
+    top_inv = -slope_inv*(x-ke_x)-ke_y+y    
+    
+    print(theta)
+    proj_d = d_obj * np.cos(theta)
+    #sign = (np.sign(x-ke_int_x)*(x-ke_int_x)**2 +np.sign(y-ke_int_y)*(y-ke_int_y)**2)
+    return np.sign(top_inv)*proj_d #sign*np.array(top/bot)
+def get_bpt1_groups_ke01(x,y):
     groups =[]
     if type(x)!=np.array:
         xvals = np.copy(np.array(x))
@@ -112,12 +153,54 @@ def get_bpt1_groups(x,y):
         yvals = np.copy(np.array(y))
     for i in range(len(xvals)):
         if xvals[i] < 0:
-            if yvals[i] <np.log10(y1_kauffmann(xvals[i])):
+            if yvals[i] < np.log10(y1_kauffmann(xvals[i])):
                 groups.append('HII')
+            elif yvals[i] < np.log10(y1_kewley(xvals[i])):
+                groups.append('COMP')
+            else:
+                if yvals[i] > np.log10(y1_schawinski(xvals[i])):
+                    groups.append('Sy2')
+                else:
+                    groups.append('LINER')
+        else:
+            if xvals[i] < 0.43:
+                if yvals[i] < np.log10(y1_kewley(xvals[i])):
+                    groups.append('COMP')
+                else:
+                    if yvals[i] > np.log10(y1_schawinski(xvals[i])):
+                        groups.append('Sy2')
+                    else:
+                        groups.append('LINER')
+            else:
+                if yvals[i] > np.log10(y1_schawinski(xvals[i])):
+                    groups.append('Sy2')
+                else:
+                    groups.append('LINER')
+            
+    groups=np.array(groups)    
+    sy2 = np.where(groups == 'Sy2')[0]
+    liner = np.where(groups=='LINER')[0]
+    comp = np.where(groups== 'COMP')[0]
+    nonagn = np.where(groups == 'HII')[0]
+    return groups,nonagn, comp, sy2, liner   
+    
+def get_bpt1_groups(x,y):
+    groups =[]
+    if type(x)!=np.array:
+        xvals = np.copy(np.array(x))
+    if type(y)!=np.array:
+        yvals = np.copy(np.array(y))
+    for i in range(len(xvals)):
+        if np.isnan(xvals[i]) or np.isnan(yvals[i]):
+            groups.append('NO')
+        else:
+            if xvals[i] < 0:
+                if yvals[i] <np.log10(y1_kauffmann(xvals[i])):
+                    groups.append('HII')
+                else:
+                    groups.append('AGN')
             else:
                 groups.append('AGN')
-        else:
-            groups.append('AGN')
     groups=np.array(groups)    
     agn = np.where(groups == 'AGN')[0]
     nonagn = np.where(groups == 'HII')[0]
@@ -165,6 +248,57 @@ def get_bpt3_groups( x, y, filt=[]):
     seyf = np.where(groups=='Seyfert')[0]
     liner = np.where(groups=='LINER')[0]
     return groups,hii,seyf,liner#hii,seyf,liner
+def get_whan_groups(x,y):
+    groups = []
+    if type(x)!=np.array:
+        xvals = np.copy(np.array(x))
+    if type(y)!=np.array:
+        yvals = np.copy(np.array(y))
+    for i in range(len(xvals)):
+        if np.isnan(xvals[i]):
+            groups.append('NO')
+        elif yvals[i] < 0.5:
+            groups.append('PG')
+        elif  yvals[i] < 3:
+            groups.append('RG')
+        elif yvals[i] <6 and xvals[i] >-0.4:
+            groups.append('wAGN')
+        elif yvals[i]>6 and xvals[i]>-0.4:
+            groups.append('sAGN')
+        elif yvals[i]>3 and xvals[i]<-0.4:
+            groups.append('SF')
+    groups = np.array(groups)
+    sf = np.where(groups == 'SF')[0]
+    sagn = np.where(groups=='sAGN')[0]
+    wagn = np.where(groups=='wAGN')[0]
+    pg = np.where(groups=='PG')[0]
+    rg = np.where(groups=='RG')[0]
+    
+    return groups,sf,sagn,wagn, rg, pg#hii,seyf,liner
+
+
+def get_ooo_groups( x, y, filt=[]):
+    groups=[]
+    if type(x)!=np.array:
+        xvals = np.copy(np.array(x))
+    if type(y)!=np.array:
+        yvals = np.copy(np.array(y))
+    for i in range(len(xvals)):
+        if np.isnan(xvals[i]) or np.isnan(yvals[i]):
+            groups.append('NO')
+            continue
+        elif yvals[i] < np.log10(ooo_agn(xvals[i])):
+            groups.append('HII')
+            continue
+        elif  yvals[i] > np.log10(ooo_linersy2(xvals[i])):
+            groups.append('Seyfert')
+        else:
+            groups.append('LINER')
+    groups = np.array(groups)
+    hii = np.where(groups == 'HII')[0]
+    seyf = np.where(groups=='Seyfert')[0]
+    liner = np.where(groups=='LINER')[0]
+    return groups,hii,seyf,liner#hii,seyf,liner
 def get_bptplus_groups(x,y, filt=[]):
     groups =[]
     if type(x)!=np.array:
@@ -172,13 +306,16 @@ def get_bptplus_groups(x,y, filt=[]):
     if type(y)!=np.array:
         yvals = np.copy(np.array(y))
     for i in range(len(xvals)):
-        if xvals[i] < -0.4:
-            if yvals[i] < np.log10(y1_kauffmann(xvals[i])):
-                groups.append('HII')
+        if np.isnan(xvals[i]) or np.isnan(yvals[i]):
+            groups.append('NO')
+        else:
+            if xvals[i] < -0.4:
+                if yvals[i] < np.log10(y1_kauffmann(xvals[i])):
+                    groups.append('HII')
+                else:
+                    groups.append('AGN')
             else:
                 groups.append('AGN')
-        else:
-            groups.append('AGN')
     groups=np.array(groups)
     agn = np.where(groups == 'AGN')[0]
     nonagn = np.where(groups == 'HII')[0]
@@ -188,17 +325,20 @@ def get_bptplus_niigroups( x, filt=[]):
     if type(x)!=np.array:
         xvals = np.copy(np.array(x))
     for i in range(len(xvals)):
-        if xvals[i] < -0.4:
-            groups.append('HII')
+        if np.isnan(xvals[i]):
+            groups.append('NO')
         else:
-            groups.append('AGN')
+            if xvals[i] < -0.4:
+                groups.append('HII')
+            else:
+                groups.append('AGN')
     groups=np.array(groups)
     agn = np.where(groups == 'AGN')[0]
     nonagn = np.where(groups == 'HII')[0]
     return groups,nonagn, agn
 class ELObj:
-    def __init__(self, sdssinds, sdss, make_spec, gswcat, gsw = False, xr=False, 
-                 sncut=2, hb_sn_cut=2, dustbinning=False):
+    def __init__(self, sdssinds, sdss, make_spec, gswcat, gsw = False, xr=False, xmm=False, weak_lines=False,
+                 sncut=2, hb_sn_cut=2, dustbinning=False, empirdust=False, radio = False):
         self.sdss = sdss
         self.make_spec = make_spec
         self.gswcat = gswcat
@@ -224,6 +364,7 @@ class ELObj:
         #BPT filt used for everything
         self.bpt_sn_filt_bool = (self.halp_sn>sncut) & (self.hbeta_sn > sncut) & (self.oiii_sn > sncut) & (self.nii_sn > sncut)
         self.bpt_sn_filt = np.where(self.bpt_sn_filt_bool)[0]
+        self.high_sn_o3 = np.where(self.oiii_sn>sncut)[0]
         
         self.not_bpt_sn_filt_bool  = np.logical_not(self.bpt_sn_filt_bool)
 
@@ -326,11 +467,14 @@ class ELObj:
                         'nII6548flux': np.copy(sdss.allnII_6548)/1e17,
                         'oiiflux': np.copy(sdss.alloII)/1e17,
                         
+                        'tauv_cont':np.copy(sdss.tauv_cont),
                         'd4000': np.copy(sdss.alld4000),
+                        'hdelta_lick' :np.copy(sdss.hdelta_lick),
                         'halp_eqw':np.copy(sdss.allha_eqw),
                         'oiii_eqw':np.copy(sdss.alloIII_eqw),
                         'vdisp':np.copy(sdss.allvdisp),
                         'mbh': np.log10(np.copy(3*(sdss.allvdisp/200)**4)*1e8),
+                        'edd_lum': np.log10(3*1e8*1.38e38*((sdss.allvdisp/200)**4)),
                         'forbiddenfwhm':  np.copy(sdss.allforbiddendisp*2 * np.sqrt(2*np.log(2))),
                         'balmerfwhm': np.copy(sdss.allbalmerdisp*2 * np.sqrt(2*np.log(2))),
                         'fibmass':np.copy(sdss.all_fibmass),
@@ -368,8 +512,7 @@ class ELObj:
         self.EL_dict['yvals_bpt'] =self.EL_dict['oiiiflux']/self.EL_dict['hbetaflux']
         self.EL_dict['xvals1_bpt'] =self.EL_dict['niiflux']/self.EL_dict['halpflux']
         self.EL_dict['xvals2_bpt'] =self.EL_dict['siiflux']/self.EL_dict['halpflux']
-        self.EL_dict['xvals3_bpt'] =self.EL_dict['niiflux']/self.EL_dict['halpflux']
-            
+        self.EL_dict['xvals3_bpt'] =self.EL_dict['oiflux']/self.EL_dict['halpflux']
             
         self.EL_dict['av'] = extinction(self.EL_dict['halpflux'], self.EL_dict['hbetaflux'])
         self.EL_dict['av_agn'] = extinction(self.EL_dict['halpflux'], self.EL_dict['hbetaflux'],agn=True)
@@ -378,7 +521,14 @@ class ELObj:
         self.EL_dict['siiha'] = np.log10(np.copy(self.EL_dict['xvals2_bpt']))
         self.EL_dict['oiha'] = np.log10(np.copy(self.EL_dict['xvals3_bpt']))
         self.EL_dict['oiiihb'] = np.log10(np.copy(self.EL_dict['yvals_bpt']))
+        self.EL_dict['thom_dist'] = get_thom_dist(self.EL_dict['niiha'], self.EL_dict['oiiihb']) 
 
+        self.EL_dict['ji_p1'] =  np.copy( (self.EL_dict['niiha']*0.63+self.EL_dict['siiha']*0.51+self.EL_dict['oiiihb']*0.59))
+        self.EL_dict['ji_p2'] =  np.copy( (-self.EL_dict['niiha']*0.63+self.EL_dict['siiha']*0.78))
+        self.EL_dict['ji_p3'] =  np.copy( (-self.EL_dict['niiha']*0.46-self.EL_dict['siiha']*0.37+0.81*self.EL_dict['oiiihb']))
+        
+        
+        
         self.EL_dict_gsw = {}
         for key in self.EL_dict.keys():
             self.EL_dict_gsw[key] = self.EL_dict[key][sdssinds]
@@ -387,12 +537,14 @@ class ELObj:
 
         self.EL_dict_gsw['ids'] = np.copy(self.gswcat.ids[self.make_spec])
         self.EL_dict_gsw['sfr'] = np.copy(self.gswcat.sfr[self.make_spec])
-
+        self.EL_dict_gsw['sigma1'] = np.copy(self.gswcat.sigma1[self.make_spec])
+        
         self.EL_dict_gsw['ssfr'] = np.copy(self.EL_dict_gsw['sfr'] - self.EL_dict_gsw['mass'])
         self.EL_dict_gsw['delta_ssfr'] = get_deltassfr(self.EL_dict_gsw['mass'], self.EL_dict_gsw['ssfr'])
 
         
         self.EL_dict_gsw['z'] =  np.copy(self.gswcat.z[self.make_spec])
+        
         self.EL_dict_gsw['ra'] = np.copy(self.gswcat.ra[self.make_spec])
         self.EL_dict_gsw['dec'] = np.copy(self.gswcat.dec[self.make_spec])
         self.EL_dict_gsw['av_gsw'] = np.copy(self.gswcat.av[self.make_spec])
@@ -400,15 +552,29 @@ class ELObj:
         self.EL_dict_gsw['fibsfrgsw']= np.copy(self.EL_dict_gsw['sfr']+np.log10(self.EL_dict_gsw['massfracgsw']))
 
 
-        high_sn10_hb = np.where((self.EL_dict_gsw['hbetaflux_sn']>10)&(self.EL_dict_gsw['halpflux_sn']>0))           
-        self.y_reg = np.array(self.EL_dict_gsw['av_agn'][high_sn10_hb])
+        high_sn10_hb = np.where((self.EL_dict_gsw['hbetaflux_sn']>10)&(self.EL_dict_gsw['halpflux_sn']>0))
+        print(high_sn10_hb)
+        if weak_lines or not empirdust:
 
-        self.X_reg_av = np.vstack([self.EL_dict_gsw['av_gsw'][high_sn10_hb]]).transpose()
-        self.reg_av = LinearRegression().fit(self.X_reg_av,self.y_reg)
+            self.reg_av = None
+            self.reg_av_sf = None
+
+        elif empirdust:
+            
+            self.y_reg = np.array(self.EL_dict_gsw['av_agn'][high_sn10_hb])
+            self.y_reg_sf = np.array(self.EL_dict_gsw['av'][high_sn10_hb])
+            self.X_reg_av = np.vstack([self.EL_dict_gsw['av_gsw'][high_sn10_hb]]).transpose()
+            self.reg_av = LinearRegression().fit(self.X_reg_av,self.y_reg)
+            self.reg_av_sf = LinearRegression().fit(self.X_reg_av,self.y_reg_sf)
+        
         self.x_pred_av = np.vstack([self.EL_dict_gsw['av_gsw']]).transpose()
         self.EL_dict_gsw['corrected_presub_av'] = correct_av(self.reg_av, self.x_pred_av, 
                                                          np.array(self.EL_dict_gsw['av_agn']),
-                                                         np.array(self.EL_dict_gsw['hbetaflux_sn']))
+                                                         np.array(self.EL_dict_gsw['hbetaflux_sn']), empirdust=empirdust)
+        self.EL_dict_gsw['corrected_presub_av_sf'] = correct_av(self.reg_av_sf, self.x_pred_av, 
+                                                         np.array(self.EL_dict_gsw['av']),
+                                                         np.array(self.EL_dict_gsw['hbetaflux_sn']), empirdust=empirdust)
+        
         '''
         self.X_reg_av_sfr = np.vstack([self.EL_dict_gsw['av_gsw'][high_sn10_hb], self.EL_dict_gsw['sfr'][high_sn10_hb]]).transpose()
         self.reg_av_sfr = LinearRegression().fit(self.X_reg_av_sfr,self.y_reg)
@@ -434,6 +600,7 @@ class ELObj:
         self.EL_dict_gsw['halpflux_corr'] = dustcorrect(self.EL_dict_gsw['halpflux'], self.EL_dict_gsw['corrected_presub_av'], 6563.0)
         
         self.EL_dict_gsw['oiiiflux_corr'] = dustcorrect(self.EL_dict_gsw['oiiiflux'], self.EL_dict_gsw['corrected_presub_av'], 5007.0)
+        self.EL_dict_gsw['oiii_err_corr'] = dustcorrect(self.EL_dict_gsw['oiii_err'], self.EL_dict_gsw['corrected_presub_av'], 5007.0)
         
         self.EL_dict_gsw['oiiflux_corr'] = dustcorrect(self.EL_dict_gsw['oiiflux'], self.EL_dict_gsw['corrected_presub_av'], 3727.0)
         self.EL_dict_gsw['niiflux_corr'] = dustcorrect(self.EL_dict_gsw['niiflux'], self.EL_dict_gsw['corrected_presub_av'], 6583.0)
@@ -443,48 +610,163 @@ class ELObj:
         self.EL_dict_gsw['sii6731flux_corr'] = dustcorrect(self.EL_dict_gsw['sii6731flux'], self.EL_dict_gsw['corrected_presub_av'], 6731.0)
 
 
+        self.EL_dict_gsw['hbetaflux_corr_sf'] = dustcorrect(self.EL_dict_gsw['hbetaflux'], self.EL_dict_gsw['corrected_presub_av_sf'], 4861.0)
+        self.EL_dict_gsw['halpflux_corr_sf'] = dustcorrect(self.EL_dict_gsw['halpflux'], self.EL_dict_gsw['corrected_presub_av_sf'], 6563.0)
+        
+        self.EL_dict_gsw['oiiiflux_corr_sf'] = dustcorrect(self.EL_dict_gsw['oiiiflux'], self.EL_dict_gsw['corrected_presub_av_sf'], 5007.0)
+        self.EL_dict_gsw['oiii_err_corr_sf'] = dustcorrect(self.EL_dict_gsw['oiii_err'], self.EL_dict_gsw['corrected_presub_av_sf'], 5007.0)
+        
+        self.EL_dict_gsw['oiiflux_corr_sf'] = dustcorrect(self.EL_dict_gsw['oiiflux'], self.EL_dict_gsw['corrected_presub_av_sf'], 3727.0)
+        self.EL_dict_gsw['niiflux_corr_sf'] = dustcorrect(self.EL_dict_gsw['niiflux'], self.EL_dict_gsw['corrected_presub_av_sf'], 6583.0)
+        self.EL_dict_gsw['oiflux_corr_sf'] = dustcorrect(self.EL_dict_gsw['oiflux'], self.EL_dict_gsw['corrected_presub_av_sf'], 6300.0)
+        self.EL_dict_gsw['siiflux_corr_sf'] = dustcorrect(self.EL_dict_gsw['siiflux'], self.EL_dict_gsw['corrected_presub_av_sf'], 6724.0)
+        self.EL_dict_gsw['sii6717flux_corr_sf'] = dustcorrect(self.EL_dict_gsw['sii6717flux'], self.EL_dict_gsw['corrected_presub_av_sf'], 6717.0)
+        self.EL_dict_gsw['sii6731flux_corr_sf'] = dustcorrect(self.EL_dict_gsw['sii6731flux'], self.EL_dict_gsw['corrected_presub_av_sf'], 6731.0)
+
+        self.EL_dict_gsw['hbetaflux_corr_p1'] = dustcorrect(self.EL_dict_gsw['hbetaflux'], self.EL_dict_gsw['av'], 4861.0)
+        self.EL_dict_gsw['halpflux_corr_p1'] = dustcorrect(self.EL_dict_gsw['halpflux'], self.EL_dict_gsw['av'], 6563.0)
+        
+        self.EL_dict_gsw['oiiiflux_corr_p1'] = dustcorrect(self.EL_dict_gsw['oiiiflux'], self.EL_dict_gsw['av'], 5007.0)
+        
+        self.EL_dict_gsw['oiiflux_corr_p1'] = dustcorrect(self.EL_dict_gsw['oiiflux'], self.EL_dict_gsw['av'], 3727.0)
+        self.EL_dict_gsw['niiflux_corr_p1'] = dustcorrect(self.EL_dict_gsw['niiflux'], self.EL_dict_gsw['av'], 6583.0)
+        self.EL_dict_gsw['oiflux_corr_p1'] = dustcorrect(self.EL_dict_gsw['oiflux'], self.EL_dict_gsw['av'], 6300.0)
+        self.EL_dict_gsw['siiflux_corr_p1'] = dustcorrect(self.EL_dict_gsw['siiflux'], self.EL_dict_gsw['av'], 6724.0)
+        self.EL_dict_gsw['sii6717flux_corr_p1'] = dustcorrect(self.EL_dict_gsw['sii6717flux'], self.EL_dict_gsw['av'], 6717.0)
+        self.EL_dict_gsw['sii6731flux_corr_p1'] = dustcorrect(self.EL_dict_gsw['sii6731flux'], self.EL_dict_gsw['av'], 6731.0)
+
         self.EL_dict_gsw['oiii_oii'] = np.log10(self.EL_dict_gsw['oiiiflux_corr']/self.EL_dict_gsw['oiiflux_corr'])
         self.EL_dict_gsw['U'] =oiii_oii_to_U(self.EL_dict_gsw['oiii_oii'] )
         self.EL_dict_gsw['nii_oii'] =np.log10(self.EL_dict_gsw['niiflux']/self.EL_dict_gsw['oiiflux_corr'])
-        self.EL_dict_gsw['log_oh'] = nii_oii_to_oh(self.EL_dict_gsw['niiflux_corr'], self.EL_dict_gsw['oiiflux_corr'])             
+        self.EL_dict_gsw['log_oh'] = nii_oii_to_oh(self.EL_dict_gsw['niiflux_corr'], self.EL_dict_gsw['oiiflux_corr'])  
+        self.EL_dict_gsw['log_oh_ke02'] = nii_oii_to_oh_ke02(self.EL_dict_gsw['niiflux_corr'], self.EL_dict_gsw['oiiflux_corr'])  
+           
         self.EL_dict_gsw['sii_ratio'] =(self.EL_dict_gsw['sii6717flux_corr']/self.EL_dict_gsw['sii6731flux_corr'])
         self.EL_dict_gsw['sii_oii'] =np.log10(self.EL_dict_gsw['siiflux']/self.EL_dict_gsw['oiiflux'])
         self.EL_dict_gsw['oi_sii'] =np.log10(self.EL_dict_gsw['oiflux']/self.EL_dict_gsw['siiflux'])
+
         
         self.EL_dict_gsw['oiiilum'] = np.log10(getlumfromflux(self.EL_dict_gsw['oiiiflux_corr'],self.EL_dict_gsw['z']))
+        self.EL_dict_gsw['oiiilum_up'] = np.log10(getlumfromflux(self.EL_dict_gsw['oiiiflux_corr']+self.EL_dict_gsw['oiii_err_corr'],self.EL_dict_gsw['z']))
+        self.EL_dict_gsw['oiiilum_down'] = np.log10(getlumfromflux(self.EL_dict_gsw['oiiiflux_corr']-self.EL_dict_gsw['oiii_err_corr'],self.EL_dict_gsw['z']))
+        self.EL_dict_gsw['e_oiiilum_down'] = self.EL_dict_gsw['oiiilum']-self.EL_dict_gsw['oiiilum_down']
+        self.EL_dict_gsw['e_oiiilum_up'] = self.EL_dict_gsw['oiiilum_up']- self.EL_dict_gsw['oiiilum']
+        
+        
         self.EL_dict_gsw['halplum'] = np.log10(getlumfromflux(self.EL_dict_gsw['halpflux_corr'], self.EL_dict_gsw['z']))
-        self.EL_dict_gsw['oiiilum_uncorr'] = getlumfromflux(self.EL_dict_gsw['oiiiflux'],self.EL_dict_gsw['z'])
-        self.EL_dict_gsw['halplum_uncorr'] = getlumfromflux(self.EL_dict_gsw['halpflux'], self.EL_dict_gsw['z'])
+        self.EL_dict_gsw['edd_par'] = self.EL_dict_gsw['oiiilum']-self.EL_dict_gsw['mbh']
+
+        self.EL_dict_gsw['oiiilum_sf'] = np.log10(getlumfromflux(self.EL_dict_gsw['oiiiflux_corr_sf'],self.EL_dict_gsw['z']))
+        self.EL_dict_gsw['halplum_sf'] = np.log10(getlumfromflux(self.EL_dict_gsw['halpflux_corr_sf'], self.EL_dict_gsw['z']))
+
+        self.EL_dict_gsw['oiiilum_p1'] = np.log10(getlumfromflux(self.EL_dict_gsw['oiiiflux_corr_p1'],self.EL_dict_gsw['z']))
+        self.EL_dict_gsw['halplum_p1'] = np.log10(getlumfromflux(self.EL_dict_gsw['halpflux_corr_p1'], self.EL_dict_gsw['z']))
+
+        self.EL_dict_gsw['oiiilum_uncorr'] = np.log10(getlumfromflux(self.EL_dict_gsw['oiiiflux'],self.EL_dict_gsw['z']))
+        
+        self.EL_dict_gsw['oiiilum_up_uncorr'] = np.log10(getlumfromflux(self.EL_dict_gsw['oiiiflux']+self.EL_dict_gsw['oiii_err'],self.EL_dict_gsw['z']))
+        self.EL_dict_gsw['oiiilum_down_uncorr'] = np.log10(getlumfromflux(self.EL_dict_gsw['oiiiflux']-self.EL_dict_gsw['oiii_err'],self.EL_dict_gsw['z']))
+        self.EL_dict_gsw['e_oiiilum_up_uncorr'] = self.EL_dict_gsw['oiiilum_up_uncorr']-self.EL_dict_gsw['oiiilum_uncorr']
+        self.EL_dict_gsw['e_oiiilum_down_uncorr'] = self.EL_dict_gsw['oiiilum_uncorr']- self.EL_dict_gsw['oiiilum_down_uncorr']
+        
+        self.EL_dict_gsw['halplum_uncorr'] = np.log10(getlumfromflux(self.EL_dict_gsw['halpflux'], self.EL_dict_gsw['z']))
         self.EL_dict_gsw['halpfibsfr'] = halptofibsfr_corr(10**self.EL_dict_gsw['halplum'])
+        self.EL_dict_gsw['halpfibsfr_uncorr'] = halptofibsfr_corr(10**self.EL_dict_gsw['halplum_uncorr'])
+
+        self.EL_dict_gsw['halpfibsfr_sf'] = halptofibsfr_corr(10**self.EL_dict_gsw['halplum_sf'])
 
         if self.xr:
-            self.EL_dict_gsw['exptimes'] = np.copy(self.gswcat.exptimes[self.make_spec])
-            self.EL_dict_gsw['xrayflag'] = np.copy(self.gswcat.xrayflag[self.make_spec])
-            self.EL_dict_gsw['ext'] = np.copy(self.gswcat.ext[self.make_spec])
+            self.EL_dict_gsw['full_xraylum'] = np.copy(self.gswcat.gsw_df.fulllumsrf.iloc[self.make_spec])
+            self.EL_dict_gsw['soft_xraylum'] = np.copy(self.gswcat.gsw_df.softlumsrf.iloc[self.make_spec])
+            self.EL_dict_gsw['hard_xraylum'] = np.copy(self.gswcat.gsw_df.hardlumsrf.iloc[self.make_spec])
+            
+            self.EL_dict_gsw['fullflux'] = np.copy(self.gswcat.gsw_df.fullflux.iloc[self.make_spec])
+            
+            self.EL_dict_gsw['softflux'] = np.copy(self.gswcat.gsw_df.softflux.iloc[self.make_spec])
+            self.EL_dict_gsw['hardflux'] = np.copy(self.gswcat.gsw_df.hardflux.iloc[self.make_spec])
+            self.EL_dict_gsw['full_lxsfr'] = np.copy(np.log10(xrayranallidict['full']*10**(self.EL_dict_gsw['sfr'])))
+            self.EL_dict_gsw['hardlx_sfr'] = np.copy(np.log10(xrayranallidict['hard']*10**(self.EL_dict_gsw['sfr'])))
+            self.EL_dict_gsw['softlx_sfr'] = np.copy(np.log10(xrayranallidict['soft']*10**(self.EL_dict_gsw['sfr'])))
+            self.EL_dict_gsw['full_lxagn'] = np.copy(np.log10(10**self.EL_dict_gsw['full_xraylum']-10**self.EL_dict_gsw['full_lxsfr']))
+            self.EL_dict_gsw['hard_lxagn'] = np.copy(np.log10(10**self.EL_dict_gsw['hard_xraylum']-10**self.EL_dict_gsw['hardlx_sfr']))
+            self.EL_dict_gsw['soft_lxagn'] = np.copy(np.log10(10**self.EL_dict_gsw['soft_xraylum']-10**self.EL_dict_gsw['softlx_sfr']))
 
+            if xmm:
+                self.EL_dict_gsw['exptimes'] = np.copy(self.gswcat.gsw_df.exptimes.iloc[self.make_spec])
+                #self.EL_dict_gsw['xrayflag'] = np.copy(self.gswcat.gsw_df.xrayflag[self.make_spec])
+                #self.EL_dict_gsw['ext'] = np.copy(self.gswcat.gsw_df.ext[self.make_spec])
+                self.EL_dict_gsw['efullflux'] = np.copy(self.gswcat.gsw_df.efullflux.iloc[self.make_spec])
+                self.EL_dict_gsw['fullflux_sn'] = self.EL_dict_gsw['fullflux']/self.EL_dict_gsw['efullflux']
+                
+                self.EL_dict_gsw['ehardflux'] = np.copy(self.gswcat.gsw_df.efullflux.iloc[self.make_spec])
+                self.EL_dict_gsw['hardflux_sn'] = self.EL_dict_gsw['hardflux']/self.EL_dict_gsw['ehardflux']
+                
+                self.EL_dict_gsw['esoftflux'] = np.copy(self.gswcat.gsw_df.efullflux.iloc[self.make_spec])
+                self.EL_dict_gsw['softflux_sn'] = self.EL_dict_gsw['softflux']/self.EL_dict_gsw['esoftflux']
 
-        
-        self.EL_df = pd.DataFrame.from_dict(self.EL_dict)
+            
+            
+                self.EL_dict_gsw['full_xraylum_up'] = np.copy(self.gswcat.gsw_df.efulllumsrf_up.iloc[self.make_spec])
+                self.EL_dict_gsw['full_xraylum_down'] = np.copy(self.gswcat.gsw_df.efulllumsrf_down.iloc[self.make_spec])
+
+                self.EL_dict_gsw['e_full_xraylum_up'] = self.EL_dict_gsw['full_xraylum_up'] -self.EL_dict_gsw['full_xraylum']
+                self.EL_dict_gsw['e_full_xraylum_down'] = self.EL_dict_gsw['full_xraylum'] -self.EL_dict_gsw['full_xraylum_down']
+            
+                self.EL_dict_gsw['hr1'] = np.copy(self.gswcat.gsw_df.hr1.iloc[self.make_spec])
+                self.EL_dict_gsw['hr2'] = np.copy(self.gswcat.gsw_df.hr2.iloc[self.make_spec])
+                self.EL_dict_gsw['hr3'] = np.copy(self.gswcat.gsw_df.hr3.iloc[self.make_spec])
+                self.EL_dict_gsw['hr4'] = np.copy(self.gswcat.gsw_df.hr4.iloc[self.make_spec])
+            
+        if radio:   
+            self.EL_dict_gsw['nvss_flux'] = np.copy(self.gswcat.gsw_df.nvss_flux.iloc[self.make_spec])
+            self.EL_dict_gsw['first_flux'] = np.copy(self.gswcat.gsw_df.first_flux.iloc[self.make_spec])
+            self.EL_dict_gsw['wenss_flux'] = np.copy(self.gswcat.gsw_df.wenss_flux.iloc[self.make_spec])
+            self.EL_dict_gsw['vlss_flux'] = np.copy(self.gswcat.gsw_df.vlss_flux.iloc[self.make_spec])
+            self.EL_dict_gsw['nvss_lums'] = np.copy(self.gswcat.gsw_df.nvss_lums.iloc[self.make_spec])
+            self.EL_dict_gsw['first_lums'] = np.copy(self.gswcat.gsw_df.firstlums.iloc[self.make_spec])
+            self.EL_dict_gsw['wenss_lums'] = np.copy(self.gswcat.gsw_df.wensslums.iloc[self.make_spec])
+            self.EL_dict_gsw['vlss_lums'] = np.copy(self.gswcat.gsw_df.vlsslums.iloc[self.make_spec])
+
         self.EL_gsw_df = pd.DataFrame.from_dict(self.EL_dict_gsw)
+        allbptgroups, allbptsf, allbptagn = get_bpt1_groups( np.log10(self.EL_gsw_df['xvals1_bpt']), np.log10(self.EL_gsw_df['yvals_bpt'] ) )
+        allbptplusgroups, allbptplssf, allbptplsagn = get_bptplus_groups(np.log10(self.EL_gsw_df['xvals1_bpt']), np.log10(self.EL_gsw_df['yvals_bpt']))
+        allbptplusniigroups, allbptplsnii_sf, allbptplsnii_agn= get_bptplus_niigroups(np.log10(self.EL_gsw_df['xvals1_bpt']))
 
-   
+        self.EL_gsw_df['bptplusgroups'] = allbptplusgroups
+        self.EL_gsw_df['bptplusniigroups'] = allbptplusniigroups
+
+        self.EL_gsw_df['bptgroups'] = allbptgroups
+
+        self.not_bpt_EL_gsw_df = self.EL_gsw_df.iloc[self.not_bpt_sn_filt].copy() #unclassifiables from Paper 1
+        self.high_sn_o3_EL_gsw_df = self.EL_gsw_df.iloc[self.high_sn_o3].copy() #unclassifiables from Paper 1
+        
         self.bpt_EL_gsw_df = self.EL_gsw_df.iloc[self.bpt_sn_filt].copy()
+        
+        high_sn_all7 = np.where(( self.bpt_EL_gsw_df.oiiflux_sn>2) &(self.bpt_EL_gsw_df.oiflux_sn>2) &(self.bpt_EL_gsw_df.siiflux_sn>2))
+        self.alllines_bpt_EL_gsw_df = self.bpt_EL_gsw_df.iloc[high_sn_all7].copy()
+        
         self.vo87_1_EL_gsw_df = self.bpt_EL_gsw_df.iloc[self.vo87_1_filt].copy()
         self.vo87_2_EL_gsw_df = self.bpt_EL_gsw_df.iloc[self.vo87_2_filt].copy()
         
+
         bptgroups, bptsf, bptagn = get_bpt1_groups( np.log10(self.bpt_EL_gsw_df['xvals1_bpt']), np.log10(self.bpt_EL_gsw_df['yvals_bpt'] ) )
+
         
         bptplsugroups, bptplssf, bptplsagn = get_bptplus_groups(np.log10(self.bpt_EL_gsw_df['xvals1_bpt']), np.log10(self.bpt_EL_gsw_df['yvals_bpt']))
         
-
-        #self.bpt_EL_gsw_df['bptgroups'] = bptgroups
-        #self.bpt_EL_gsw_df['bptplusgroups'] = bptplsugroups
+        
         
         self.bpt_sf_df = self.bpt_EL_gsw_df.iloc[bptsf].copy()
+
+        high_sn_all7_sf = np.where(( self.bpt_sf_df.oiiflux_sn>2) &(self.bpt_sf_df.oiflux_sn>2) &(self.bpt_sf_df.siiflux_sn>2))
+
+        self.alllines_bpt_sf_df = self.bpt_sf_df.iloc[high_sn_all7_sf]
         self.bpt_agn_df = self.bpt_EL_gsw_df.iloc[bptagn].copy()
         
         self.bptplus_sf_df = self.bpt_EL_gsw_df.iloc[bptplssf].copy()
         self.bptplus_agn_df = self.bpt_EL_gsw_df.iloc[bptplsagn].copy()
+        high_sn_all7_bptplussf = np.where(( self.bptplus_sf_df.oiiflux_sn>2) &(self.bptplus_sf_df.oiflux_sn>2) &(self.bptplus_sf_df.siiflux_sn>2))
+        self.alllines_bptplus_sf_df = self.bptplus_sf_df.iloc[high_sn_all7_bptplussf]
                                                                                                                                                                                            
         self.plus_EL_gsw_df = self.EL_gsw_df.iloc[self.halp_nii_filt].copy()
 

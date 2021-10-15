@@ -20,7 +20,7 @@ def catmatch_act(ra1, dec1, ra2, dec2, rfluxes, fullflux, goodm1):
     matchxflux =[]
     matchrflux = []
     match_7_dists = []
-    for i in np.int64(goodm1): #range(len(ra1)):
+    for i in np.int64(goodm1): #range(len(ra1)):  
         racop = np.copy(ra2)
         if i%1000 == 0:
             print(i)

@@ -8,3 +8,6 @@ allm2 = np.loadtxt(catfold+"GSWLC-M2.dat", unpack = True, usecols=(5, 6, 11, 9, 
 m1_photcatids = np.loadtxt(catfold+'gs_mis_sdss_phot.dat', unpack=True,usecols=(6,),dtype=np.int64)
 m1_modelrflux = np.loadtxt(catfold+'gs_mis_sdss_phot.dat', unpack=True, usecols=(41,))
 ind2_m1phot = np.loadtxt(catfold+'photmatchinginds.txt', dtype=np.int64)
+sigma1_m = np.loadtxt(catfold+'sigma1_mis.dat', dtype=np.float64, usecols=(2), unpack=True)
+
+allm2 = np.vstack((allm2, sigma1_m))

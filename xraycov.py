@@ -24,8 +24,12 @@ def conv_ra(ra):
     return (copra)*(-1)
 sampleobsids = np.loadtxt('catalogs/sampleobstimes.txt', dtype=np.str)
 
-ragsw,decgsw = np.loadtxt('catalogs/gsw2galsbpt.txt') #galaxies with BPT SNR > 2
+
+#ragsw,decgsw = np.loadtxt('catalogs/gsw2galsbpt.txt') #galaxies with BPT SNR > 2
+ragsw,decgsw = np.loadtxt('catalogs/gswgalsbpt.txt', unpack=True) #galaxies with BPT SNR > 2
+
 '''
+gswgalsbpt
 -*8000*.ftz are the full-field images
 -Need them for the three diff. X-ray cameras
 '''
@@ -44,6 +48,22 @@ xmm3_pn = glob.glob('xray_imgs/xmm3/pn/*/pps/*8000*.FTZ')
 uniq_pn, uniq_ind_pn=np.unique([xmm3_pn[i].split('/')[3] for i in range(len(xmm3_pn))],return_index=True)
 xmm3_pn = np.array(xmm3_pn)  
 allimglists = np.hstack([xmm3_m1, xmm3_m2, xmm3_pn])
+
+
+print('M1')
+xmm4_m1 = glob.glob('xray_imgs/xmm4/m1/*/pps/*8000*.FTZ')
+uniq_m1, uniq_ind_m1=np.unique([xmm4_m1[i].split('/')[3] for i in range(len(xmm4_m1))],return_index=True)
+xmm4_m1 = np.array(xmm4_m1) 
+print('M2')
+xmm4_m2 = glob.glob('xray_imgs/xmm4/m2/*/pps/*8000*.FTZ')
+uniq_m2, uniq_ind_m2=np.unique([xmm4_m2[i].split('/')[3] for i in range(len(xmm4_m2))],return_index=True)
+xmm4_m2 = np.array(xmm4_m2) 
+print('pn')
+xmm4_pn = glob.glob('xray_imgs/xmm4/pn/*/pps/*8000*.FTZ')
+uniq_pn, uniq_ind_pn=np.unique([xmm4_pn[i].split('/')[3] for i in range(len(xmm4_pn))],return_index=True)
+xmm4_pn = np.array(xmm4_pn)  
+allimglists = np.hstack([xmm4_m1, xmm4_m2, xmm4_pn])
+
 '''
 
 #loading from file
@@ -193,12 +213,13 @@ def getxrcov(imglist, ra, dec, fname):
     np.savetxt('catalogs/xraycov/ramiss_'+fname+'_xrcovg_fields_set.txt', ramiss)#
     np.savetxt('catalogs/xraycov/decmiss_' +fname+'_xrcovg_fields_set.txt', decmiss)
 
+getxrcov(allimglists, ra_allgsw, dec_allgsw, 'gsw2xmm4')
 
-getxrcov(allimglists, ragsw, decgsw, 'gsw2xmm3') #to run the main parts
+#getxrcov(allimglists, ragsw, decgsw, 'gsw2xmm3') #to run the main parts
     
 '''
 Below: If such X-ray coverage is already done, easier to load certain information for plotting
-'''
+
 matched_gals =np.int64(np.loadtxt('catalogs/xraycov/matched_gals_gsw2xmm3_xrcovg_fields_set.txt'))
 unmatched_gals = np.int64(np.loadtxt('catalogs/xraycov/unmatched_gals_gsw2xmm3_xrcovg_fields_set.txt'))
 matched_fields = np.int64(np.loadtxt('catalogs/xraycov/matchedfields_gsw2xmm3_xrcovg_fields_set.txt'))
@@ -209,6 +230,7 @@ deccent = np.float64(np.loadtxt('./catalogs/xraycov/deccent_gsw2xmm3_xrcovg_fiel
 
 ramiss = np.float64(np.loadtxt('./catalogs/xraycov/ramiss_gsw2xmm3_xrcovg_fields_set.txt'))
 decmiss = np.float64(np.loadtxt('./catalogs/xraycov/decmiss_gsw2xmm3_xrcovg_fields_set.txt'))
+'''
 
 mydpi=48
 def plotcov( matched_fields, save=False,fname=''):
