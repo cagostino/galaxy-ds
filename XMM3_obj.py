@@ -19,6 +19,8 @@ class XMM:
         self.eflux4 = xmmcat.getcol('e_Flux4')
         self.flux5 = xmmcat.getcol('Flux5') #4.5-12
         self.eflux5 = xmmcat.getcol('e_Flux5')
+
+        
         self.flux8 = xmmcat.getcol('Flux8') #0.2-12
         self.eflux8  = xmmcat.getcol('e_Flux8')
         self.HR1 = xmmcat.getcol('HR1')
@@ -49,12 +51,17 @@ class XMM:
     def get_texp(self, matchinds):
         texps = []
         for k, source in enumerate(self.sourceids[matchinds]):
+            if k%1000 ==0:
+                print(k)
             source_obs = str(np.int64(str(source)[2:11]))
             obsids = np.array(np.array(self.obsids,dtype=np.int64), dtype='str')
             obs_ = np.where(obsids == source_obs)[0]
             #print(source_obs, obsids[obs_])
             exp = np.array([self.tpn[obs_], self.tmos1[obs_], self.tmos2[obs_]])
-            texps.append(np.max(exp))
+            try:
+                texps.append(np.max(exp))
+            except:
+                texps.append(np.nan)
         return np.array(texps)
 class XMM3obs(XMM):
     def __init__(self, xmmcat, xmmcatobs):

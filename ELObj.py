@@ -548,9 +548,21 @@ class ELObj:
         self.EL_dict_gsw['ra'] = np.copy(self.gswcat.ra[self.make_spec])
         self.EL_dict_gsw['dec'] = np.copy(self.gswcat.dec[self.make_spec])
         self.EL_dict_gsw['av_gsw'] = np.copy(self.gswcat.av[self.make_spec])
+        self.EL_dict_gsw['a_uv_gsw'] = np.copy(self.gswcat.a_uv[self.make_spec])
+
         self.EL_dict_gsw['fibsfr']= np.copy(self.EL_dict_gsw['sfr']+np.log10(self.EL_dict_gsw['massfrac']))
         self.EL_dict_gsw['fibsfrgsw']= np.copy(self.EL_dict_gsw['sfr']+np.log10(self.EL_dict_gsw['massfracgsw']))
-
+        
+        self.EL_dict_gsw['dmpc_samir']=np.log10(samircosmo.luminosity_distance(self.EL_dict_gsw['z']).value)
+        
+        self.EL_dict_gsw['logoiii_sf'] = (-0.54004897*self.EL_dict_gsw['mass']+0.89790634*self.EL_dict_gsw['fibmass']+
+                                        0.11895356*self.EL_dict_gsw['sfr']-0.077016435*self.EL_dict_gsw['a_uv_gsw']+
+                                        1.2047141-0.00056521663*self.EL_dict_gsw['hdelta_lick']-1.1270720*(np.log10(self.EL_dict_gsw['d4000']-1.09))-
+                                        0.17276752*self.EL_dict_gsw['av_gsw']-1.4106159*self.EL_dict_gsw['dmpc_samir'])
+        self.EL_dict_gsw['oiii_sf_sub_samir'] = self.EL_dict_gsw['oiiiflux']-10**(self.EL_dict_gsw['logoiii_sf'])/1e17
+        self.oiiinegsfsub = np.where(self.EL_dict_gsw['oiii_sf_sub_samir']<=0)[0]
+        self.EL_dict_gsw['oiii_sf_sub_samir'][self.oiiinegsfsub] = self.EL_dict_gsw['oiiiflux'][self.oiiinegsfsub]
+        
 
         high_sn10_hb = np.where((self.EL_dict_gsw['hbetaflux_sn']>10)&(self.EL_dict_gsw['halpflux_sn']>0))
         print(high_sn10_hb)
@@ -574,6 +586,7 @@ class ELObj:
         self.EL_dict_gsw['corrected_presub_av_sf'] = correct_av(self.reg_av_sf, self.x_pred_av, 
                                                          np.array(self.EL_dict_gsw['av']),
                                                          np.array(self.EL_dict_gsw['hbetaflux_sn']), empirdust=empirdust)
+        
         
         '''
         self.X_reg_av_sfr = np.vstack([self.EL_dict_gsw['av_gsw'][high_sn10_hb], self.EL_dict_gsw['sfr'][high_sn10_hb]]).transpose()
@@ -600,6 +613,8 @@ class ELObj:
         self.EL_dict_gsw['halpflux_corr'] = dustcorrect(self.EL_dict_gsw['halpflux'], self.EL_dict_gsw['corrected_presub_av'], 6563.0)
         
         self.EL_dict_gsw['oiiiflux_corr'] = dustcorrect(self.EL_dict_gsw['oiiiflux'], self.EL_dict_gsw['corrected_presub_av'], 5007.0)
+        self.EL_dict_gsw['oiiiflux_corr_sf_sub_samir'] = dustcorrect(self.EL_dict_gsw['oiii_sf_sub_samir'], self.EL_dict_gsw['corrected_presub_av'], 5007.0)
+
         self.EL_dict_gsw['oiii_err_corr'] = dustcorrect(self.EL_dict_gsw['oiii_err'], self.EL_dict_gsw['corrected_presub_av'], 5007.0)
         
         self.EL_dict_gsw['oiiflux_corr'] = dustcorrect(self.EL_dict_gsw['oiiflux'], self.EL_dict_gsw['corrected_presub_av'], 3727.0)
@@ -647,6 +662,8 @@ class ELObj:
 
         
         self.EL_dict_gsw['oiiilum'] = np.log10(getlumfromflux(self.EL_dict_gsw['oiiiflux_corr'],self.EL_dict_gsw['z']))
+        self.EL_dict_gsw['oiiilum_sfsub_samir'] = np.log10(getlumfromflux(self.EL_dict_gsw['oiiiflux_corr_sf_sub_samir'],self.EL_dict_gsw['z']))
+
         self.EL_dict_gsw['oiiilum_up'] = np.log10(getlumfromflux(self.EL_dict_gsw['oiiiflux_corr']+self.EL_dict_gsw['oiii_err_corr'],self.EL_dict_gsw['z']))
         self.EL_dict_gsw['oiiilum_down'] = np.log10(getlumfromflux(self.EL_dict_gsw['oiiiflux_corr']-self.EL_dict_gsw['oiii_err_corr'],self.EL_dict_gsw['z']))
         self.EL_dict_gsw['e_oiiilum_down'] = self.EL_dict_gsw['oiiilum']-self.EL_dict_gsw['oiiilum_down']
@@ -679,6 +696,15 @@ class ELObj:
             self.EL_dict_gsw['full_xraylum'] = np.copy(self.gswcat.gsw_df.fulllumsrf.iloc[self.make_spec])
             self.EL_dict_gsw['soft_xraylum'] = np.copy(self.gswcat.gsw_df.softlumsrf.iloc[self.make_spec])
             self.EL_dict_gsw['hard_xraylum'] = np.copy(self.gswcat.gsw_df.hardlumsrf.iloc[self.make_spec])
+            self.EL_dict_gsw['lo3_pred_fromlx'] = (self.EL_dict_gsw['hard_xraylum']+7.55)/(1.22)
+            self.EL_dict_gsw['lo3_offset'] = self.EL_dict_gsw['lo3_pred_fromlx']-self.EL_dict_gsw['oiiilum']       
+            self.EL_dict_gsw['fo3_pred_fromlx'] = redden(getfluxfromlum(10**self.EL_dict_gsw['lo3_pred_fromlx'], self.EL_dict_gsw['z']),
+                                                         self.EL_dict_gsw['corrected_presub_av'], 5007.0)
+            self.EL_dict_gsw['lo3_minus_pred_fromlx'] = (self.EL_dict_gsw['hard_xraylum']+7.55)/(1.22)-0.587 #subtracting dispersion?
+            self.EL_dict_gsw['fo3_minus_pred_fromlx'] = redden(getfluxfromlum(10**self.EL_dict_gsw['lo3_minus_pred_fromlx'], self.EL_dict_gsw['z']),
+                                                               self.EL_dict_gsw['corrected_presub_av'], 5007.0 )
+            
+            self.EL_dict_gsw['fo3_dev'] = (self.EL_dict_gsw['fo3_pred_fromlx']-self.EL_dict_gsw['oiiiflux'])/(self.EL_dict_gsw['fo3_pred_fromlx']-self.EL_dict_gsw['fo3_minus_pred_fromlx'])
             
             self.EL_dict_gsw['fullflux'] = np.copy(self.gswcat.gsw_df.fullflux.iloc[self.make_spec])
             

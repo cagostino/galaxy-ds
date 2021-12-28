@@ -91,6 +91,386 @@ decdiffx4 = actmatch_4xmm_gsw2[6]
 
 
 
+m1_thin = combo_query_dict[succ[0]][:0].copy().to_pandas()
+m1_med = combo_query_dict[succ[0]][:0].copy().to_pandas()
+m1_thick = combo_query_dict[succ[0]][:0].copy().to_pandas()
+m2_thin = combo_query_dict[succ[0]][:0].copy().to_pandas()
+m2_med = combo_query_dict[succ[0]][:0].copy().to_pandas()
+m2_thick = combo_query_dict[succ[0]][:0].copy().to_pandas()
+pn_thin = combo_query_dict[succ[0]][:0].copy().to_pandas()
+pn_med = combo_query_dict[succ[0]][:0].copy().to_pandas()
+pn_thick = combo_query_dict[succ[0]][:0].copy().to_pandas()
+
+m1_thin_inds =[]
+m1_med_inds = []
+m1_thick_inds = []
+m2_thin_inds =[]
+m2_med_inds = []
+m2_thick_inds = []
+pn_thin_inds =[]
+pn_med_inds = []
+pn_thick_inds = []
+
+table_dicts = {'M1_Thin1': [m1_thin,m1_thin_inds],
+               'M1_Medium': [m1_med,m1_med_inds],
+               'M1_Thick': [m1_thick, m1_thick_inds],
+               'M2_Thin1': [m2_thin, m2_thin_inds],
+               'M2_Medium': [m2_med, m2_med_inds],
+               'M2_Thick': [m2_thick, m2_thick_inds],
+               'PN_Thin1': [pn_thin, pn_thin_inds],
+               'PN_Medium': [pn_med, pn_med_inds],
+               'PN_Thick': [pn_thick, pn_thick_inds]    
+               }
+ecfs = {
+        'PN':{'Thin1_soft':7.3866,
+              'Thin1_hard': 1.086,
+              'Thin1_full': 3.3243,
+              'Medium_soft': 7.0298,
+              'Medium_hard': 1.0992,
+              'Medium_full':3.1924,
+              'Thick_soft': 5.4091,
+              'Thick_hard': 1.056,
+              'Thick_full': 2.5928
+              },
+        'M1':{'Thin1_soft':1.929,
+              'Thin1_hard': 0.3832,
+              'Thin1_full': 0.929,
+              'Medium_soft': 1.8531,
+              'Medium_hard': 0.3797,
+              'Medium_full': 0.900,
+              'Thick_soft': 1.5301,
+              'Thick_hard': 0.3672,
+              'Thick_full': 0.779
+              },
+        'M2':{'Thin1_soft':1.9322,
+              'Thin1_hard': 0.3919,
+              'Thin1_full': 0.9358,
+              'Medium_soft': 1.8548,
+              'Medium_hard': 0.3881,
+              'Medium_full': 0.9358,
+              'Thick_soft': 1.5301,
+              'Thick_hard': 0.3749,
+              'Thick_full': 0.7829
+              }
+        }
+for i in range(len(succ)):
+    tab_ = combo_query_dict[succ[i]]    
+    if i %100 ==0:
+        print(i)
+    for filt in filts:
+        for inst in insts:
+            subtab = tab_[(tab_['instrum'] ==inst)&(tab_['filt'] ==filt)].filled(-9999)
+            if len(subtab) != 0:
+                subtab_ = subtab.to_pandas()
+                table_dicts[inst+'_'+filt][1].append(succ[i])
+                table_dicts[inst+'_'+filt][0] = table_dicts[inst+'_'+filt][0].append( subtab_)
+
+
+xraytable_queries = np.load('combo_queries_xraycovered.npy', allow_pickle=True)
+xraytable_queries = dict(xraytable_queries.item())
+succ = [] 
+failed = []
+
+for key in xraytable_queries.keys():
+    if len(xraytable_queries[key]) >0:
+        succ.append(key)
+    else:
+        failed.append(key)
+succ = np.array(succ)
+
+combo_table_xr= xraytable_queries[succ[0]][:0].copy().to_pandas()
+
+nan_flx_ul = []
+succ_flx_ul = []
+for i in range(len(succ)):
+    tab_ = xraytable_queries[succ[i]]    
+    if i %100 ==0:
+        print(i)
+    band7_sigs = []
+    band8_sigs = []
+    band6_sigs = []
+    band7_insts = []
+    band7_exps = []
+    
+
+    for j in range(len(tab_)):
+        row_ = tab_[j]
+        inst_ = row_['instrum']
+        filt_ = row_['filt']
+        ecf_7 = ecfs[inst_][filt_+'_hard']
+        ecf_8 = ecfs[inst_][filt_+'_full']
+        ecf_6 = ecfs[inst_][filt_+'_soft']
+
+        band7_sigs.append(np.float64(row_['band7_ul_sigma2'])/ecf_7)
+        band8_sigs.append(np.float64(row_['band8_ul_sigma2'])/ecf_8)
+        band6_sigs.append(np.float64(row_['band6_ul_sigma2'])/ecf_6)
+        band7_insts.append(row_['instrum'])
+        band7_exps.append(np.float64(row_['band7_exposure']))
+        
+    band7_sigs = np.array(band7_sigs)
+    band8_sigs = np.array(band8_sigs)
+    band6_sigs = np.array(band6_sigs)
+    
+    minsig7 = np.where((band7_sigs==np.nanmin(band7_sigs ))&(np.isfinite(band7_sigs)))[0]
+    minsig8 = np.where((band8_sigs==np.nanmin(band8_sigs ))&(np.isfinite(band8_sigs)))[0]
+    minsig6 = np.where((band6_sigs==np.nanmin(band6_sigs ))&(np.isfinite(band6_sigs)))[0]
+    
+    
+    if len(minsig7)!=0:        
+        combo_table_xr=combo_table_xr.append(tab_[minsig7].to_pandas())
+        succ_flx_ul.append(i)
+    elif len(minsig8)!=0:        
+        combo_table_xr=combo_table_xr.append(tab_[minsig8].to_pandas())
+        succ_flx_ul.append(i)
+    elif len(minsig6)!=0:        
+        combo_table_xr=combo_table_xr.append(tab_[minsig6].to_pandas())
+        succ_flx_ul.append(i)
+    else:
+        band7_sigs_est = []
+        for k in range(len(band7_exps)):
+            if band7_insts[k] == 'PN':
+                band7_sigs_est.append(10**(-np.log10(band7_exps[k])*5/7-11 ))
+            else:
+                band7_sigs_est.append(10**(-np.log10(band7_exps[k])*5/6-41/4 ))
+        minsig7_est = np.argmin(band7_sigs_est)
+        combo_table_xr=combo_table_xr.append(tab_[[np.argmax(minsig7_est)]].to_pandas())
+        nan_flx_ul.append(i)
+for key in table_dicts.keys():
+    ecf_key = ecfs[key.split('_')[0]]
+    ecf_soft = ecf_key[key.split('_')[1]+'_soft']
+    ecf_hard = ecf_key[key.split('_')[1]+'_hard']
+    ecf_full = ecf_key[key.split('_')[1]+'_full']  
+    
+band6_flx_1sig =[]
+band7_flx_1sig =[]
+band8_flx_1sig =[]
+band6_flx_2sig =[]
+band7_flx_2sig =[]
+band7_flx_2sig_est =[]
+
+band8_flx_2sig =[]
+band6_flx_ =[]
+band7_flx_ =[]
+band8_flx_ =[]
+
+for i in range(len(combo_table_xr)):
+    row_ = combo_table_xr.iloc[i]
+    inst_ = row_['instrum']
+    filt_ = row_['filt']
+    ecf_7 = ecfs[inst_][filt_+'_hard']
+    ecf_8 = ecfs[inst_][filt_+'_full']
+    ecf_6 = ecfs[inst_][filt_+'_soft']
+    band7_flx_.append(np.float64(row_['band7_src_counts']-row_['band7_bck_counts'])/(np.float64(row_['band7_exposure'])*ecf_7*1e11*np.float64(row_['eef'])))
+    band8_flx_.append(np.float64(row_['band8_src_counts']-row_['band8_bck_counts'])/(np.float64(row_['band8_exposure'])*ecf_8*1e11*np.float64(row_['eef'])))
+    band6_flx_.append(np.float64(row_['band6_src_counts']-row_['band6_bck_counts'])/(np.float64(row_['band6_exposure'])*ecf_6*1e11*np.float64(row_['eef'])))
+
+    if inst_ == 'PN':
+        band7_flx_2sig_est.append(10**(-np.log10(row_['band7_exposure'])*5/7-11 ))
+    else:
+        band7_flx_2sig_est.append(10**(-np.log10(row_['band7_exposure'])*5/6-41/4 ))
+    band7_flx_1sig.append(np.float64(row_['band7_ul_sigma1'])/ecf_7/1e11)
+    band8_flx_1sig.append(np.float64(row_['band8_ul_sigma1'])/ecf_8/1e11)
+    band6_flx_1sig.append(np.float64(row_['band6_ul_sigma1'])/ecf_6/1e11)
+    band7_flx_2sig.append(np.float64(row_['band7_ul_sigma2'])/ecf_7/1e11)
+    band8_flx_2sig.append(np.float64(row_['band8_ul_sigma2'])/ecf_8/1e11)
+    band6_flx_2sig.append(np.float64(row_['band6_ul_sigma2'])/ecf_6/1e11)
+
+mpa_mags = galinfo.getcol('PLUG_MAG')
+mpa_rmag = mpa_mags[:,2]
+mpa_rflux = - mpa_rmag    
+
+actmatch_4xmm_mpa = catmatch_act(x4.ra,x4.dec,mpa_ra, mpa_dec, mpa_rflux, x4.fullflux, np.arange(len(x4.ra)))
+#np.array(match_7), np.array(match_7_dists), np.array(matchxflux), np.array(matchedind), np.array(matchrflux), np.array(matchra_diff), np.array(matchdec_diff)
+idm2x4_mpa = actmatch_4xmm_mpa[0]
+goodm2x4_mpa = actmatch_4xmm_mpa[3]
+d2d2mx4_mpa = actmatch_4xmm_mpa[1]
+radiffx4_mpa = actmatch_4xmm_mpa[5]
+decdiffx4_mpa = actmatch_4xmm_mpa[6]
+
+e, a, b = np.intersect1d(srcids_x4_full, x4.sourceids, return_indices=True)
+actmatch_4xmm_mpa_res = catmatch_act(x4.ra[b],x4.dec[b],mpa_ra[succ], mpa_dec[succ], mpa_rflux[succ], x4.fullflux[b], np.arange(len(x4.ra[b])))
+#np.array(match_7), np.array(match_7_dists), np.array(matchxflux), np.array(matchedind), np.array(matchrflux), np.array(matchra_diff), np.array(matchdec_diff)
+idm2x4_mpa_res = actmatch_4xmm_mpa_res[0]
+goodm2x4_mpa_res = actmatch_4xmm_mpa_res[3]
+d2d2mx4_mpa_res = actmatch_4xmm_mpa_res[1]
+radiffx4_mpa_res = actmatch_4xmm_mpa_res[5]
+decdiffx4_mpa_res = actmatch_4xmm_mpa_res[6]
+            
+            
+rates = {'PN':xmm4_full.getcol('PN_4_RATE')+ xmm4_full.getcol('PN_5_RATE'),
+         'M1':xmm4_full.getcol('M1_4_RATE')+xmm4_full.getcol('M1_5_RATE'),
+         'M2': xmm4_full.getcol('M2_4_RATE')+xmm4_full.getcol('M2_5_RATE')}            
+cts = {'PN':xmm4_full.getcol('PN_8_CTS'),
+         'M1':xmm4_full.getcol('M1_8_CTS') ,
+         'M2':xmm4_full.getcol('M2_8_CTS')}          
+fluxes = {'PN':xmm4_full.getcol('PN_8_FLUX'),
+         'M1':xmm4_full.getcol('M1_8_FLUX') ,
+         'M2':xmm4_full.getcol('M2_8_FLUX')}          
+  
+
+rates_xmm = []
+rates_rap = []
+
+cts_xmm = []
+cts_rap = []
+
+flx_rap = []
+flx_xmm = []
+
+for i in range(len(idm2x4_mpa_res)):
+    cts_rapidxmm = np.float64(combo_queries_xr['band8_src_counts'][idm2x4_mpa_res[i]])    
+    rate7_rapidxmm = ((combo_queries_xr['band7_src_counts']-combo_queries_xr['band7_bck_counts'])/combo_queries_xr['band7_exposure']/combo_queries_xr['eef'])[idm2x4_mpa_res[i]]
+    rate8_rapidxmm = ((combo_queries_xr['band8_src_counts']-combo_queries_xr['band8_bck_counts'])/combo_queries_xr['band8_exposure']/combo_queries_xr['eef'])[idm2x4_mpa_res[i]]
+
+    inst = combo_queries_xr['instrum'][idm2x4_mpa_res[i]]
+    filt = combo_queries_xr['filt'][idm2x4_mpa_res[i]]
+    
+    flux8_rapidxmm = rate8_rapidxmm/ecfs[inst][filt+'_full']/1e11
+    x4_rate =  rates[inst][a[goodm2x4_mpa_res[i]]]
+    x4_cts = cts[inst][a[goodm2x4_mpa_res[i]]]
+    x4_flx = fluxes[inst][a[goodm2x4_mpa_res[i]]]
+    
+    rates_rap.append(rate7_rapidxmm)
+    cts_rap.append(cts_rapidxmm)
+    rates_xmm.append(x4_rate)
+    cts_xmm.append(x4_cts)
+    flx_xmm.append(x4_flx)
+    flx_rap.append(flux8_rapidxmm)
+    
+rates_xmm = np.array(rates_xmm)
+rates_rap = np.array(rates_rap)
+cts_xmm = np.array(cts_xmm)
+cts_rap = np.array(cts_rap)
+flx_xmm = np.array(flx_xmm)
+flx_rap = np.array(flx_rap)
+    
+actmatch_4xmm_mpa_xrcov = catmatch_act(x4.ra,x4.dec,mpa_ra[succ], mpa_dec[succ], mpa_rflux[succ], x4.fullflux, np.arange(len(x4.ra)))
+#np.array(match_7), np.array(match_7_dists), np.array(matchxflux), np.array(matchedind), np.array(matchrflux), np.array(matchra_diff), np.array(matchdec_diff)
+idm2x4_mpa_xrcov = actmatch_4xmm_mpa_xrcov[0]
+goodm2x4_mpa_xrcov = actmatch_4xmm_mpa_xrcov[3]
+d2d2mx4_mpa_xrcov = actmatch_4xmm_mpa_xrcov[1]
+radiffx4_mpa_xrcov = actmatch_4xmm_mpa_xrcov[5]
+decdiffx4_mpa_xrcov = actmatch_4xmm_mpa_xrcov[6]
+
+actmatch_4xmmbig_mpa_xrcov = catmatch_act(rabigxmm,decbigxmm,mpa_ra[succ], mpa_dec[succ], mpa_rflux[succ], fluxbigxmm, np.arange(len(fluxbigxmm)))
+idm2x4_big_mpa_xrcov = actmatch_4xmmbig_mpa_xrcov[0]
+goodm2x4_big_mpa_xrcov = actmatch_4xmmbig_mpa_xrcov[3]
+d2d2mx4_big_mpa_xrcov = actmatch_4xmmbig_mpa_xrcov[1]
+radiffx4_big_mpa_xrcov = actmatch_4xmmbig_mpa_xrcov[5]
+decdiffx4_big_mpa_xrcov = actmatch_4xmmbig_mpa_xrcov[6]
+
+combo_queries = {}
+for i in range(len(combo_matched_gals_mpaxmm4)):
+        query = rpi.query_radec([mpa_ra[combo_matched_gals_mpaxmm4[i]]],[mpa_dec[combo_matched_gals_mpaxmm4[i]]], obstype='pointed')
+        combo_queries[combo_matched_gals_mpaxmm4[i]] = query
+        if i%100 == 0:
+            print(query)
+            print(i)
+
+
+dataset = {} 
+dataset['PLATEID'] = galinfo.getcol('PLATEID')
+dataset['FIBERID'] = galinfo.getcol('FIBERID')
+dataset['MJD'] = galinfo.getcol('MJD')
+
+dataset['RA'] = galinfo.getcol('RA')
+dataset['DEC'] = galinfo.getcol('DEC')
+
+dataset_df = pd.DataFrame(dataset)
+
+dataset_df['XRAYRA'] = np.nan
+dataset_df['XRAYDEC'] = np.nan
+dataset_df['hard_exp_time'] = np.nan
+dataset_df['hard_band_2sigma_ul_flux'] = np.nan
+dataset_df['hard_band_2sigma_ul_flux_est'] = np.nan
+dataset_df['hard_band_flux'] = np.nan
+dataset_df['mass_gsw'] = np.nan
+dataset_df['sfr_gsw'] = np.nan
+
+
+dataset_df.loc[succ,'hard_exp_time'] = np.array( np.log10(combo_table_xr.band7_exposure))
+dataset_df.loc[succ,'hard_band_2sigma_ul_flux'] = band7_flx_2sig
+dataset_df.loc[succ,'hard_band_2sigma_ul_flux_est'] = band7_flx_2sig_est
+dataset_df.loc[succ,'hard_band_flux'] = band7_flx_
+dataset_df.loc[succ,'hard_band_ul_flags'] = np.array(combo_table_xr.band7_flags)
+
+dataset_df.loc[succ,'XRAYRA'] = np.array(combo_table_xr.ra)
+dataset_df.loc[succ,'XRAYDEC'] = np.array(combo_table_xr.dec)
+
+dataset_df.loc[mpa_spec_allm2.spec_inds_prac,'sfr_gsw'] = allm2[sfrind][mpa_spec_allm2.make_prac]
+dataset_df.loc[mpa_spec_allm2.spec_inds_prac,'mass_gsw'] =   allm2[massind][mpa_spec_allm2.make_prac]
+
+dataset_df['band7_background_cts'] = np.nan
+dataset_df['band7_src_cts'] = np.nan
+#dataset_df['band7_1sigma_ul_flux'] = np.nan
+
+dataset_df['band7_exposure_time'] = np.nan
+
+
+
+dataset_df['band6_1sigma_ul_flux'] = np.nan
+dataset_df['band6_2sigma_ul_flux'] = np.nan
+dataset_df['band6_exposure_time'] = np.nan
+dataset_df['band6_background_cts'] = np.nan
+dataset_df['band6_src_cts'] = np.nan
+
+dataset_df['band8_1sigma_ul_flux'] = np.nan
+dataset_df['band8_2sigma_ul_flux'] = np.nan
+dataset_df['band8_exposure_time'] = np.nan
+dataset_df['band8_background_cts'] = np.nan
+dataset_df['band8_src_cts'] = np.nan
+
+
+dataset_df.loc[succ,'band7_1sigma_ul_flux'] = band7_flx_1sig
+dataset_df.loc[succ,'band7_2sigma_ul_flux'] = band7_flx_2sig
+dataset_df.loc[succ,'band7_background_cts'] = np.array(combo_table_xr['band7_bck_counts'])
+dataset_df.loc[succ,'band7_src_cts'] =np.array( combo_table_xr['band7_src_counts'])
+dataset_df.loc[succ,'band7_exposure_time'] = np.array(combo_table_xr['band7_exposure'])
+dataset_df.loc[succ, 'XRAYRA'] = np.array(combo_table_xr['ra'])
+dataset_df.loc[succ, 'XRAYDEC'] = np.array(combo_table_xr['dec'])
+
+
+dataset_df.loc[succ,'band8_1sigma_ul_flux'] = band8_flx_1sig
+dataset_df.loc[succ,'band8_2sigma_ul_flux'] = band8_flx_2sig
+dataset_df.loc[succ,'band8_background_cts'] = np.array(combo_table_xr['band8_bck_counts'])
+dataset_df.loc[succ,'band8_src_cts'] =np.array( combo_table_xr['band8_src_counts'])
+dataset_df.loc[succ,'band8_exposure_time'] = np.array(combo_table_xr['band8_exposure'])
+
+
+dataset_df.loc[succ,'band6_1sigma_ul_flux'] = band6_flx_1sig
+dataset_df.loc[succ,'band6_2sigma_ul_flux'] = band6_flx_2sig
+dataset_df.loc[succ,'band6_background_cts'] = np.array(combo_table_xr['band6_bck_counts'])
+dataset_df.loc[succ,'band6_src_cts'] = np.array(combo_table_xr['band6_src_counts'])
+dataset_df.loc[succ,'band6_exposure_time'] =np.array( combo_table_xr['band6_exposure'])
+
+
+
+dataset_df['4xmm_ra'] = np.nan
+dataset_df['4xmm_dec'] = np.nan
+dataset_df['4xmm_band6_flux'] = np.nan
+dataset_df['4xmm_band7_flux'] = np.nan
+dataset_df['4xmm_band8_flux'] = np.nan
+dataset_df['4xmm_band6_flux_error'] = np.nan
+dataset_df['4xmm_band7_flux_error'] = np.nan
+dataset_df['4xmm_band8_flux_error'] = np.nan
+
+dataset_df['4xmm_qual_flag'] = np.nan
+dataset_df['4xmm_extent'] = np.nan
+
+
+dataset_df.loc[ idm2x4_mpa,'4xmm_ra'] = x4.ra[goodm2x4_mpa]
+dataset_df.loc[ idm2x4_mpa,'4xmm_dec'] = x4.dec[goodm2x4_mpa]
+dataset_df.loc[ idm2x4_mpa,'4xmm_extent'] = x4.ext[goodm2x4_mpa]
+dataset_df.loc[ idm2x4_mpa,'4xmm_band6_flux'] = (x4.flux1+x4.flux2+x4.flux3)[goodm2x4_mpa]
+dataset_df.loc[ idm2x4_mpa,'4xmm_band7_flux'] = (x4.flux4+x4.flux5)[goodm2x4_mpa]
+dataset_df.loc[ idm2x4_mpa,'4xmm_band8_flux'] = (x4.flux1+x4.flux2+x4.flux3+x4.flux4+x4.flux5)[goodm2x4_mpa]
+
+dataset_df.loc[ idm2x4_mpa,'4xmm_band6_flux_error'] = np.sqrt(x4.eflux1**2+x4.eflux2**2+x4.eflux3**2)[goodm2x4_mpa]
+dataset_df.loc[ idm2x4_mpa,'4xmm_band7_flux_error'] = np.sqrt(x4.eflux4**2+x4.eflux5**2)[goodm2x4_mpa]
+dataset_df.loc[ idm2x4_mpa,'4xmm_band8_flux_error'] = np.sqrt(x4.eflux1**2+x4.eflux2**2+x4.eflux3**2+x4.eflux4**2+x4.eflux5**2)[goodm2x4_mpa]
+dataset_df.loc[ idm2x4_mpa,'4xmm_qual_flag'] = x4.qualflag[goodm2x4_mpa]
+
+
 np.savetxt(catfold+'xmm3gswamatch1ind.txt',ida1)
 np.savetxt(catfold+'xmm3gswamatch1good.tx4xt',gooda1)
 np.savetxt(catfold+'xmm3gswamatchd2d1.txt',d2d1a)
@@ -272,7 +652,7 @@ sternobj_df_spec_xr['fulllumsrf'] = np.log10((getlumfromflux(x4.fullflux[match_t
 sternobj_df_spec_xr['hardlumsrf'] = np.log10((getlumfromflux(x4.hardflux[match_to_xmm], sternobj_df_spec_xr['z'])*(1+sternobj_df_spec_xr['z'])**(1.7-2)))
 
 sternobj_df_spec_xr['texp'] = x4.sternexptimes
-sternobj_df_spec_xr.to_csv('sternxr_match.csv')
+sternobj_df_spec_xr.to_csv(catfold+'sternxr_match.csv')
 
 sternobj_df_spec_xr_rob = sternobj_df_spec_xr.iloc[np.where((sternobj_df_spec_xr.robust =='+')&(sternobj_df_spec_xr['abs'] =='+'))].copy()
 liu_obj = {}
@@ -412,6 +792,7 @@ csc_cat.gswmatch_inds = gsw_csc
 m2Cat_GSW_qsos = GSWCat( np.arange(len(m2[0])), m2, redshift_m2, allm2, sedflag=1)
 
 m2Cat_GSW = GSWCat( np.arange(len(m2[0])), m2, redshift_m2, allm2)
+x2Cat_GSW = GSWCat( np.arange(len(x2[0])), x2, redshift_x2, allx2)
 
 
 m2Cat_GSW_3xmm = GSWCatmatch3xmm(x3.idm2[x3.medtimefilt], m2, redshift_m2, allm2, x3.qualflag_filt,
@@ -507,9 +888,10 @@ mpa_spec_m2_4xmm_all_qsos = MPAJHU_Spec(m2Cat_GSW_4xmm_all_qsos, sdssobj, sedtyp
 
 
 mpa_spec_allm2 = MPAJHU_Spec(m2Cat_GSW, sdssobj, find=False, gsw=True)
+mpa_spec_allx2 = MPAJHU_Spec(x2Cat_GSW, sdssobj, find=False, gsw=True)
 
 first_spec_allm2 = FIRST_Spec(m2Cat_GSW, firstobj, find=False, gsw=True)
-first_spec_allm2.spec_inds_prac, first_spec_allm2.spec_plates_prac, first_spec_allm2.spec_fibers_prac, first_spec_allm2.make_prac = np.loadtxt(catfold+'first_gsw2_matching_info.txt', dtype=np.int64, unpack=True)
+first_spec_allm2.spec_inds_prac, first_spec_allm2.spec_plates_prac, first_spec_allm2.spec_fibers_prac, first_spec_allm2.make_prac = np.int64(np.loadtxt(catfold+'first_gsw2_matching_info.txt', dtype=np.float64))
 
 m2Cat_GSW_first = GSWCatmatch_radio( np.arange(len(m2[0]))[first_spec_allm2.make_prac], 
                                     m2, redshift_m2, allm2,
@@ -522,10 +904,14 @@ m2Cat_GSW_first = GSWCatmatch_radio( np.arange(len(m2[0]))[first_spec_allm2.make
 mpa_spec_allm2_first = MPAJHU_Spec(m2Cat_GSW_first, sdssobj, find=False, gsw=True)
 
 #gsw_2matching_info = np.vstack([mpa_spec_allm2.spec_inds_prac, mpa_spec_allm2.spec_plates_prac, mpa_spec_allm2.spec_fibers_prac, mpa_spec_allm2.spec_mass_prac, mpa_spec_allm2.make_prac ])
+#gsw_x2matching_info = np.vstack([mpa_spec_allx2.spec_inds_prac, mpa_spec_allx2.spec_plates_prac, mpa_spec_allx2.spec_fibers_prac, mpa_spec_allx2.spec_mass_prac, mpa_spec_allx2.make_prac ])
+
 #first_gswmatching_info = np.vstack([first_spec_allm2.spec_inds_prac, first_spec_allm2.spec_plates_prac, first_spec_allm2.spec_fibers_prac, first_spec_allm2.make_prac ])
 #first_dr7matching_info = np.vstack([mpa_spec_allm2_first.spec_inds_prac, mpa_spec_allm2_first.spec_plates_prac, mpa_spec_allm2_first.spec_fibers_prac, mpa_spec_allm2_first.make_prac ])
 
 mpa_spec_allm2.spec_inds_prac, mpa_spec_allm2.spec_plates_prac, mpa_spec_allm2.spec_fibers_prac, mpa_spec_allm2.spec_mass_prac, mpa_spec_allm2.make_prac = np.loadtxt(catfold+'gsw2_dr7_matching_info.txt')
+mpa_spec_allx2.spec_inds_prac, mpa_spec_allx2.spec_plates_prac, mpa_spec_allx2.spec_fibers_prac, mpa_spec_allx2.spec_mass_prac, mpa_spec_allx2.make_prac = np.loadtxt(catfold+'gsw2_x2_dr7_matching_info.txt')
+
 mpa_spec_allm2_first.spec_inds_prac, mpa_spec_allm2_first.spec_plates_prac, mpa_spec_allm2_first.spec_fibers_prac, mpa_spec_allm2_first.make_prac = np.loadtxt(catfold+'first_dr7_matching_info.txt', unpack=True)
 
 inds_comm, gsw_sedfilt_mpamake,mpamake_gsw_sedfilt=np.intersect1d(m2Cat_GSW.sedfilt, mpa_spec_allm2.make_prac, return_indices=True)
@@ -544,6 +930,9 @@ inds_comm, gsw_sedfilt_mpamake,mpamake_gsw_sedfilt=np.intersect1d(m2Cat_GSW.sedf
 #spec_inds_allm2, spec_plates_allm2, spec_fibers_allm2, mass_allm2,make_allm2 = np.loadtxt(catfold+'gsw_dr7_matching_info.txt')
 mpa_spec_allm2.spec_inds_prac = np.int64(mpa_spec_allm2.spec_inds_prac).reshape(-1)
 mpa_spec_allm2.make_prac = np.int64(mpa_spec_allm2.make_prac).reshape(-1)
+mpa_spec_allx2.spec_inds_prac = np.int64(mpa_spec_allx2.spec_inds_prac).reshape(-1)
+mpa_spec_allx2.make_prac = np.int64(mpa_spec_allx2.make_prac).reshape(-1)
+
 mpa_spec_qsos.spec_inds_prac = np.int64(mpa_spec_qsos.spec_inds_prac).reshape(-1)
 mpa_spec_qsos.make_prac = np.int64(mpa_spec_qsos.make_prac).reshape(-1)
 mpa_spec_m2_3xmm.spec_inds_prac = np.int64(mpa_spec_m2_3xmm.spec_inds_prac ).reshape(-1)
@@ -579,7 +968,7 @@ actual analysis begins below
 
 #%% Emission line objects
 EL_qsos = ELObj(mpa_spec_qsos.spec_inds_prac , sdssobj, mpa_spec_qsos.make_prac,m2Cat_GSW_qsos,gsw=True)
-EL_m2 = ELObj(mpa_spec_allm2.spec_inds_prac , sdssobj, gsw_sedfilt_mpamake,m2Cat_GSW,gsw=True, dustbinning=True, empirdust=True)
+EL_m2 = ELObj(mpa_spec_allm2.spec_inds_prac , sdssobj, gsw_sedfilt_mpamake, m2Cat_GSW,gsw=True, dustbinning=True, empirdust=True)
 EL_first = ELObj(mpa_spec_allm2_first.spec_inds_prac , sdssobj, mpa_spec_allm2_first.make_prac,m2Cat_GSW_first,gsw=True, dustbinning=False, empirdust=False, radio = True )
 
 EL_3xmm  = ELObj(mpa_spec_m2_3xmm.spec_inds_prac , sdssobj, mpa_spec_m2_3xmm.make_prac,m2Cat_GSW_3xmm, xr=True, xmm=True, empirdust=False)
@@ -1123,16 +1512,16 @@ merged_xr_sf_all_combo = pd.merge(xmm3eldiagmed_xrfilt_all.bpt_EL_gsw_df, sfrm_g
 merged_xr_liner2_all_combo = pd.merge(xmm3eldiagmed_xrfilt_all.bpt_EL_gsw_df, sfrm_gsw2.fullagn_df[cols_to_use].iloc[combo_hliner], on='ids')
 
 
-merged_xr_sy2_all.to_csv('merged_xr_sy2_all.csv')
-merged_xr_liner2_all.to_csv('merged_xr_hliner_all.csv')
-merged_xr_sf_all.to_csv('merged_xr_sliner_all.csv')
-merged_xr_val_all.to_csv('merged_xr_val_all.csv')
-merged_xr_all.to_csv('merged_xr_all.csv')
+merged_xr_sy2_all.to_csv(catfold+'merged_xr_sy2_all.csv')
+merged_xr_liner2_all.to_csv(catfold+'merged_xr_hliner_all.csv')
+merged_xr_sf_all.to_csv(catfold+'merged_xr_sliner_all.csv')
+merged_xr_val_all.to_csv(catfold+'merged_xr_val_all.csv')
+merged_xr_all.to_csv(catfold+'merged_xr_all.csv')
 
-merged_xr_sy2_all_combo.to_csv('merged_xr_sy2_all_combo.csv')
-merged_xr_liner2_all_combo.to_csv('merged_xr_hliner_all_combo.csv')
-merged_xr_sf_all_combo.to_csv('merged_xr_sliner_all_combo.csv')
-merged_xr_val_all_combo.to_csv('merged_xr_val_all_combo.csv')
+merged_xr_sy2_all_combo.to_csv(catfold+'merged_xr_sy2_all_combo.csv')
+merged_xr_liner2_all_combo.to_csv(catfold+'merged_xr_hliner_all_combo.csv')
+merged_xr_sf_all_combo.to_csv(catfold+'merged_xr_sliner_all_combo.csv')
+merged_xr_val_all_combo.to_csv(catfold+'merged_xr_val_all_combo.csv')
 
 
 
@@ -1149,23 +1538,23 @@ merged_xr_sf_all_woo1 = pd.merge(xmm3eldiagmed_xrfilt_all.bpt_EL_gsw_df, sfrm_gs
 merged_xr_liner2_all_woo1 = pd.merge(xmm3eldiagmed_xrfilt_all.bpt_EL_gsw_df, sfrm_gsw2.fullagn_df[cols_to_use].iloc[hliner_2], on='ids')
 
 
-merged_xr_sy2_all_woo1.to_csv('merged_xr_sy2_all_woo1.csv')
-merged_xr_liner2_all_woo1.to_csv('merged_xr_hliner_all_woo1.csv')
-merged_xr_sf_all_woo1.to_csv('merged_xr_sliner_all_woo1.csv')
-merged_xr_val2_all.to_csv('merged_xr_val_all_woo1.csv')
+merged_xr_sy2_all_woo1.to_csv(catfold+'merged_xr_sy2_all_woo1.csv')
+merged_xr_liner2_all_woo1.to_csv(catfold+'merged_xr_hliner_all_woo1.csv')
+merged_xr_sf_all_woo1.to_csv(catfold+'merged_xr_sliner_all_woo1.csv')
+merged_xr_val2_all.to_csv(catfold+'merged_xr_val_all_woo1.csv')
 
 
-EL_3xmm_all.high_sn_o3_EL_gsw_df.to_csv('high_sn_o3_xray_all_sample.csv')
-EL_3xmm.high_sn_o3_EL_gsw_df.to_csv('high_sn_o3_xray_sample.csv')
-EL_4xmm_all.EL_gsw_df.to_csv('x4_xray_all_sample.csv')
-xmm4eldiagmed_xrfilt_xragn.EL_gsw_df.to_csv('x4_xragn_all_sample.csv')
+EL_3xmm_all.high_sn_o3_EL_gsw_df.to_csv(catfold+'high_sn_o3_xray_all_sample.csv')
+EL_3xmm.high_sn_o3_EL_gsw_df.to_csv(catfold+'high_sn_o3_xray_sample.csv')
+EL_4xmm_all.EL_gsw_df.to_csv(catfold+'x4_xray_all_sample.csv')
+xmm4eldiagmed_xrfilt_xragn.EL_gsw_df.to_csv(catfold+'x4_xragn_all_sample.csv')
 
-xmm3eldiagmed_xrfilt_all.bpt_sf_df.to_csv('xragn_bptsf.csv')
-xmm3eldiagmed_xrfilt_all_high_sn_o3.high_sn_o3_EL_gsw_df.to_csv('xragn_high_sn_o3_sample.csv')
-xmm3eldiagmed_xrfilt_xragn.EL_gsw_df.to_csv('xragn_sample_no_sn_cuts.csv')
+xmm3eldiagmed_xrfilt_all.bpt_sf_df.to_csv(catfold+'xragn_bptsf.csv')
+xmm3eldiagmed_xrfilt_all_high_sn_o3.high_sn_o3_EL_gsw_df.to_csv(catfold+'xragn_high_sn_o3_sample.csv')
+xmm3eldiagmed_xrfilt_xragn.EL_gsw_df.to_csv(catfold+'xragn_sample_no_sn_cuts.csv')
 
-xmm3eldiagmed_xrfilt_unclass_p1.EL_gsw_df.to_csv('xragn_sample_unclass_p1_cuts.csv')
-xmm3eldiagmed_xrfilt_unclass_p2.EL_gsw_df.to_csv('xragn_sample_unclass_p2_cuts.csv')
+xmm3eldiagmed_xrfilt_unclass_p1.EL_gsw_df.to_csv(catfold+'xragn_sample_unclass_p1_cuts.csv')
+xmm3eldiagmed_xrfilt_unclass_p2.EL_gsw_df.to_csv(catfold+'xragn_sample_unclass_p2_cuts.csv')
 
 
 comm_covered_bptplsagn, comm_bptpls, comm_covered = np.intersect1d(EL_m2.bptplsagn, covered_gsw_x3, return_indices=True)

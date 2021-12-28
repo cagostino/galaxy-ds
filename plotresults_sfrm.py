@@ -50,11 +50,11 @@ class Plot:
         plot2dhist(x,y, self.nx, self.ny, minx=self.minx, maxx=self.maxx,
                    miny=self.miny, maxy=self.maxy, xlabel=xlabel, 
                    ylabel=ylabel, ccode=ccode, ccodename=ccodename)
-def scatter(x,y, xerr=[], yerr=[], xlabel='', ylabel='',  aspect='equal',
+def scatter(x,y, xerr=[], yerr=[],ccode=[], xlabel='', ylabel='',  aspect='equal',
             minx=0,maxx=0, miny=0, maxy=0, label='',bin_y=False, plotdata=True, lim=True, setplotlims=True,
             bin_stat_y='mean', size_y_bin=0.25, counting_thresh=5, percentiles = False,
             elinewidth=0.1,capsize=3, capthick=0.1, facecolor=None, edgecolor='k', linecolor='r',
-            alpha=1,ecolor='k', color='k', marker='o', s=5, fmt='none'):
+            alpha=1,ecolor='k', color='k', marker='o', s=5, fmt='none', vmin=None, vmax=None):
     if plotdata:
         if len(xerr)!=0 and len(yerr)!=0:
             plt.errorbar(x,y, xerr=xerr, yerr=yerr, fmt=fmt, 
@@ -72,7 +72,10 @@ def scatter(x,y, xerr=[], yerr=[], xlabel='', ylabel='',  aspect='equal',
                          label=label,elinewidth=elinewidth, color=color,
                          ecolor=ecolor, alpha=alpha, marker=marker, markersize=s)
         else:
-            plt.scatter(x,y, label=label, alpha=1, marker=marker, s=s,facecolor=facecolor, edgecolor=edgecolor,color=color)
+            if len(ccode)!=0:
+                plt.scatter(x,y, label=label, alpha=1, marker=marker,c=ccode, s=s, vmin=vmin, vmax=vmax)
+            else:   
+                plt.scatter(x,y, label=label, alpha=1, marker=marker,s=s,facecolor=facecolor, edgecolor=edgecolor,color=color)
 
     plt.gca().set_aspect(aspect)
     
@@ -109,9 +112,9 @@ def scatter(x,y, xerr=[], yerr=[], xlabel='', ylabel='',  aspect='equal',
         return xmid, avg_y, avg_quant
     
 def plothist(x, bins=10, range=(), linewidth=1, 
-             cumulative=False, reverse=False, 
+             cumulative=False, reverse=False, ylim=False,
              label='',linestyle='--', 
-             density=False, xlabel='',normed=False,
+             density=False, xlabel='',normed=False, norm0= False,
              integrate = False):
     if range==():
         range = (np.min(x), np.max(x))
@@ -120,22 +123,33 @@ def plothist(x, bins=10, range=(), linewidth=1,
     plt.xlabel(xlabel)
     
     if normed:
-        cnts= cnts/np.max(cnts)
+        if norm0:
+            cnts=cnts/cnts[0]
+        else:
+            cnts= cnts/np.max(cnts)   
     if not cumulative:
         plt.plot(bncenters, cnts, linewidth=linewidth, linestyle=linestyle, label=label)
-        plt.ylim([0, np.max(cnts)+np.max(cnts)/10])
+        
+        if ylim:
+            plt.ylim([0, np.max(cnts)+np.max(cnts)/10])
+        int_ = scipy.integrate.simps(cnts, x=bncenters)
+        return bncenters, cnts, int_
     else:
         if normed:
             cnts = cnts/np.sum(cnts)
+        int_ = scipy.integrate.simps(cnts, x=bncenters)
+ 
+        plt.ylim([0, np.max(np.cumsum(cnts))+np.max(np.cumsum(cnts))/10])
+
         if reverse:
             plt.plot(bncenters[::-1], np.cumsum(cnts[::-1]), linestyle=linestyle, label=label)
             plt.gca().invert_xaxis()
+            return bncenters[::-1],np.cumsum(cnts[::-1]), int_
         else:        
             plt.plot(bncenters, np.cumsum(cnts), label=label)
-        plt.ylim([0, np.max(np.cumsum(cnts))+np.max(np.cumsum(cnts))/10])
-    if integrate:
-        int_ = scipy.integrate.simps(cnts, x=bncenters)
-        return int_
+            return bncenters, np.cumsum(cnts), int_
+        
+
 class Hist:
     def __init__(self, name, minx=0, maxx=0, xlabel='', ylabel='', nbins=20):
         self.name = name
@@ -156,7 +170,7 @@ def reject_outliers(data, m=2):
 def plthist(bincenters, counts):
     plt.plot(bincenters, counts,color='k', drawstyle='steps-mid')
 
-def plot2dhist(x,y,nx=200,ny=200, ccode= [], nan=False, data=True, fig=None,make_ax=False, ax=None, dens_scale=0.3,ccode_stat=np.nanmedian,
+def plot2dhist(x,y,nx=200,ny=200, ccode= [], nan=True, data=True, fig=None,make_ax=False, ax=None, dens_scale=0.3,ccode_stat=np.nanmedian,
                bin_y=False, bin_stat_y = 'mean',  ybincolsty='r-',ybincolsty_perc='r-.',nbins=25, size_y_bin=0, bin_quantity=[],percentiles=False,
                ccodename = '', ccodelim=[], ccode_bin_min=20, linewid=2, label='', zorder=10,show_cbar=True,
                minx=0, maxx=0, miny=0, maxy=0, xlabel='', ylabel='', lim=False, setplotlims=False, counting_thresh=20, aspect='equal'):

@@ -1,5 +1,6 @@
 import astropy.cosmology as apc
 cosmo = apc.Planck15
+samircosmo = apc.FlatLambdaCDM(H0=70, Om0=0.3)
 import numpy as np
 from astropy.coordinates import SkyCoord 
 from astropy import units as  u

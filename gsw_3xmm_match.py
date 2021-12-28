@@ -11,7 +11,10 @@ mjdind = 6
 sedind = 7
 av_ind = 8
 av_err_ind = 9
-sigma1_ind=10
+a_uv_ind=10
+
+sigma1_ind=11
+
 class GSWCat:
     def __init__(self, goodinds, gswlcids, redshift, sfrplus, sedflag=0):
         self.inds = goodinds
@@ -33,6 +36,8 @@ class GSWCat:
         self.mjd = sfrplus[mjdind][self.inds][self.sedfilt]        
         self.av = sfrplus[av_ind][self.inds][self.sedfilt]
         self.av_err = sfrplus[av_err_ind][self.inds][self.sedfilt]
+        self.a_uv = sfrplus[a_uv_ind][self.inds][self.sedfilt]
+        
         self.sigma1 = sfrplus[sigma1_ind][self.inds][self.sedfilt]
         self.gsw_dict = {'z':self.z,
                          'sedflags':self.sedflags,
@@ -46,7 +51,8 @@ class GSWCat:
                          'mjd':self.mjd,
                          'av':self.av,
                          'sigma1':self.sigma1,
-                         'av_err':self.av_err}
+                         'av_err':self.av_err,
+                         'a_uv':self.a_uv}
         self.gsw_df = pd.DataFrame(self.gsw_dict)
         
 
