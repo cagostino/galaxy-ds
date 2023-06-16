@@ -145,6 +145,22 @@ def get_thom_dist(x,y):
     proj_d = d_obj * np.cos(theta)
     #sign = (np.sign(x-ke_int_x)*(x-ke_int_x)**2 +np.sign(y-ke_int_y)*(y-ke_int_y)**2)
     return np.sign(top_inv)*proj_d #sign*np.array(top/bot)
+def get_classifiability(n2_sn, ha_sn, o3_sn, hb_sn, sncut=2):
+    bpt_sn_filt_bool = (ha_sn>sncut) & (hb_sn > sncut) & (o3_sn > sncut) & (n2_sn> sncut)
+    halp_nii_filt_bool = ( (ha_sn > sncut) & (n2_sn > sncut) &( (o3_sn<=sncut) | (hb_sn <=sncut) ) )
+    neither_filt_bool = np.logical_not(((bpt_sn_filt_bool ) | (halp_nii_filt_bool)) )
+    options = []
+    for i in range(len(bpt_sn_filt_bool)):
+        if bpt_sn_filt_bool[i]:
+            options.append('bpt')
+        elif halp_nii_filt_bool[i]:
+            options.append('nii')
+        else:
+            options.append('uncl')
+    return np.array(options)
+    
+    
+
 def get_bpt1_groups_ke01(x,y):
     groups =[]
     if type(x)!=np.array:
@@ -309,11 +325,13 @@ def get_bptplus_groups(x,y, filt=[]):
         if np.isnan(xvals[i]) or np.isnan(yvals[i]):
             groups.append('NO')
         else:
-            if xvals[i] < -0.4:
-                if yvals[i] < np.log10(y1_kauffmann(xvals[i])):
+            if xvals[i] < -0.35:
+                if yvals[i] > np.log10(y1_kauffmann(xvals[i])):
+                    groups.append('AGN')
+                elif xvals[i]<-0.4:
                     groups.append('HII')
                 else:
-                    groups.append('AGN')
+                    groups.append('MIX')
             else:
                 groups.append('AGN')
     groups=np.array(groups)
@@ -330,8 +348,10 @@ def get_bptplus_niigroups( x, filt=[]):
         else:
             if xvals[i] < -0.4:
                 groups.append('HII')
-            else:
+            elif xvals[i] >-0.35:
                 groups.append('AGN')
+            else:
+                groups.append('MIX')
     groups=np.array(groups)
     agn = np.where(groups == 'AGN')[0]
     nonagn = np.where(groups == 'HII')[0]
@@ -475,6 +495,7 @@ class ELObj:
                         'vdisp':np.copy(sdss.allvdisp),
                         'mbh': np.log10(np.copy(3*(sdss.allvdisp/200)**4)*1e8),
                         'edd_lum': np.log10(3*1e8*1.38e38*((sdss.allvdisp/200)**4)),
+
                         'forbiddenfwhm':  np.copy(sdss.allforbiddendisp*2 * np.sqrt(2*np.log(2))),
                         'balmerfwhm': np.copy(sdss.allbalmerdisp*2 * np.sqrt(2*np.log(2))),
                         'fibmass':np.copy(sdss.all_fibmass),
@@ -533,16 +554,34 @@ class ELObj:
         for key in self.EL_dict.keys():
             self.EL_dict_gsw[key] = self.EL_dict[key][sdssinds]
         self.EL_dict_gsw['mass'] = np.copy(self.gswcat.mass[self.make_spec])
+        self.EL_dict_gsw['sedflags'] = np.copy(self.gswcat.sedflags[self.make_spec])
+
         self.EL_dict_gsw['massfracgsw'] = np.copy(10**( self.EL_dict_gsw['fibmass']))/np.copy(10**(self.EL_dict_gsw['mass']))
 
         self.EL_dict_gsw['ids'] = np.copy(self.gswcat.ids[self.make_spec])
         self.EL_dict_gsw['sfr'] = np.copy(self.gswcat.sfr[self.make_spec])
         self.EL_dict_gsw['sigma1'] = np.copy(self.gswcat.sigma1[self.make_spec])
+        self.EL_dict_gsw['nyuenv'] = np.log10(np.copy(self.gswcat.nyuenv[self.make_spec])+2*0.2)
+        
+        self.EL_dict_gsw['baldenv'] = np.copy(self.gswcat.baldenv[self.make_spec])
+        self.EL_dict_gsw['irx'] = np.copy(self.gswcat.irx[self.make_spec])
+        self.EL_dict_gsw['nuv'] = np.copy(self.gswcat.nuv[self.make_spec])
+        self.EL_dict_gsw['fuv'] = np.copy(self.gswcat.fuv[self.make_spec])
+        self.EL_dict_gsw['uv_col'] = self.EL_dict_gsw['fuv']-self.EL_dict_gsw['nuv']
+        bad_uv = np.where((self.EL_dict_gsw['nuv']==-99) |(self.EL_dict_gsw['nuv']==-999) |(self.EL_dict_gsw['fuv']==-99) |(self.EL_dict_gsw['nuv']==-999) )[0]
+        self.EL_dict_gsw['uv_col'][bad_uv] = np.nan        
+        self.EL_dict_gsw['axisrat'] = np.copy(self.gswcat.axisrat[self.make_spec])
+        
         
         self.EL_dict_gsw['ssfr'] = np.copy(self.EL_dict_gsw['sfr'] - self.EL_dict_gsw['mass'])
         self.EL_dict_gsw['delta_ssfr'] = get_deltassfr(self.EL_dict_gsw['mass'], self.EL_dict_gsw['ssfr'])
 
-        
+        self.EL_dict_gsw['irx'][np.where(self.EL_dict_gsw['ssfr']<-11)] = np.nan
+        self.EL_dict_gsw['irx'][np.where(self.EL_dict_gsw['irx']==-99)] = np.nan
+        self.EL_dict_gsw['axisrat'][np.where(self.EL_dict_gsw['axisrat']==100)] = np.nan
+
+        self.EL_dict_gsw['irx'][np.where((self.EL_dict_gsw['irx']==-99)&(self.EL_dict_gsw['irx']>10))] = np.nan
+
         self.EL_dict_gsw['z'] =  np.copy(self.gswcat.z[self.make_spec])
         
         self.EL_dict_gsw['ra'] = np.copy(self.gswcat.ra[self.make_spec])
@@ -561,7 +600,7 @@ class ELObj:
                                         0.17276752*self.EL_dict_gsw['av_gsw']-1.4106159*self.EL_dict_gsw['dmpc_samir'])
         self.EL_dict_gsw['oiii_sf_sub_samir'] = self.EL_dict_gsw['oiiiflux']-10**(self.EL_dict_gsw['logoiii_sf'])/1e17
         self.oiiinegsfsub = np.where(self.EL_dict_gsw['oiii_sf_sub_samir']<=0)[0]
-        self.EL_dict_gsw['oiii_sf_sub_samir'][self.oiiinegsfsub] = self.EL_dict_gsw['oiiiflux'][self.oiiinegsfsub]
+        self.EL_dict_gsw['oiii_sf_sub_samir'][self.oiiinegsfsub] = np.nan #self.EL_dict_gsw['oiiiflux'][self.oiiinegsfsub]
         
 
         high_sn10_hb = np.where((self.EL_dict_gsw['hbetaflux_sn']>10)&(self.EL_dict_gsw['halpflux_sn']>0))
@@ -651,6 +690,9 @@ class ELObj:
         self.EL_dict_gsw['sii6731flux_corr_p1'] = dustcorrect(self.EL_dict_gsw['sii6731flux'], self.EL_dict_gsw['av'], 6731.0)
 
         self.EL_dict_gsw['oiii_oii'] = np.log10(self.EL_dict_gsw['oiiiflux_corr']/self.EL_dict_gsw['oiiflux_corr'])
+        self.EL_dict_gsw['oiii_oi'] = np.log10(self.EL_dict_gsw['oiiiflux_corr']/self.EL_dict_gsw['oiflux_corr'])
+        self.EL_dict_gsw['oiii_nii'] = np.log10(self.EL_dict_gsw['oiiiflux_corr']/self.EL_dict_gsw['niiflux_corr'])
+
         self.EL_dict_gsw['U'] =oiii_oii_to_U(self.EL_dict_gsw['oiii_oii'] )
         self.EL_dict_gsw['nii_oii'] =np.log10(self.EL_dict_gsw['niiflux']/self.EL_dict_gsw['oiiflux_corr'])
         self.EL_dict_gsw['log_oh'] = nii_oii_to_oh(self.EL_dict_gsw['niiflux_corr'], self.EL_dict_gsw['oiiflux_corr'])  
@@ -662,14 +704,26 @@ class ELObj:
 
         
         self.EL_dict_gsw['oiiilum'] = np.log10(getlumfromflux(self.EL_dict_gsw['oiiiflux_corr'],self.EL_dict_gsw['z']))
+        self.EL_dict_gsw['edd_ratio'] = self.EL_dict_gsw['oiiilum']+np.log10(600)-self.EL_dict_gsw['edd_lum']
+
+        self.EL_dict_gsw['oilum'] = np.log10(getlumfromflux(self.EL_dict_gsw['oiflux_corr'],self.EL_dict_gsw['z']))
+        self.EL_dict_gsw['oiilum'] = np.log10(getlumfromflux(self.EL_dict_gsw['oiiflux_corr'],self.EL_dict_gsw['z']))
+        self.EL_dict_gsw['niilum'] = np.log10(getlumfromflux(self.EL_dict_gsw['niiflux_corr'],self.EL_dict_gsw['z']))
+        self.EL_dict_gsw['siilum'] = np.log10(getlumfromflux(self.EL_dict_gsw['siiflux_corr'],self.EL_dict_gsw['z']))
+
         self.EL_dict_gsw['oiiilum_sfsub_samir'] = np.log10(getlumfromflux(self.EL_dict_gsw['oiiiflux_corr_sf_sub_samir'],self.EL_dict_gsw['z']))
 
         self.EL_dict_gsw['oiiilum_up'] = np.log10(getlumfromflux(self.EL_dict_gsw['oiiiflux_corr']+self.EL_dict_gsw['oiii_err_corr'],self.EL_dict_gsw['z']))
+        self.EL_dict_gsw['oiiilum_up2'] = np.log10(getlumfromflux(self.EL_dict_gsw['oiiiflux_corr']+2*self.EL_dict_gsw['oiii_err_corr'],self.EL_dict_gsw['z']))
+
         self.EL_dict_gsw['oiiilum_down'] = np.log10(getlumfromflux(self.EL_dict_gsw['oiiiflux_corr']-self.EL_dict_gsw['oiii_err_corr'],self.EL_dict_gsw['z']))
         self.EL_dict_gsw['e_oiiilum_down'] = self.EL_dict_gsw['oiiilum']-self.EL_dict_gsw['oiiilum_down']
         self.EL_dict_gsw['e_oiiilum_up'] = self.EL_dict_gsw['oiiilum_up']- self.EL_dict_gsw['oiiilum']
+
+        self.EL_dict_gsw['nlr_rad_from_lo3'] = self.EL_dict_gsw['oiiilum']*(0.42)-13.97
         
-        
+        self.EL_dict_gsw['fibsize'] = cosmo.angular_diameter_distance(self.EL_dict_gsw['z']/206265.)*1000.*1.5 #in kpc
+        self.EL_dict_gsw['nlr_fib_ratio'] = self.EL_dict_gsw['nlr_rad_from_lo3']/self.EL_dict_gsw['fibsize']
         self.EL_dict_gsw['halplum'] = np.log10(getlumfromflux(self.EL_dict_gsw['halpflux_corr'], self.EL_dict_gsw['z']))
         self.EL_dict_gsw['edd_par'] = self.EL_dict_gsw['oiiilum']-self.EL_dict_gsw['mbh']
 
@@ -696,8 +750,16 @@ class ELObj:
             self.EL_dict_gsw['full_xraylum'] = np.copy(self.gswcat.gsw_df.fulllumsrf.iloc[self.make_spec])
             self.EL_dict_gsw['soft_xraylum'] = np.copy(self.gswcat.gsw_df.softlumsrf.iloc[self.make_spec])
             self.EL_dict_gsw['hard_xraylum'] = np.copy(self.gswcat.gsw_df.hardlumsrf.iloc[self.make_spec])
+            self.EL_dict_gsw['edd_par_xr'] = self.EL_dict_gsw['hard_xraylum']-self.EL_dict_gsw['edd_lum']
+
             self.EL_dict_gsw['lo3_pred_fromlx'] = (self.EL_dict_gsw['hard_xraylum']+7.55)/(1.22)
-            self.EL_dict_gsw['lo3_offset'] = self.EL_dict_gsw['lo3_pred_fromlx']-self.EL_dict_gsw['oiiilum']       
+            self.EL_dict_gsw['nlr_rad_from_lo3_pred_fromlx'] = self.EL_dict_gsw['lo3_pred_fromlx']*(0.42)-13.97
+            self.EL_dict_gsw['nlr_fib_ratio_pred_fromlx'] = 10**self.EL_dict_gsw['nlr_rad_from_lo3_pred_fromlx']/1000/self.EL_dict_gsw['fibsize']
+                    
+            self.EL_dict_gsw['lo3_offset'] = -(self.EL_dict_gsw['lo3_pred_fromlx']-self.EL_dict_gsw['oiiilum']    )  
+            self.EL_dict_gsw['lo3_offset_up'] = -(self.EL_dict_gsw['lo3_pred_fromlx']-self.EL_dict_gsw['oiiilum_up']    )  
+            self.EL_dict_gsw['lo3_offset_up2'] = -(self.EL_dict_gsw['lo3_pred_fromlx']-self.EL_dict_gsw['oiiilum_up2']    )  
+            
             self.EL_dict_gsw['fo3_pred_fromlx'] = redden(getfluxfromlum(10**self.EL_dict_gsw['lo3_pred_fromlx'], self.EL_dict_gsw['z']),
                                                          self.EL_dict_gsw['corrected_presub_av'], 5007.0)
             self.EL_dict_gsw['lo3_minus_pred_fromlx'] = (self.EL_dict_gsw['hard_xraylum']+7.55)/(1.22)-0.587 #subtracting dispersion?
@@ -711,6 +773,21 @@ class ELObj:
             self.EL_dict_gsw['softflux'] = np.copy(self.gswcat.gsw_df.softflux.iloc[self.make_spec])
             self.EL_dict_gsw['hardflux'] = np.copy(self.gswcat.gsw_df.hardflux.iloc[self.make_spec])
             self.EL_dict_gsw['full_lxsfr'] = np.copy(np.log10(xrayranallidict['full']*10**(self.EL_dict_gsw['sfr'])))
+            self.EL_dict_gsw['hard_lxsfr'] = np.copy(np.log10(xrayranallidict['hard']*10**(self.EL_dict_gsw['sfr'])))
+            self.EL_dict_gsw['xray_agn_status'] = self.EL_dict_gsw['full_xraylum']-0.6 > self.EL_dict_gsw['full_lxsfr']
+            self.EL_dict_gsw['xray_excess'] = self.EL_dict_gsw['full_xraylum']- self.EL_dict_gsw['full_lxsfr']
+            
+            self.EL_dict_gsw['hardlx_gas'] = np.copy(np.log10(7.3e39*10**(self.EL_dict_gsw['sfr']))) #mineo+2012
+            self.EL_dict_gsw['hardlx_xrb'] = np.copy(np.log10( (10**(29.37)*(10**self.EL_dict_gsw['mass'])*(1+self.EL_dict_gsw['z'])**2.03 )+
+                                                              (10**self.EL_dict_gsw['sfr'])*(10**39.28)*(1+self.EL_dict_gsw['z'])**1.31))
+            self.EL_dict_gsw['softlx_xrb'] = np.copy(np.log10( (10**(29.04)*(10**self.EL_dict_gsw['mass'])*(1+self.EL_dict_gsw['z'])**3.78 )+
+                                                              (10**self.EL_dict_gsw['sfr'])*(10**39.28)*(1+self.EL_dict_gsw['z'])**0.99))
+            self.EL_dict_gsw['fulllx_xrb'] = np.log10(10**self.EL_dict_gsw['softlx_xrb']+10**self.EL_dict_gsw['hardlx_xrb'])
+            self.EL_dict_gsw['hardlx_xrb_local'] = np.copy(np.log10( 10**(28.96)*(10**self.EL_dict_gsw['mass'])+
+                                                              10**self.EL_dict_gsw['sfr']*(10**39.21)))
+
+            
+            
             self.EL_dict_gsw['hardlx_sfr'] = np.copy(np.log10(xrayranallidict['hard']*10**(self.EL_dict_gsw['sfr'])))
             self.EL_dict_gsw['softlx_sfr'] = np.copy(np.log10(xrayranallidict['soft']*10**(self.EL_dict_gsw['sfr'])))
             self.EL_dict_gsw['full_lxagn'] = np.copy(np.log10(10**self.EL_dict_gsw['full_xraylum']-10**self.EL_dict_gsw['full_lxsfr']))
@@ -719,8 +796,8 @@ class ELObj:
 
             if xmm:
                 self.EL_dict_gsw['exptimes'] = np.copy(self.gswcat.gsw_df.exptimes.iloc[self.make_spec])
-                #self.EL_dict_gsw['xrayflag'] = np.copy(self.gswcat.gsw_df.xrayflag[self.make_spec])
-                #self.EL_dict_gsw['ext'] = np.copy(self.gswcat.gsw_df.ext[self.make_spec])
+                self.EL_dict_gsw['xrayflag'] = np.copy(self.gswcat.xrayflag[self.make_spec])
+                self.EL_dict_gsw['ext'] = np.copy(self.gswcat.ext[self.make_spec])
                 self.EL_dict_gsw['efullflux'] = np.copy(self.gswcat.gsw_df.efullflux.iloc[self.make_spec])
                 self.EL_dict_gsw['fullflux_sn'] = self.EL_dict_gsw['fullflux']/self.EL_dict_gsw['efullflux']
                 
@@ -737,6 +814,13 @@ class ELObj:
 
                 self.EL_dict_gsw['e_full_xraylum_up'] = self.EL_dict_gsw['full_xraylum_up'] -self.EL_dict_gsw['full_xraylum']
                 self.EL_dict_gsw['e_full_xraylum_down'] = self.EL_dict_gsw['full_xraylum'] -self.EL_dict_gsw['full_xraylum_down']
+
+                self.EL_dict_gsw['hard_xraylum_up'] = np.copy(self.gswcat.gsw_df.ehardlumsrf_up.iloc[self.make_spec])
+                self.EL_dict_gsw['hard_xraylum_down'] = np.copy(self.gswcat.gsw_df.ehardlumsrf_down.iloc[self.make_spec])
+
+                self.EL_dict_gsw['e_hard_xraylum_up'] = self.EL_dict_gsw['hard_xraylum_up'] -self.EL_dict_gsw['hard_xraylum']
+                self.EL_dict_gsw['e_hard_xraylum_down'] = self.EL_dict_gsw['hard_xraylum'] -self.EL_dict_gsw['hard_xraylum_down']
+
             
                 self.EL_dict_gsw['hr1'] = np.copy(self.gswcat.gsw_df.hr1.iloc[self.make_spec])
                 self.EL_dict_gsw['hr2'] = np.copy(self.gswcat.gsw_df.hr2.iloc[self.make_spec])
@@ -762,7 +846,10 @@ class ELObj:
         self.EL_gsw_df['bptplusniigroups'] = allbptplusniigroups
 
         self.EL_gsw_df['bptgroups'] = allbptgroups
-
+        classifiability = get_classifiability(self.EL_gsw_df['niiflux_sn'], 
+            self.EL_gsw_df['halpflux_sn'],self.EL_gsw_df['oiiiflux_sn'],self.EL_gsw_df['hbetaflux_sn'] )
+        self.EL_gsw_df['classifiability'] = classifiability
+        
         self.not_bpt_EL_gsw_df = self.EL_gsw_df.iloc[self.not_bpt_sn_filt].copy() #unclassifiables from Paper 1
         self.high_sn_o3_EL_gsw_df = self.EL_gsw_df.iloc[self.high_sn_o3].copy() #unclassifiables from Paper 1
         
@@ -777,7 +864,7 @@ class ELObj:
 
         bptgroups, bptsf, bptagn = get_bpt1_groups( np.log10(self.bpt_EL_gsw_df['xvals1_bpt']), np.log10(self.bpt_EL_gsw_df['yvals_bpt'] ) )
 
-        
+ 
         bptplsugroups, bptplssf, bptplsagn = get_bptplus_groups(np.log10(self.bpt_EL_gsw_df['xvals1_bpt']), np.log10(self.bpt_EL_gsw_df['yvals_bpt']))
         
         

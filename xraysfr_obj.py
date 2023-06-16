@@ -75,11 +75,11 @@ class Xraysfr:
                                         (self.lum[self.filt][nonagn][self.validnoagn] >0))[0]
         self.likelyagnbptagn = np.where((self.lxsfr[self.filt][agn][self.validagn] < self.lum[self.filt][agn][self.validagn]-0.6) &
                                         (self.lum[self.filt][agn][self.validagn] >0))[0]
-        self.likelysf = np.where((abs(self.lxsfr[self.filt][self.valid] - self.lum[self.filt][self.valid]) < 0.3) &
+        self.likelysf = np.where((abs(self.lxsfr[self.filt][self.valid] - self.lum[self.filt][self.valid]) < 0.6) &
                                      (self.lum[self.filt][self.valid] > 0))[0]
-        self.likelysfbpthii = np.where((abs(self.lxsfr[self.filt][nonagn][self.validnoagn] - self.lum[self.filt][nonagn][self.validnoagn])<0.3) &
+        self.likelysfbpthii = np.where((abs(self.lxsfr[self.filt][nonagn][self.validnoagn] - self.lum[self.filt][nonagn][self.validnoagn])<0.6) &
                                         (self.lum[self.filt][nonagn][self.validnoagn] >0))[0]
-        self.likelysfbptagn = np.where((abs(self.lxsfr[self.filt][agn][self.validagn] - self.lum[self.filt][agn][self.validagn])<0.3) &
+        self.likelysfbptagn = np.where((abs(self.lxsfr[self.filt][agn][self.validagn] - self.lum[self.filt][agn][self.validagn])<0.6) &
                                         (self.lum[self.filt][agn][self.validagn] >0))[0]
         #valid xray agn
         self.lum_mass_val_filt_xrayagn =  self.lum_mass[self.filt][self.valid][self.likelyagn_xr]

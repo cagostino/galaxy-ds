@@ -14,6 +14,12 @@ av_err_ind = 9
 a_uv_ind=10
 
 sigma1_ind=11
+nyuenv_ind=12
+baldenv_ind=13
+irx_ind=14
+axisrat_ind =15
+nuv_ind=16
+fuv_ind=17
 
 class GSWCat:
     def __init__(self, goodinds, gswlcids, redshift, sfrplus, sedflag=0):
@@ -39,6 +45,13 @@ class GSWCat:
         self.a_uv = sfrplus[a_uv_ind][self.inds][self.sedfilt]
         
         self.sigma1 = sfrplus[sigma1_ind][self.inds][self.sedfilt]
+        self.nyuenv = sfrplus[nyuenv_ind][self.inds][self.sedfilt]
+        self.baldenv = sfrplus[baldenv_ind][self.inds][self.sedfilt]
+        self.irx = sfrplus[irx_ind][self.inds][self.sedfilt]
+        self.axisrat = sfrplus[axisrat_ind][self.inds][self.sedfilt]
+        self.nuv = sfrplus[nuv_ind][self.inds][self.sedfilt]
+        self.fuv = sfrplus[fuv_ind][self.inds][self.sedfilt]
+        
         self.gsw_dict = {'z':self.z,
                          'sedflags':self.sedflags,
                          'ids':self.ids,
@@ -51,8 +64,15 @@ class GSWCat:
                          'mjd':self.mjd,
                          'av':self.av,
                          'sigma1':self.sigma1,
+                         'baldenv':self.baldenv,
+                         'nyuenv':self.nyuenv,
+                         'irx':self.irx,
+                         'axisrat':self.axisrat,
                          'av_err':self.av_err,
-                         'a_uv':self.a_uv}
+                         'a_uv':self.a_uv,
+                         'nuv':self.nuv,
+                         'fuv':self.fuv
+                         }
         self.gsw_df = pd.DataFrame(self.gsw_dict)
         
 
@@ -80,6 +100,9 @@ class GSWCatmatch3xmm(GSWCat):
         self.gsw_df['efulllums_down'] = getlumfromflux(fullflux_filt[self.sedfilt]-efullflux_filt[self.sedfilt],self.z)
         self.gsw_df['softlumsrf'] = np.log10(self.gsw_df.softlums*(1+self.z)**(1.7-2))
         self.gsw_df['hardlumsrf'] = np.log10(self.gsw_df.hardlums*(1+self.z)**(1.7-2))
+        self.gsw_df['ehardlums_up'] =  getlumfromflux(hardflux_filt[self.sedfilt]+ehardflux_filt[self.sedfilt],self.z)
+        self.gsw_df['ehardlums_down'] = getlumfromflux(hardflux_filt[self.sedfilt]-ehardflux_filt[self.sedfilt],self.z)
+
         self.gsw_df['hardlums2rf'] = np.log10(self.gsw_df.hardlums2*(1+self.z)**(1.7-2))
         self.gsw_df['hr1'] = hr1[self.sedfilt]
         self.gsw_df['hr2'] = hr2[self.sedfilt]
@@ -89,9 +112,12 @@ class GSWCatmatch3xmm(GSWCat):
         self.gsw_df['fulllumsrf'] = np.log10(self.gsw_df.fulllums*(1+self.z)**(1.7-2))
         self.gsw_df['efulllumsrf_down'] = np.log10(self.gsw_df.efulllums_down*(1+self.z)**(1.7-2))
         self.gsw_df['efulllumsrf_up'] = np.log10(self.gsw_df.efulllums_up*(1+self.z)**(1.7-2))
-        '''
-        self.gsw_df['ext'] = ext[self.sedfilt]
-        self.gsw_df['xrayflag'] = xrayflag[self.sedfilt]'''
+        
+        self.gsw_df['ehardlumsrf_down'] = np.log10(self.gsw_df.ehardlums_down*(1+self.z)**(1.7-2))
+        self.gsw_df['ehardlumsrf_up'] = np.log10(self.gsw_df.ehardlums_up*(1+self.z)**(1.7-2))
+        
+        self.ext = ext[self.sedfilt]
+        self.xrayflag = xrayflag[self.sedfilt]
         
 class GSWCatmatch_CSC(GSWCat):
     def __init__(self, goodinds, gswlcids, redshift, sfrplus,  fullflux_filt, 

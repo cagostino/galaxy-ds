@@ -37,7 +37,7 @@ plt.rc('font', family='serif')
 
 
 
-#commid, ind1_m2, ind2_m2phot = commonpts1d(m2[0], m2_photcatids)
+#commid, ind1_m2, ind2_m2phot = commonpts1d(m2[0], m1_photcatids)
 m2_photrfluxmatched = m1_modelrflux[ind2_m1phot]
 posflux = np.where(m2_photrfluxmatched >0 )[0]
 #np.savetxt(catfold+'photmatchinginds.txt', ind2_m2phot,fmt='%s')
@@ -296,6 +296,7 @@ d2d2mx4_mpa_res = actmatch_4xmm_mpa_res[1]
 radiffx4_mpa_res = actmatch_4xmm_mpa_res[5]
 decdiffx4_mpa_res = actmatch_4xmm_mpa_res[6]
             
+xmm4_full = Fits_set('catalogs/4xmm_full.fits')
             
 rates = {'PN':xmm4_full.getcol('PN_4_RATE')+ xmm4_full.getcol('PN_5_RATE'),
          'M1':xmm4_full.getcol('M1_4_RATE')+xmm4_full.getcol('M1_5_RATE'),
@@ -458,17 +459,18 @@ dataset_df['4xmm_qual_flag'] = np.nan
 dataset_df['4xmm_extent'] = np.nan
 
 
-dataset_df.loc[ idm2x4_mpa,'4xmm_ra'] = x4.ra[goodm2x4_mpa]
-dataset_df.loc[ idm2x4_mpa,'4xmm_dec'] = x4.dec[goodm2x4_mpa]
-dataset_df.loc[ idm2x4_mpa,'4xmm_extent'] = x4.ext[goodm2x4_mpa]
-dataset_df.loc[ idm2x4_mpa,'4xmm_band6_flux'] = (x4.flux1+x4.flux2+x4.flux3)[goodm2x4_mpa]
-dataset_df.loc[ idm2x4_mpa,'4xmm_band7_flux'] = (x4.flux4+x4.flux5)[goodm2x4_mpa]
-dataset_df.loc[ idm2x4_mpa,'4xmm_band8_flux'] = (x4.flux1+x4.flux2+x4.flux3+x4.flux4+x4.flux5)[goodm2x4_mpa]
+dataset_df.loc[ succ[idm2x4_mpa_res],'4xmm_ra'] = x4.ra[goodm2x4_mpa]
+dataset_df.loc[ succ[idm2x4_mpa_res],'4xmm_dec'] = x4.dec[goodm2x4_mpa]
+dataset_df.loc[ succ[idm2x4_mpa_res],'4xmm_extent'] = x4.ext[goodm2x4_mpa]
+dataset_df.loc[ succ[idm2x4_mpa_res],'4xmm_band6_flux'] = (x4.flux1+x4.flux2+x4.flux3)[goodm2x4_mpa]
+dataset_df.loc[ succ[idm2x4_mpa_res],'4xmm_band7_flux'] = (x4.flux4+x4.flux5)[goodm2x4_mpa]
+dataset_df.loc[ succ[idm2x4_mpa_res],'4xmm_band8_flux'] = (x4.flux1+x4.flux2+x4.flux3+x4.flux4+x4.flux5)[goodm2x4_mpa]
 
-dataset_df.loc[ idm2x4_mpa,'4xmm_band6_flux_error'] = np.sqrt(x4.eflux1**2+x4.eflux2**2+x4.eflux3**2)[goodm2x4_mpa]
-dataset_df.loc[ idm2x4_mpa,'4xmm_band7_flux_error'] = np.sqrt(x4.eflux4**2+x4.eflux5**2)[goodm2x4_mpa]
-dataset_df.loc[ idm2x4_mpa,'4xmm_band8_flux_error'] = np.sqrt(x4.eflux1**2+x4.eflux2**2+x4.eflux3**2+x4.eflux4**2+x4.eflux5**2)[goodm2x4_mpa]
-dataset_df.loc[ idm2x4_mpa,'4xmm_qual_flag'] = x4.qualflag[goodm2x4_mpa]
+dataset_df.loc[ succ[idm2x4_mpa_res],'4xmm_band6_flux_error'] = np.sqrt(x4.eflux1**2+x4.eflux2**2+x4.eflux3**2)[goodm2x4_mpa]
+dataset_df.loc[ succ[idm2x4_mpa_res],'4xmm_band7_flux_error'] = np.sqrt(x4.eflux4**2+x4.eflux5**2)[goodm2x4_mpa]
+dataset_df.loc[ succ[idm2x4_mpa_res],'4xmm_band8_flux_error'] = np.sqrt(x4.eflux1**2+x4.eflux2**2+x4.eflux3**2+x4.eflux4**2+x4.eflux5**2)[goodm2x4_mpa]
+dataset_df.loc[ succ[idm2x4_mpa_res],'4xmm_qual_flag'] = x4.qualflag[goodm2x4_mpa]
+dataset_df.loc[ succ[idm2x4_mpa_res],'4xmm_extent'] = x4.ext[goodm2x4_mpa_res]
 
 
 np.savetxt(catfold+'xmm3gswamatch1ind.txt',ida1)
@@ -716,6 +718,9 @@ liuobj_df['sn_fhb'] = np.array(liuobj_df['fhb'])/np.array(liuobj_df['e_fhb'])
 liuobj_df['av_balm'] = extinction(liuobj_df['fha'], liuobj_df['fhb'], agn=True, zeroed=True)
 liuobj_df['fo3_corr'] = dustcorrect(liuobj_df['fo3'], liuobj_df['av_balm'], 5007.0)
 liuobj_df['lo3_corr'] = np.log10(getlumfromflux(liuobj_df['fo3_corr'], liuobj_df['z']))
+liuobj_df['fo1_corr'] = dustcorrect(liuobj_df['fo1'], liuobj_df['av_balm'], 6001.0)
+liuobj_df['lo1_corr'] = np.log10(getlumfromflux(liuobj_df['fo1_corr'], liuobj_df['z']))
+
 liuobj_df['fha_corr'] = dustcorrect(liuobj_df['fha'], liuobj_df['av_balm'], 6563.0)
 liuobj_df['lha_corr'] = np.log10(getlumfromflux(liuobj_df['fha_corr'], liuobj_df['z']))
 
@@ -1026,6 +1031,9 @@ fullxray_xmm_all = Xraysfr(np.array(m2Cat_GSW_3xmm_all.gsw_df.fulllumsrf), m2Cat
 fullxray_xmm4_all = Xraysfr(np.array(m2Cat_GSW_4xmm_all.gsw_df.fulllumsrf), m2Cat_GSW_4xmm_all, 
                            mpa_spec_m2_4xmm_all.make_prac[EL_4xmm_all.bpt_sn_filt],
                            EL_4xmm_all.bptagn, EL_4xmm_all.bptsf, 'full')
+fullxray_xmm4_all_bptplus = Xraysfr(np.array(m2Cat_GSW_4xmm_all.gsw_df.fulllumsrf), m2Cat_GSW_4xmm_all, 
+                           mpa_spec_m2_4xmm_all.make_prac[EL_4xmm_all.bpt_sn_filt],
+                           EL_4xmm_all.bptplsagn, EL_4xmm_all.bptplssf, 'full')
 
 
 fullxray_xmm_all_high_sn_o3 = Xraysfr(np.array(m2Cat_GSW_3xmm_all.gsw_df.fulllumsrf), m2Cat_GSW_3xmm_all, 
@@ -1058,7 +1066,11 @@ fullxray_xmm_all_no = Xraysfr(np.array(m2Cat_GSW_3xmm_all.gsw_df.fulllumsrf), m2
 fullxray_xmm_all_unclass_p2 = Xraysfr(np.array(m2Cat_GSW_3xmm_all.gsw_df.fulllumsrf), m2Cat_GSW_3xmm_all,
                               mpa_spec_m2_3xmm_all.make_prac[EL_3xmm_all.neither_filt], [], [], 'full')
 
+fullxray_xmm4_all_unclass_p2 = Xraysfr(np.array(m2Cat_GSW_4xmm_all.gsw_df.fulllumsrf), m2Cat_GSW_4xmm_all,
+                              mpa_spec_m2_4xmm_all.make_prac[EL_4xmm_all.neither_filt], [], [], 'full')
 
+fullxray_xmm4_all_no = Xraysfr(np.array(m2Cat_GSW_4xmm_all.gsw_df.fulllumsrf), m2Cat_GSW_4xmm_all,
+                              mpa_spec_m2_4xmm_all.make_prac[EL_4xmm_all.not_bpt_sn_filt_bool], [], [], 'full')
 #%% refiltering emission line objects by x-ray properties
 xmm3eldiagmed_xrfilt = ELObj(mpa_spec_m2_3xmm.spec_inds_prac[EL_3xmm.bpt_sn_filt][fullxray_xmm.valid][fullxray_xmm.likelyagn_xr], 
                              sdssobj,
@@ -1087,6 +1099,9 @@ xmm3eldiagmed_xrfilt_all =  ELObj(mpa_spec_m2_3xmm_all.spec_inds_prac[EL_3xmm_al
 xmm4eldiagmed_xrfilt_all =  ELObj(mpa_spec_m2_4xmm_all.spec_inds_prac[EL_4xmm_all.bpt_sn_filt][fullxray_xmm4_all.valid][fullxray_xmm4_all.likelyagn_xr], sdssobj,
                                   mpa_spec_m2_4xmm_all.make_prac[EL_4xmm_all.bpt_sn_filt][fullxray_xmm4_all.valid][fullxray_xmm4_all.likelyagn_xr], 
                                   m2Cat_GSW_4xmm_all,xr=True, xmm=True)
+xmm4eldiagmed_sffilt_all =  ELObj(mpa_spec_m2_4xmm_all.spec_inds_prac[EL_4xmm_all.bpt_sn_filt][fullxray_xmm4_all.valid][fullxray_xmm4_all.likelysf], sdssobj,
+                                  mpa_spec_m2_4xmm_all.make_prac[EL_4xmm_all.bpt_sn_filt][fullxray_xmm4_all.valid][fullxray_xmm4_all.likelysf], 
+                                  m2Cat_GSW_4xmm_all,xr=True, xmm=True)
 
 xmm3eldiagmed_xrfilt_all_high_sn_o3 =  ELObj(mpa_spec_m2_3xmm_all.spec_inds_prac[EL_3xmm_all.high_sn_o3][fullxray_xmm_all_high_sn_o3.valid][fullxray_xmm_all_high_sn_o3.likelyagn_xr], sdssobj,
                                   mpa_spec_m2_3xmm_all.make_prac[EL_3xmm_all.high_sn_o3][fullxray_xmm_all_high_sn_o3.valid][fullxray_xmm_all_high_sn_o3.likelyagn_xr], m2Cat_GSW_3xmm_all,xr=True, xmm=True)
@@ -1104,6 +1119,11 @@ xmm4eldiagmed_xrfilt_xragn =  ELObj(mpa_spec_m2_4xmm_all.spec_inds_prac[fullxray
                                     sdssobj,
                                   mpa_spec_m2_4xmm_all.make_prac[fullxray_xmm4_all_xragn.valid][fullxray_xmm4_all_xragn.likelyagn_xr], 
                                   m2Cat_GSW_4xmm_all,xr=True, xmm=True)
+
+
+xmm4eldiagmed_xrsffilt = ELObj(mpa_spec_m2_4xmm_all.spec_inds_prac[EL_4xmm_all.bpt_sn_filt][fullxray_xmm4_all.valid][fullxray_xmm4_all.likelysf], sdssobj,
+                             mpa_spec_m2_4xmm_all.make_prac[EL_4xmm_all.bpt_sn_filt][fullxray_xmm4_all.valid][fullxray_xmm4_all.likelysf], m2Cat_GSW_4xmm_all,xr=True, xmm=True)
+
 xmm3eldiagmed_xrfilt_unclass_p2 =  ELObj(mpa_spec_m2_3xmm_all.spec_inds_prac[EL_3xmm_all.neither_filt][fullxray_xmm_all_unclass_p2.valid][fullxray_xmm_all_unclass_p2.likelyagn_xr], 
                                     sdssobj,
                                   mpa_spec_m2_3xmm_all.make_prac[EL_3xmm_all.neither_filt][fullxray_xmm_all_unclass_p2.valid][fullxray_xmm_all_unclass_p2.likelyagn_xr], 
@@ -1113,6 +1133,14 @@ xmm3eldiagmed_xrfilt_unclass_p1 =  ELObj(mpa_spec_m2_3xmm_all.spec_inds_prac[EL_
                                   mpa_spec_m2_3xmm_all.make_prac[EL_3xmm_all.not_bpt_sn_filt_bool][fullxray_xmm_all_no.valid][fullxray_xmm_all_no.likelyagn_xr], 
                                   m2Cat_GSW_3xmm_all,xr=True, xmm=True)
 
+xmm4eldiagmed_xrfilt_unclass_p2 =  ELObj(mpa_spec_m2_4xmm_all.spec_inds_prac[EL_4xmm_all.neither_filt][fullxray_xmm4_all_unclass_p2.valid][fullxray_xmm4_all_unclass_p2.likelyagn_xr], 
+                                    sdssobj,
+                                  mpa_spec_m2_4xmm_all.make_prac[EL_4xmm_all.neither_filt][fullxray_xmm4_all_unclass_p2.valid][fullxray_xmm4_all_unclass_p2.likelyagn_xr], 
+                                  m2Cat_GSW_4xmm_all,xr=True, xmm=True, weak_lines=True)
+xmm4eldiagmed_xrfilt_unclass_p1 =  ELObj(mpa_spec_m2_4xmm_all.spec_inds_prac[EL_4xmm_all.not_bpt_sn_filt_bool][fullxray_xmm4_all_no.valid][fullxray_xmm4_all_no.likelyagn_xr], 
+                                    sdssobj,
+                                  mpa_spec_m2_4xmm_all.make_prac[EL_4xmm_all.not_bpt_sn_filt_bool][fullxray_xmm4_all_no.valid][fullxray_xmm4_all_no.likelyagn_xr], 
+                                  m2Cat_GSW_4xmm_all,xr=True, xmm=True)
 
 
 
@@ -1295,7 +1323,7 @@ combo_val = np.where(combo_classes_full !=0)[0]
 combo_sy2 = np.where(combo_classes_full ==1)[0]
 combo_hliner = np.where(combo_classes_full ==2)[0]
 combo_sliner = np.where(combo_classes_full ==3)[0]
-
+combo_allliners = np.where((combo_classes_full==2)|(combo_classes_full==3))
 
 kmnclust1[kmnclust1==0] = 9
 combo_classes_full[combo_classes_full==0] = 9
@@ -1484,33 +1512,37 @@ cols_to_use_csc  = cols_to_use_csc.tolist()
 cols_to_use_csc.append('ids')
 
 
-merged_xr = pd.merge(xmm3eldiagmed_xrfilt.bpt_EL_gsw_df, sfrm_gsw2.fullagn_df[ cols_to_use], on='ids')
-merged_xr_all = pd.merge(xmm3eldiagmed_xrfilt_all.bpt_EL_gsw_df, sfrm_gsw2.fullagn_df[ cols_to_use], on='ids')
+merged_xr = pd.merge(xmm4eldiagmed_xrfilt.bpt_EL_gsw_df, sfrm_gsw2.fullagn_df[ cols_to_use], on='ids')
+merged_xr_all = pd.merge(xmm4eldiagmed_xrfilt_all.bpt_EL_gsw_df, sfrm_gsw2.fullagn_df[ cols_to_use], on='ids')
 
-merged_xr_val = pd.merge(xmm3eldiagmed_xrfilt.bpt_EL_gsw_df, sfrm_gsw2.fullagn_df[cols_to_use].iloc[val1], on='ids')
-merged_xr_val_all = pd.merge(xmm3eldiagmed_xrfilt_all.bpt_EL_gsw_df, sfrm_gsw2.fullagn_df[cols_to_use].iloc[val1], on='ids')
+merged_xr_val = pd.merge(xmm4eldiagmed_xrfilt.bpt_EL_gsw_df, sfrm_gsw2.fullagn_df[cols_to_use].iloc[val1], on='ids')
+merged_xr_val_all = pd.merge(xmm4eldiagmed_xrfilt_all.bpt_EL_gsw_df, sfrm_gsw2.fullagn_df[cols_to_use].iloc[val1], on='ids')
 
-merged_xr_val_combo = pd.merge(xmm3eldiagmed_xrfilt.bpt_EL_gsw_df, sfrm_gsw2.fullagn_df[cols_to_use].iloc[combo_val], on='ids')
-merged_xr_val_all_combo = pd.merge(xmm3eldiagmed_xrfilt_all.bpt_EL_gsw_df, sfrm_gsw2.fullagn_df[cols_to_use].iloc[combo_val], on='ids')
+merged_xr_val_combo = pd.merge(xmm4eldiagmed_xrfilt.bpt_EL_gsw_df, sfrm_gsw2.fullagn_df[cols_to_use].iloc[combo_val], on='ids')
+merged_xr_val_all_combo = pd.merge(xmm4eldiagmed_xrfilt_all.bpt_EL_gsw_df, sfrm_gsw2.fullagn_df[cols_to_use].iloc[combo_val], on='ids')
+merged_xr_val_all_combo_allxr = pd.merge(EL_4xmm_all.EL_gsw_df, sfrm_gsw2.fullagn_df[cols_to_use].iloc[combo_val], on='ids')
 
-merged_xr_sy2 = pd.merge(xmm3eldiagmed_xrfilt.bpt_EL_gsw_df, sfrm_gsw2.fullagn_df[cols_to_use].iloc[sy2_1], on='ids')
-merged_xr_sf = pd.merge(xmm3eldiagmed_xrfilt.bpt_EL_gsw_df, sfrm_gsw2.fullagn_df[cols_to_use].iloc[sliner_1], on='ids')
-merged_xr_liner2 = pd.merge(xmm3eldiagmed_xrfilt.bpt_EL_gsw_df, sfrm_gsw2.fullagn_df[cols_to_use].iloc[hliner_1], on='ids')
+merged_xr_sy2 = pd.merge(xmm4eldiagmed_xrfilt.bpt_EL_gsw_df, sfrm_gsw2.fullagn_df[cols_to_use].iloc[sy2_1], on='ids')
+merged_xr_sf = pd.merge(xmm4eldiagmed_xrfilt.bpt_EL_gsw_df, sfrm_gsw2.fullagn_df[cols_to_use].iloc[sliner_1], on='ids')
+merged_xr_liner2 = pd.merge(xmm4eldiagmed_xrfilt.bpt_EL_gsw_df, sfrm_gsw2.fullagn_df[cols_to_use].iloc[hliner_1], on='ids')
 
-merged_xr_sy2_all = pd.merge(xmm3eldiagmed_xrfilt_all.bpt_EL_gsw_df, sfrm_gsw2.fullagn_df[cols_to_use].iloc[sy2_1], on='ids')
-merged_xr_sf_all = pd.merge(xmm3eldiagmed_xrfilt_all.bpt_EL_gsw_df, sfrm_gsw2.fullagn_df[cols_to_use].iloc[sliner_1], on='ids')
-merged_xr_liner2_all = pd.merge(xmm3eldiagmed_xrfilt_all.bpt_EL_gsw_df, sfrm_gsw2.fullagn_df[cols_to_use].iloc[hliner_1], on='ids')
+merged_xr_sy2_all = pd.merge(xmm4eldiagmed_xrfilt_all.bpt_EL_gsw_df, sfrm_gsw2.fullagn_df[cols_to_use].iloc[sy2_1], on='ids')
+merged_xr_sf_all = pd.merge(xmm4eldiagmed_xrfilt_all.bpt_EL_gsw_df, sfrm_gsw2.fullagn_df[cols_to_use].iloc[sliner_1], on='ids')
+merged_xr_liner2_all = pd.merge(xmm4eldiagmed_xrfilt_all.bpt_EL_gsw_df, sfrm_gsw2.fullagn_df[cols_to_use].iloc[hliner_1], on='ids')
 
 
+merged_xr_sy2_combo = pd.merge(xmm4eldiagmed_xrfilt.bpt_EL_gsw_df, sfrm_gsw2.fullagn_df[cols_to_use].iloc[combo_sy2], on='ids')
+merged_xr_sf_combo = pd.merge(xmm4eldiagmed_xrfilt.bpt_EL_gsw_df, sfrm_gsw2.fullagn_df[cols_to_use].iloc[combo_sliner], on='ids')
+merged_xr_liner2_combo = pd.merge(xmm4eldiagmed_xrfilt.bpt_EL_gsw_df, sfrm_gsw2.fullagn_df[cols_to_use].iloc[combo_hliner], on='ids')
 
-merged_xr_sy2_combo = pd.merge(xmm3eldiagmed_xrfilt.bpt_EL_gsw_df, sfrm_gsw2.fullagn_df[cols_to_use].iloc[combo_sy2], on='ids')
-merged_xr_sf_combo = pd.merge(xmm3eldiagmed_xrfilt.bpt_EL_gsw_df, sfrm_gsw2.fullagn_df[cols_to_use].iloc[combo_sliner], on='ids')
-merged_xr_liner2_combo = pd.merge(xmm3eldiagmed_xrfilt.bpt_EL_gsw_df, sfrm_gsw2.fullagn_df[cols_to_use].iloc[combo_hliner], on='ids')
+merged_xr_sy2_all_combo = pd.merge(xmm4eldiagmed_xrfilt_all.bpt_EL_gsw_df, sfrm_gsw2.fullagn_df[cols_to_use].iloc[combo_sy2], on='ids')
+merged_xr_sf_all_combo = pd.merge(xmm4eldiagmed_xrfilt_all.bpt_EL_gsw_df, sfrm_gsw2.fullagn_df[cols_to_use].iloc[combo_sliner], on='ids')
+merged_xr_liner2_all_combo = pd.merge(xmm4eldiagmed_xrfilt_all.bpt_EL_gsw_df, sfrm_gsw2.fullagn_df[cols_to_use].iloc[combo_hliner], on='ids')
 
-merged_xr_sy2_all_combo = pd.merge(xmm3eldiagmed_xrfilt_all.bpt_EL_gsw_df, sfrm_gsw2.fullagn_df[cols_to_use].iloc[combo_sy2], on='ids')
-merged_xr_sf_all_combo = pd.merge(xmm3eldiagmed_xrfilt_all.bpt_EL_gsw_df, sfrm_gsw2.fullagn_df[cols_to_use].iloc[combo_sliner], on='ids')
-merged_xr_liner2_all_combo = pd.merge(xmm3eldiagmed_xrfilt_all.bpt_EL_gsw_df, sfrm_gsw2.fullagn_df[cols_to_use].iloc[combo_hliner], on='ids')
 
+merged_xr_sy2_all_combo_allxr = pd.merge(EL_4xmm_all.EL_gsw_df, sfrm_gsw2.fullagn_df[cols_to_use].iloc[combo_sy2], on='ids')
+merged_xr_sf_all_combo_allxr = pd.merge(EL_4xmm_all.EL_gsw_df, sfrm_gsw2.fullagn_df[cols_to_use].iloc[combo_sliner], on='ids')
+merged_xr_liner2_all_combo_allxr = pd.merge(EL_4xmm_all.EL_gsw_df, sfrm_gsw2.fullagn_df[cols_to_use].iloc[combo_hliner], on='ids')
 
 merged_xr_sy2_all.to_csv(catfold+'merged_xr_sy2_all.csv')
 merged_xr_liner2_all.to_csv(catfold+'merged_xr_hliner_all.csv')
@@ -1522,6 +1554,12 @@ merged_xr_sy2_all_combo.to_csv(catfold+'merged_xr_sy2_all_combo.csv')
 merged_xr_liner2_all_combo.to_csv(catfold+'merged_xr_hliner_all_combo.csv')
 merged_xr_sf_all_combo.to_csv(catfold+'merged_xr_sliner_all_combo.csv')
 merged_xr_val_all_combo.to_csv(catfold+'merged_xr_val_all_combo.csv')
+
+
+merged_xr_sy2_all_combo_allxr.to_csv(catfold+'merged_xr_sy2_all_combo_allxr.csv')
+merged_xr_liner2_all_combo_allxr.to_csv(catfold+'merged_xr_hliner_all_combo_allxr.csv')
+merged_xr_sf_all_combo_allxr.to_csv(catfold+'merged_xr_sliner_all_combo_allxr.csv')
+merged_xr_val_all_combo_allxr.to_csv(catfold+'merged_xr_val_all_combo_allxr.csv')
 
 
 
@@ -1549,13 +1587,27 @@ EL_3xmm.high_sn_o3_EL_gsw_df.to_csv(catfold+'high_sn_o3_xray_sample.csv')
 EL_4xmm_all.EL_gsw_df.to_csv(catfold+'x4_xray_all_sample.csv')
 xmm4eldiagmed_xrfilt_xragn.EL_gsw_df.to_csv(catfold+'x4_xragn_all_sample.csv')
 
+xmm4eldiagmed_xrfilt_xragn.bptplus_sf_df.to_csv(catfold+'xragn_bptplussf.csv')
+xmm4eldiagmed_xrfilt_xragn.bptplusnii_agn_df.to_csv(catfold+'xragn_bptplusnii.csv')
+xmm4eldiagmed_xrfilt_xragn.bptplusnii_sf_df.to_csv(catfold+'xragn_bptplusniisf.csv')
+
 xmm3eldiagmed_xrfilt_all.bpt_sf_df.to_csv(catfold+'xragn_bptsf.csv')
+EL_4xmm_all.bpt_sf_df.to_csv(catfold+'xr_bptsf.csv')
+EL_4xmm_all.bptplus_sf_df.to_csv(catfold+'xr_bptplussf.csv')
+
+EL_4xmm_all.bptplusnii_agn_df.to_csv(catfold+'xr_bptniiagn.csv')
+
+
 xmm3eldiagmed_xrfilt_all_high_sn_o3.high_sn_o3_EL_gsw_df.to_csv(catfold+'xragn_high_sn_o3_sample.csv')
 xmm3eldiagmed_xrfilt_xragn.EL_gsw_df.to_csv(catfold+'xragn_sample_no_sn_cuts.csv')
 
-xmm3eldiagmed_xrfilt_unclass_p1.EL_gsw_df.to_csv(catfold+'xragn_sample_unclass_p1_cuts.csv')
-xmm3eldiagmed_xrfilt_unclass_p2.EL_gsw_df.to_csv(catfold+'xragn_sample_unclass_p2_cuts.csv')
+xmm4eldiagmed_xrfilt_unclass_p1.EL_gsw_df.to_csv(catfold+'xragn_sample_unclass_p1_cuts.csv')
+xmm4eldiagmed_xrfilt_unclass_p2.EL_gsw_df.to_csv(catfold+'xragn_sample_unclass_p2_cuts.csv')
 
+bptplus_xr_o3 = EL_4xmm_all.bptplusnii_agn_df.iloc[np.where((EL_4xmm_all.bptplusnii_agn_df.oiiiflux_sn>1)&
+                                                            (EL_4xmm_all.bptplusnii_agn_df.hardflux_sn>2))].copy()
+neither_xr_o3 = EL_4xmm_all.neither_EL_gsw_df.iloc[np.where((EL_4xmm_all.neither_EL_gsw_df.oiiiflux_sn>1)&
+                                                            (EL_4xmm_all.neither_EL_gsw_df.hardflux_sn>2))].copy()
 
 comm_covered_bptplsagn, comm_bptpls, comm_covered = np.intersect1d(EL_m2.bptplsagn, covered_gsw_x3, return_indices=True)
 commdiffidsxmm3_sub, xmm3diffcomm_sub, xmm3gswdiffcomm_sub = commonpts1d(xmm3ids, gswids[covered_gsw_x3[comm_covered]])

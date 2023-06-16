@@ -19,10 +19,10 @@ from xraysfr_obj import *
 from demarcations import *
 import scipy.stats as st
 
-def gaussian(x, amp, cen, wid):
-    return amp*np.exp(-(x-cen)**2/wid)
+#def gaussian(x, amp, cen, wid):
+#    return amp*np.exp(-(x-cen)**2/wid)
 from lmfit import Model
-gmodel = Model(gaussian)
+#gmodel = Model(gaussian)
 #import os
 #os.environ['PATH']+=':~/texlive'
 #from mpl_toolkits.basemap import Basemap
@@ -50,71 +50,54 @@ class Plot:
         plot2dhist(x,y, self.nx, self.ny, minx=self.minx, maxx=self.maxx,
                    miny=self.miny, maxy=self.maxy, xlabel=xlabel, 
                    ylabel=ylabel, ccode=ccode, ccodename=ccodename)
-def scatter(x,y, xerr=[], yerr=[],ccode=[], xlabel='', ylabel='',  aspect='equal',
-            minx=0,maxx=0, miny=0, maxy=0, label='',bin_y=False, plotdata=True, lim=True, setplotlims=True,
+def scatter(x,y, xerr=[], yerr=[],ccode=[], xlabel='', ylabel='',  aspect='equal',nan=True,
+            fig=None,make_ax=False, ax=None, cmap='plasma',
+            minx = 0, maxx=0, miny=0, maxy=0, label='',binlabel='', bin_y=False, plotdata=True, lim=True, setplotlims=True,
             bin_stat_y='mean', size_y_bin=0.25, counting_thresh=5, percentiles = False,
-            elinewidth=0.1,capsize=3, capthick=0.1, facecolor=None, edgecolor='k', linecolor='r',
-            alpha=1,ecolor='k', color='k', marker='o', s=5, fmt='none', vmin=None, vmax=None):
+            elinewidth=0.1,capsize=3, capthick=0.1, facecolor=None, edgecolor='k', linecolor='r',markerborder=1,
+            alpha=1,ecolor='k', color='k', marker='o', s=5, fmt='none', vmin=None, vmax=None, zorder=1):
+    if nan:
+        filt = np.where((np.isfinite(x))&(np.isfinite(y)))
+        x = np.copy(np.array(x)[filt])
+        y = np.copy(np.array(y)[filt])
+        
+    if ax and not fig:
+        print('ax')
+        fig=ax
+    elif not ax and not fig:
+        ax = plt.gca()        
     if plotdata:
-        if len(xerr)!=0 and len(yerr)!=0:
-            plt.errorbar(x,y, xerr=xerr, yerr=yerr, fmt=fmt, 
-                         capthick=capthick, capsize=capsize, 
-                         label=label,elinewidth=elinewidth, color=color,
-                         ecolor=ecolor, alpha=alpha, marker=marker,markersize=s)
-        elif len(xerr)!=0:
-            plt.errorbar(x,y, xerr=xerr, fmt=fmt, 
-                         capthick=capthick, capsize=capsize, 
-                         label=label,elinewidth=elinewidth, color=color,
-                         ecolor=ecolor, alpha=alpha, marker=marker, markersize=s)
-        elif len(yerr) !=0 :
-            plt.errorbar(x,y, yerr=yerr, fmt=fmt, 
-                         capthick=capthick, capsize=capsize, 
-                         label=label,elinewidth=elinewidth, color=color,
-                         ecolor=ecolor, alpha=alpha, marker=marker, markersize=s)
+        if len(xerr)!=0 or len(yerr)!=0:
+            ax.errorbar(x,y, **kwargs)        
         else:
             if len(ccode)!=0:
-                plt.scatter(x,y, label=label, alpha=1, marker=marker,c=ccode, s=s, vmin=vmin, vmax=vmax)
-            else:   
-                plt.scatter(x,y, label=label, alpha=1, marker=marker,s=s,facecolor=facecolor, edgecolor=edgecolor,color=color)
-
+                ax.scatter(x,y, c=ccode,vmin=vmin, vmax=vmax, s=s, marker=marker, cmap=cmap, label=label, zorder=zorder, linewidth=markerborder)
+            else:
+                ax.scatter(x,y,  s=s, marker=marker, color=color, edgecolor=edgecolor, facecolor=facecolor, alpha=alpha, label=label, zorder=zorder, linewidth=markerborder)
+                
     plt.gca().set_aspect(aspect)
-    
     if minx!=0 or maxx!=0:
-        plt.xlim([minx,maxx])
+        ax.set_xlim([minx,maxx])
     if miny!=0 or maxy!=0:
-        plt.ylim([miny, maxy])
-
+        ax.set_ylim([miny, maxy])
     if bin_y:
-        xmid, avg_y, avg_quant = plot2dhist(x,y,
-                                                minx=minx, maxx=maxx,
-                                                miny=miny, maxy=maxy,
-                                                nan=True,bin_y=True,
-                                                data=False, bin_stat_y=bin_stat_y, 
-                                                size_y_bin=size_y_bin,
-                                                counting_thresh=counting_thresh,
-                                                lim=lim, setplotlims=setplotlims)
+        outs = plot2dhist(x,y,minx=minx, maxx=maxx, miny=miny, maxy=maxy, percentiles=percentiles, counting_thresh=counting_thresh,
+                          size_y_bin=size_y_bin, bin_stat_y=bin_stat_y, bin_y=bin_y, data=False, plotlines=False,lim=lim, setplotlims=setplotlims)
         if plotdata:
-            plt.plot(xmid, avg_y, linewidth=3, color=linecolor)#, 
-                     #label=bin_stat_y.capitalize()+r' trend, $\bar{x}=$'+str(np.nanmean(np.array(x)[np.where((np.isfinite(x)) &(np.isfinite(y)))]))[:4]+
-                     #                            r',$\bar{y}=$'+str(np.nanmean(np.array(y)[np.where((np.isfinite(x)) &(np.isfinite(y)))]))[:4] )
-        if  percentiles:
-            mid, avg_y, avg_quant, perc16, perc84 = plot2dhist(x,y,
-                                                minx=minx, maxx=maxx,
-                                                miny=miny, maxy=maxy,
-                                                nan=True,bin_y=True, percentiles=True,
-                                                data=False, bin_stat_y=bin_stat_y, 
-                                                size_y_bin=size_y_bin,
-                                                counting_thresh=counting_thresh)
+            if percentiles:
+                ax.plot(outs['xmid'], outs['perc16'], linecolor+'-.', linewidth=3 )
+                ax.plot(outs['xmid'], outs['perc84'], linecolor+'-.', linewidth=3)
+            ax.plot(outs['xmid'], outs['avg_y'], linewidth=3, color=linecolor, label=binlabel)
+            return outs
+        else:
             if plotdata:
-                plt.plot(xmid, perc16, linecolor+'-.', linewidth=3 )
-                plt.plot(xmid, perc84, linecolor+'-.', linewidth=3)
-            return xmid, avg_y, avg_quant, perc16, perc84
-        return xmid, avg_y, avg_quant
+                ax.plot(outs['xmid'], outs['avg_y'], linewidth=3, color=linecolor, label=binlabel)
+        return outs
     
 def plothist(x, bins=10, range=(), linewidth=1, 
              cumulative=False, reverse=False, ylim=False,
-             label='',linestyle='--', 
-             density=False, xlabel='',normed=False, norm0= False,
+             label='',linestyle='--', c='k',
+             density=False, xlabel='',normed=False, norm0= False, normval=None,
              integrate = False):
     if range==():
         range = (np.min(x), np.max(x))
@@ -125,10 +108,12 @@ def plothist(x, bins=10, range=(), linewidth=1,
     if normed:
         if norm0:
             cnts=cnts/cnts[0]
+        elif normval:
+            cnts=cnts/normval
         else:
             cnts= cnts/np.max(cnts)   
     if not cumulative:
-        plt.plot(bncenters, cnts, linewidth=linewidth, linestyle=linestyle, label=label)
+        plt.plot(bncenters, cnts, linewidth=linewidth, linestyle=linestyle, label=label, color=c)
         
         if ylim:
             plt.ylim([0, np.max(cnts)+np.max(cnts)/10])
@@ -142,11 +127,11 @@ def plothist(x, bins=10, range=(), linewidth=1,
         plt.ylim([0, np.max(np.cumsum(cnts))+np.max(np.cumsum(cnts))/10])
 
         if reverse:
-            plt.plot(bncenters[::-1], np.cumsum(cnts[::-1]), linestyle=linestyle, label=label)
+            plt.plot(bncenters[::-1], np.cumsum(cnts[::-1]), 'o', linestyle=linestyle, label=label, color=c)
             plt.gca().invert_xaxis()
             return bncenters[::-1],np.cumsum(cnts[::-1]), int_
         else:        
-            plt.plot(bncenters, np.cumsum(cnts), label=label)
+            plt.plot(bncenters, np.cumsum(cnts), label=label, color=c)
             return bncenters, np.cumsum(cnts), int_
         
 
@@ -170,10 +155,16 @@ def reject_outliers(data, m=2):
 def plthist(bincenters, counts):
     plt.plot(bincenters, counts,color='k', drawstyle='steps-mid')
 
-def plot2dhist(x,y,nx=200,ny=200, ccode= [], nan=True, data=True, fig=None,make_ax=False, ax=None, dens_scale=0.3,ccode_stat=np.nanmedian,
-               bin_y=False, bin_stat_y = 'mean',  ybincolsty='r-',ybincolsty_perc='r-.',nbins=25, size_y_bin=0, bin_quantity=[],percentiles=False,
-               ccodename = '', ccodelim=[], ccode_bin_min=20, linewid=2, label='', zorder=10,show_cbar=True,
-               minx=0, maxx=0, miny=0, maxy=0, xlabel='', ylabel='', lim=False, setplotlims=False, counting_thresh=20, aspect='equal'):
+def plot2dhist(x,y,nx=200,ny=200, ccode= [], nan=True, data=True, fig=None,
+               make_ax=False, ax=None, dens_scale=0.3,ccode_stat=np.nanmedian,
+               bin_y=False, bin_stat_y = 'mean',  ybincolsty='r-',plotlines=True,
+               ybincolsty_perc='r-.',nbins=25, size_y_bin=0,
+               bin_quantity=[],percentiles=False,
+               ccodename = '', ccodelim=[], ccode_bin_min=20, cmap='plasma', 
+               linewid=2, label='', zorder=10,show_cbar=True,
+               minx=0, maxx=0, miny=0, maxy=0, xlabel='', 
+               ylabel='', lim=False, setplotlims=False, 
+               counting_thresh=20, aspect='equal'):
     if type(x)!=np.array:
         x = np.copy(np.array(x))
     if type(y)!=np.array:
@@ -189,6 +180,12 @@ def plot2dhist(x,y,nx=200,ny=200, ccode= [], nan=True, data=True, fig=None,make_
         maxx = np.sort(x)[int(0.99*len(x))]
         miny = np.sort(y)[int(0.01*len(y))]
         maxy = np.sort(y)[int(0.99*len(y))]        
+    elif maxx != 0  and minx !=0 and maxy==0 and miny==0:
+        miny = np.sort(y)[int(0.01*len(y))]
+        maxy = np.sort(y)[int(0.99*len(y))]
+    elif maxx == 0  and minx ==0 and maxy!=0 and miny!=0:
+        minx = np.sort(x)[int(0.01*len(x))]
+        maxx = np.sort(x)[int(0.99*len(x))]
     if lim:
         limited = np.where((x>minx)&(x<maxx)&(y<maxy)&(y>miny) )[0]
         x = np.copy(x[limited])
@@ -215,10 +212,8 @@ def plot2dhist(x,y,nx=200,ny=200, ccode= [], nan=True, data=True, fig=None,make_
         y =np.copy(y[fin])
         if len(bin_quantity) != 0:
             bin_quantity = np.copy(bin_quantity[fin])
-    if len(ccode) != 0:
-        hist, xedges, yedges = np.histogram2d(x,y,bins = (int(nx),int(ny)), range=[[minx, maxx],[miny,maxy]])
-    else:
-        hist, xedges, yedges = np.histogram2d(x,y,bins = (int(nx),int(ny)))
+
+    hist, xedges, yedges = np.histogram2d(x,y,bins = (int(nx),int(ny)), range=[[minx, maxx],[miny,maxy]])
 
     extent= [np.min(xedges),np.max(xedges),np.min(yedges),np.max(yedges)]
     plt.minorticks_on()
@@ -255,14 +250,15 @@ def plot2dhist(x,y,nx=200,ny=200, ccode= [], nan=True, data=True, fig=None,make_
             print(nbins, size_y_bin)
             avg_y, xedges, binnum = scipy.stats.binned_statistic(x,y, statistic=bin_stat_y, bins = nbins,range=(minx, maxx))
             count_y, xedges, binnum = scipy.stats.binned_statistic(x,y,statistic='count', bins = nbins,range=(minx, maxx))
-            good_y = np.where(count_y>=counting_thresh)
+            good_y = np.where(count_y>=counting_thresh)[0]
+            #print(good_y, count_y, avg_y, xedges)
             xmid = (xedges[1:]+xedges[:-1])/2
             if percentiles:
                 bins84 = []
                 bins16 = []
                 for i in range(len(xedges)-1):
                     binned_ = np.where((x>xedges[i])&(x<xedges[i+1]))[0]
-                    if i in good_y[0]:
+                    if i in good_y:
                         bins16.append(np.percentile(y[binned_], 16))
                         bins84.append(np.percentile(y[binned_], 84))
                     else:
@@ -279,24 +275,27 @@ def plot2dhist(x,y,nx=200,ny=200, ccode= [], nan=True, data=True, fig=None,make_
                 avg_quant = bin_quantity
             
             if ax:
-                ax.plot(xmid[good_y], avg_y[good_y], ybincolsty, linewidth=linewid, label=label, zorder=zorder)
+                if plotlines:
+                    ax.plot(xmid[good_y], avg_y[good_y], ybincolsty, linewidth=linewid, label=label, zorder=zorder)
+                    if percentiles:
+                        ax.plot(xmid[good_y], bins84[good_y], ybincolsty_perc, linewidth=linewid, label=label, zorder=zorder)
+                        ax.plot(xmid[good_y], bins16[good_y], ybincolsty_perc, linewidth=linewid, label=label, zorder=zorder)
+    
                 if percentiles:
-                    ax.plot(xmid[good_y], bins84[good_y], ybincolsty_perc, linewidth=linewid, label=label, zorder=zorder)
-                    ax.plot(xmid[good_y], bins16[good_y], ybincolsty_perc, linewidth=linewid, label=label, zorder=zorder)
+                    return {'fig': fig, 'ax':ax, 'xmid':xmid[good_y], 'avg_y':avg_y[good_y], 'avg_quant':avg_quant, 'bins16':bins16[good_y], 'bins84':bins84[good_y]}
 
-                    return fig, ax, xmid[good_y], avg_y[good_y], avg_quant, bins16, bins84
-                    
-                return fig, ax, xmid[good_y], avg_y[good_y], avg_quant
+                return {'fig': fig, 'ax':ax, 'xmid':xmid[good_y], 'avg_y':avg_y[good_y], 'avg_quant':avg_quant}
             
             else:
-                if data:
+                if plotlines:
                     plt.plot(xmid[good_y], avg_y[good_y],ybincolsty, linewidth=linewid, label=label, zorder=zorder)
+                    if percentiles: 
+                        plt.plot(xmid[good_y], bins84[good_y], ybincolsty_perc, linewidth=linewid, label=label, zorder=zorder)
+                        plt.plot(xmid[good_y], bins16[good_y], ybincolsty_perc, linewidth=linewid, label=label, zorder=zorder)
+                       
                 if percentiles: 
-                    plt.plot(xmid[good_y], bins84[good_y], ybincolsty_perc, linewidth=linewid, label=label, zorder=zorder)
-                    plt.plot(xmid[good_y], bins16[good_y], ybincolsty_perc, linewidth=linewid, label=label, zorder=zorder)
-                   
-                    return xmid[good_y], avg_y[good_y], avg_quant, bins16[good_y], bins84[good_y]                  
-                return xmid[good_y], avg_y[good_y], avg_quant
+                    return {'fig': fig, 'ax':ax, 'xmid':xmid[good_y], 'avg_y':avg_y[good_y], 'avg_quant':avg_quant, 'bins16':bins16[good_y], 'bins84':bins84[good_y]}                   
+                return {'fig': fig, 'ax':ax, 'xmid':xmid[good_y], 'avg_y':avg_y[good_y], 'avg_quant':avg_quant}
     else:
         ccode_avgs = np.zeros_like(hist)
         for i in range(len(xedges)-1):
@@ -313,7 +312,7 @@ def plot2dhist(x,y,nx=200,ny=200, ccode= [], nan=True, data=True, fig=None,make_
                 mn, mx = ccodelim
             else:
                 mn, mx = np.nanmin(ccode_avgs), np.nanmax(ccode_avgs)       
-            im = ax.imshow((ccode_avgs.transpose()), cmap='plasma',extent=extent,origin='lower',
+            im = ax.imshow((ccode_avgs.transpose()), cmap=cmap,extent=extent,origin='lower',
                    aspect='auto',alpha=0.9, vmin=mn, vmax=mx)#, norm=colors.PowerNorm(gamma=1/2)) 
             ax.set_xlabel(xlabel)
             ax.set_ylabel(ylabel)            #pcm = im.get_children()[2]
@@ -326,9 +325,9 @@ def plot2dhist(x,y,nx=200,ny=200, ccode= [], nan=True, data=True, fig=None,make_
                 ax.set_xlim([minx, maxx])
                 ax.set_ylim([miny, maxy])
 
-            return im, fig, ax, ccode_avgs
+            return {'fig': fig, 'ax':ax, 'im':im, 'ccode_avgs':ccode_avgs}
         else:
-            im =plt.imshow((ccode_avgs.transpose()), cmap='plasma',extent=extent,origin='lower',
+            im =plt.imshow((ccode_avgs.transpose()), cmap=cmap,extent=extent,origin='lower',
                    aspect='auto',alpha=0.9)
             plt.xlabel(xlabel)
             plt.ylabel(ylabel)
@@ -347,7 +346,7 @@ def plot2dhist(x,y,nx=200,ny=200, ccode= [], nan=True, data=True, fig=None,make_
                 plt.xlim([minx, maxx])
                 plt.ylim([miny, maxy])
         
-            return im, ccode_avgs
+            return {'fig':fig, 'im':im,'ax':ax, 'ccode_avgs':ccode_avgs}
 def plot3d(x,y,z):
     from mpl_toolkits.mplot3d import Axes3D
     import matplotlib.pyplot as plt
@@ -1507,7 +1506,8 @@ def plotbptnormal(bgx,bgy,ccode= [], ccode_stat=np.nanmedian, fig=None, ax=None,
                   title=None, minx=-2, maxx=1.5, miny=-1.2, maxy=2,mod_kauff=True,kewley=False, scat=False,
                   bin_y=False, bin_stat_y = 'mean',  ybincolsty='r-',nbins=100,percentiles=False,
                   nx=300, ny=240, ccodename='', ccodelim=[],ccode_bin_min=20, nobj=True, thomas_mixing=False, 
-                  aspect='equal', setplotlims=False, lim=False, agnlabel_xy= (), sflabel_xy = (), show_cbar=True):
+                  aspect='equal', setplotlims=False, lim=False, agnlabel_xy= (), sflabel_xy = (), show_cbar=True,
+                  facecolor='k',edgecolor='k', label='', s=10, zorder=1, marker='o'):
     '''
     for doing bpt diagram with sdss galaxies scatter plotted
     '''
@@ -1521,7 +1521,7 @@ def plotbptnormal(bgx,bgy,ccode= [], ccode_stat=np.nanmedian, fig=None, ax=None,
     #nx = 3/0.01
     #ny = 2.4/0.01
     if scat:
-        scatter(bgx,bgy)
+        scatter(bgx,bgy, facecolor=facecolor, edgecolor=edgecolor, label=label, s=s, zorder=zorder, marker=marker)
     else:
         if len(ccode) !=0:
             
@@ -1561,8 +1561,8 @@ def plotbptnormal(bgx,bgy,ccode= [], ccode_stat=np.nanmedian, fig=None, ax=None,
             sflabel_xy = (-1.15, -0.3)
         ax.text(agnlabel_xy[0],agnlabel_xy[1],'S/L', fontsize=15)
         ax.text(sflabel_xy[0],sflabel_xy[1],'SF',fontsize=15)
-    ax.set_ylabel(r'log([OIII]/H$\rm \beta$)',fontsize=20)
-    ax.set_xlabel(r'log([NII]/H$\rm \alpha$)',fontsize=20)
+    ax.set_ylabel(r'log([OIII]/H$\rm \beta$)',fontsize=15)
+    ax.set_xlabel(r'log([NII]/H$\rm \alpha$)',fontsize=15)
     ax.set_ylim([miny-0.1,maxy])
     ax.set_xlim([minx-0.1, maxx+0.1])
     ax.set_xticks([-2,-1,0, 1 ])
@@ -5540,7 +5540,10 @@ plotbpt_oi(xmm3eldiagmed_xrfilt.oiha,xmm3eldiagmed_xrfilt.oiiihb,
          EL_m2.oiha,EL_m2.oiiihb,save=True, filename='xrfrac', ccode=contaminations_xmm3_2)
 
 
+
+plotwhan(EL_m2.niiha, np.log10(-EL_m2.halp_ewq))
 '''
+
 
 def plotwhan(bgx,bgy,save=False,filename='',
                title=None,alph=0.1,ccode=[],ccodegsw=[],cont=None,
@@ -5557,8 +5560,11 @@ def plotwhan(bgx,bgy,save=False,filename='',
     if ax == None:
         fig = plt.figure()
         ax = fig.add_subplot(111)
-    valbg = np.where((np.isfinite(bgx) & (np.isfinite(bgy))) &
+    if lim:
+        valbg = np.where((np.isfinite(bgx) & (np.isfinite(bgy))) &
                 (bgy > miny) &( bgy < maxy) & (bgx<maxx)&(bgx > minx) )[0]
+    else:
+        valbg = np.arange(len(bgx))
     if len(ccode) !=0:    
         ccode=np.copy(np.array(ccode))
         plot2dhist(bgx[valbg],bgy[valbg],nx,ny, ccode=ccode[valbg], ccodename=ccodename, 
@@ -5566,6 +5572,7 @@ def plotwhan(bgx,bgy,save=False,filename='',
                    fig=fig, lim=lim, setplotlims=setplotlims, show_cbar=show_cbar, dens_scale=dens_scale)
     else:
         plot2dhist(bgx[valbg], bgy[valbg], nx,ny, ax=ax, fig=fig, show_cbar=show_cbar,
+                   minx=minx, miny=miny, maxx=maxx, maxy=maxy,
                    setplotlims=setplotlims, lim=lim, dens_scale=dens_scale)
     #ax.plot(np.log10(xline3_linersy2),np.log10(yline3_linersy2),c='k',ls='-.')
     #ax.plot(np.log10(xline3_agn), np.log10(yline3_agn),'k--')
@@ -5581,8 +5588,8 @@ def plotwhan(bgx,bgy,save=False,filename='',
     ax.set_ylim([miny-0.1,maxy])
     ax.set_xlim([minx-0.1, maxx+0.1])
     ax.plot([-0.4, 1.5],[np.log10(6), np.log10(6)],  'k')
-    ax.plot([-1.7, 1.7],[np.log10(3), np.log10(3)],  'k')
-    ax.plot([-1.7, 1.7],[np.log10(0.5), np.log10(0.5)], 'k')
+    ax.plot([-2.4, 1.7],[np.log10(3), np.log10(3)],  'k')
+    ax.plot([-2.4, 1.7],[np.log10(0.5), np.log10(0.5)], 'k')
 
     ax.plot([-0.4, -0.4],[np.log10(3), np.log10(1000)], 'k')
     ax.set(adjustable='box', aspect=aspect)

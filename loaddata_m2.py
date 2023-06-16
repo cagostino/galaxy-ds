@@ -19,6 +19,13 @@ m1_photcatids = np.loadtxt(catfold+'gs_mis_sdss_phot.dat', unpack=True,usecols=(
 m1_modelrflux = np.loadtxt(catfold+'gs_mis_sdss_phot.dat', unpack=True, usecols=(41,))
 ind2_m1phot = np.loadtxt(catfold+'photmatchinginds.txt', dtype=np.int64)
 sigma1_m = np.loadtxt(catfold+'sigma1_mis.dat', dtype=np.float64, usecols=(2), unpack=True)
+env_nyu_m = np.loadtxt(catfold+'envir_nyu_mis.dat', dtype=np.float64, usecols=(0), unpack=False)
+env_bald_m = np.loadtxt(catfold+'baldry_mis.dat', dtype=np.float64, usecols=(4), unpack=True)
+irx_m = np.loadtxt(catfold+'irexcess_mis.dat', dtype=np.float64, usecols=(0), unpack=True)
 
-allm2 = np.vstack((allm2, sigma1_m))
-allx2 = np.vstack((allx2, allx2[0]*0 - 999))
+nuv, nuverr, fuv, fuverr = np.loadtxt(catfold+'gs_mis_galex_br.dat', usecols =(14,15,18,19),unpack=True)
+
+axisrat = 1-np.loadtxt(catfold+'simard_ellip_mis.dat', dtype=np.float64, usecols=(1), unpack=True)
+
+allm2 = np.vstack((allm2, sigma1_m,env_nyu_m, env_bald_m, irx_m, axisrat, nuv[ind2_m1phot], fuv[ind2_m1phot]))
+allx2 = np.vstack((allx2, allx2[0]*0 - 999,allx2[0]*0 - 999,allx2[0]*0 - 999, allx2[0]*0-999, allx2[0]*0-999,allx2[0]*0-999,allx2[0]*0-999))

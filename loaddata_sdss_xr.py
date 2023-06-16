@@ -13,6 +13,7 @@ class SDSSObj:
         pass
 m2 = np.loadtxt(catfold+"GSWLC-M2.dat", unpack = True, usecols=(0,1), dtype=np.int64)
 
+
 galinfo  = Fits_set(catfold+'gal_info_dr7_v5_2.fit')
 galline = Fits_set(catfold+'gal_line_dr7_v5_2.fit')
 galfiboh = Fits_set(catfold+'gal_fiboh_dr7_v5_2.fits')

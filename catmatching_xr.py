@@ -8,7 +8,7 @@ from astropy import units as u
 arcsec = 1/3600.
 
 
-def catmatch_act(ra1, dec1, ra2, dec2, rfluxes, fullflux, goodm1):
+def catmatch_act(ra1, dec1, ra2, dec2, rfluxes, fullflux, goodm1, dist_min = 7):
     '''
     ra2 to match to (GSW)
     ra1 to be matched (3XMM)
@@ -20,6 +20,8 @@ def catmatch_act(ra1, dec1, ra2, dec2, rfluxes, fullflux, goodm1):
     matchxflux =[]
     matchrflux = []
     match_7_dists = []
+    totpot= 0
+    n_uniq_bad=0
     for i in np.int64(goodm1): #range(len(ra1)):  
         racop = np.copy(ra2)
         if i%1000 == 0:
@@ -34,9 +36,11 @@ def catmatch_act(ra1, dec1, ra2, dec2, rfluxes, fullflux, goodm1):
         delta_ra = (ra1[i] - racop)*np.cos(np.radians(dec1[i]))
         delta_dec = (dec1[i] - dec2)
         delta_rad = np.sqrt(delta_ra**2 + delta_dec**2)
-        good_gals = np.where(delta_rad < 7*arcsec)[0]
+        good_gals = np.where(delta_rad < dist_min*arcsec)[0]
         n_cands = len(good_gals)
         fullfl = fullflux[i]
+        totpot+=n_cands
+        n_uniq_bad+=1
         if n_cands >0:
             print(delta_ra[good_gals]/arcsec, delta_dec[good_gals]/arcsec, delta_rad[good_gals]/arcsec)
         if n_cands > 1:
@@ -89,6 +93,9 @@ def catmatch_act(ra1, dec1, ra2, dec2, rfluxes, fullflux, goodm1):
         matchrflux.append(galrflux)
         matchra_diff.append(delta_ra_good)
         matchdec_diff.append(delta_dec_good)
+    print('totpot: ', totpot)
+    print('n_uniq_bad: ', n_uniq_bad)
+    
     return np.array(match_7), np.array(match_7_dists), np.array(matchxflux), np.array(matchedind), np.array(matchrflux), np.array(matchra_diff), np.array(matchdec_diff)
 
 def magdifftointenrat(magdiff):
