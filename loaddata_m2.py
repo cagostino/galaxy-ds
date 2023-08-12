@@ -27,5 +27,5 @@ nuv, nuverr, fuv, fuverr = np.loadtxt(catfold+'gs_mis_galex_br.dat', usecols =(1
 
 axisrat = 1-np.loadtxt(catfold+'simard_ellip_mis.dat', dtype=np.float64, usecols=(1), unpack=True)
 
-allm2 = np.vstack((allm2, sigma1_m,env_nyu_m, env_bald_m, irx_m, axisrat, nuv[ind2_m1phot], fuv[ind2_m1phot]))
+allm2 = np.vstack((allm2, sigma1_m,env_nyu_m, env_bald_m, irx_m, axisrat, allm2[0]*0-999, allm2[0]*0-999)) #nuv[ind2_m1phot], fuv[ind2_m1phot]))
 allx2 = np.vstack((allx2, allx2[0]*0 - 999,allx2[0]*0 - 999,allx2[0]*0 - 999, allx2[0]*0-999, allx2[0]*0-999,allx2[0]*0-999,allx2[0]*0-999))

@@ -7,6 +7,24 @@ Created on Tue May 17 22:22:09 2022
 """
 
 
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+import sys
+sys.path.append("../..")
+#from Fits_set import *
+#from ast_func import *
+#from ELObj import *
+
+fil = open('../../EL_m2.pkl', 'rb')
+EL_m2 = pickle.load(fil)
+
+filx = open('../../EL_4xmm.pkl', 'rb')
+EL_4xmm = pickle.load(filx)
+filxall = open('../../EL_4xmm_all.pkl', 'rb')
+EL_4xmm_all = pickle.load(filxall)
+
+#EL_m2 = np.load('../../EL_m2.npy', allow_pickle=True)
 
 '''
 

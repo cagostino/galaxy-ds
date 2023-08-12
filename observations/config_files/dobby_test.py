@@ -114,6 +114,7 @@ def get_dobby_spec(spec, spec_err, spec_flag,spec_cont,wdisp = muse_wdisp,
     #_b = 1*enable_balmer_lim
     #suffix = 'El%sk%ib%i' % (_m, _k, _b)    
     print(outfile)
+    print(wdisp)
     if not load:
         el = fit_strong_lines(lamb, spec.data, np.ma.array(spec_cont.data), spec_err.data, vd_inst = wdisp,
                             kinematic_ties_on = enable_kin_ties, 
@@ -137,7 +138,9 @@ def get_dobby_spec(spec, spec_err, spec_flag,spec_cont,wdisp = muse_wdisp,
     elines, pseudo_cont_spec = read_summary_from_file(outfile+'.hdf5')
     return lamb, elines, pseudo_cont_spec
 def get_bpt_from_dobby(dob_out, het=False):
+
     lamb, elines, pseudo_cont_spec = dob_out
+    
     out = []
     lines = [4861,5007,6563,6584,6300,6716,6731]
     if het:
@@ -153,7 +156,7 @@ def get_bpt_from_dobby(dob_out, het=False):
         dl = 1
         eF = lcrms*np.sqrt(6.*vdtot_ang*dl)
         sn = flux/eF
-        out.append([ [elines, pseudo_cont_spec], flux,eF, sn])
+        out.append([[elines, pseudo_cont_spec], flux,eF, sn])
     s2_flux = out[-2][1] +out[-1][1]
     s2_flux_error = np.sqrt(out[-2][1]+out[-1][1])
     s2_sn = s2_flux/s2_flux_error
@@ -162,7 +165,7 @@ def get_bpt_from_dobby(dob_out, het=False):
     s2ha = np.log10(out[-1][1]/out[2][1])
     o1ha = np.log10(out[4][1]/out[2][1])
     o3hb = np.log10(out[1][1]/out[0][1])
-    out.append([o3hb, n2ha,s2ha, o1ha])
+    out.append([o3hb, n2ha, s2ha, o1ha])
     ykau = np.log10(y1_kauffmann(n2ha))
     if np.isinf(o3hb) or np.isinf(n2ha):
         bpt_map = np.nan
@@ -442,7 +445,6 @@ class ELines(object):
     def __init__(self):
         pass
 
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 class Reduced_Cube(object):
     def __init__(self, fname, gal_id, z, flux_unit=1e-20,het=False, load_cutouts=True, plot=False, load_aps=False, write_sl=False, load_sl=True, bco3n=False):
@@ -591,14 +593,13 @@ class Reduced_Cube(object):
                                    self.cont_2arc, self.cont_25arc,self.cont_3arc]
             self.aperture_specs_sub = [self.spec_sub_05arc, self.spec_sub_1arc,self.spec_sub_15arc,
                                    self.spec_sub_2arc, self.spec_sub_25arc,self.spec_sub_3arc]
-            '''aps = ['0.5', '1','1.5','2','2.5', '3']
+            aps = ['0.5', '1','1.5','2','2.5', '3']
             for i, ap in enumerate(aps):
                 filename=self.gal_id +'_starlight_comp_'+ap
                 if bco3n:
                     filename=filename+'_bco3n'
                 self.plot_starlight_cont_comp(self.aperture_specs[i], self.aperture_conts[i],filename=filename)
-            
-            
+            '''
             self.spec_1arc_sq, self.cont_1arc_sq, self.spec_sub_1arc_sq, self.spec_sub_1arc_dob_sq = self.get_within_square(1, xoff=0, yoff=0, wdisp=wdisp, het=het, load= load_cutouts,plot=plot)
             self.spec_1arc_sq_up, self.cont_1arc_sq_up, self.spec_sub_1arc_sq_up, self.spec_sub_1arc_dob_sq_up = self.get_within_square(1,xoff=0, yoff=1, wdisp=wdisp, het=het, load= load_cutouts,plot=plot)
             self.spec_1arc_sq_down, self.cont_1arc_sq_down, self.spec_sub_1arc_sq_down, self.spec_sub_1arc_dob_sq_down = self.get_within_square(1, xoff=0, yoff=-1, wdisp=wdisp, het=het, load= load_cutouts,plot=plot)
@@ -752,8 +753,6 @@ class Reduced_Cube(object):
         obj.o3_flux_corr = dustcorrect(obj.o3_flux, obj.av_balmer, 5007.0)
         obj.o3_flux_error_corr = dustcorrect(obj.o3_flux_error, obj.av_balmer, 5007.0)
         
-        obj.o3_lum = np.log10(getlumfromflux(obj.o3_flux/1e20, self.z))
-
         obj.o3_lum_corr = np.log10(getlumfromflux(obj.o3_flux_corr/1e20, self.z))
         obj.o3_lum_up_corr = np.log10(getlumfromflux( (obj.o3_flux_corr+obj.o3_flux_error_corr)/1e20, self.z))
         obj.o3_lum_down_corr = np.log10(getlumfromflux((obj.o3_flux_corr-obj.o3_flux_error_corr)/1e20, self.z))
@@ -971,37 +970,27 @@ class Reduced_Cube(object):
 
         return spec, cont, spec_sub, dob_
 
-    def plot_im(self, im, vmin=None, vmax=None, ax=None, cbarlabel='', cbarticklabels=[],save=False, filename='', center = False):
-
-        if not ax:
-            wcs = WCS(self.obs.data_header)
-            wcs= wcs.dropaxis(2)
-            fig = plt.figure()
-            ax= fig.add_subplot(projection=wcs)
-        col_img = ax.imshow(im, origin='lower', vmin=vmin, vmax=vmax, cmap='plasma')
-        ax.set_xlabel('RA')
-        ax.set_ylabel('Dec.')
-        
-        #divider = make_axes_locatable(ax)
-        #cax = divider.append_axes("right", size="5%", pad=0.05)
+    def plot_im(self, im, vmin=None, vmax=None, cbarlabel='', cbarticklabels=[],save=False, filename='', center = False):
+        wcs = WCS(self.obs.data_header)
+        wcs= wcs.dropaxis(2)
+        plt.subplot(projection=wcs)
+        plt.imshow(im, origin='lower', vmin=vmin, vmax=vmax, cmap='plasma')
+        plt.xlabel('RA')
+        plt.ylabel('Dec.')
         if len(cbarlabel) != 0:
-            #cax = fig.add_axes([ax.get_position().x1+0.01, ax.get_position().y0,0.02,ax.fet_position().height ])
-            cbar = plt.colorbar(col_img,  fraction=0.046, pad=0.04, ax=ax)
+            cbar = plt.colorbar()
             cbar.set_label(cbarlabel, fontsize=20)
         if len(cbarticklabels)>0:
             cbar.set_ticks(np.arange(len(cbarticklabels))+vmin)
             cbar.set_ticklabels(cbarticklabels)
         if center:
             
-            ax.scatter(self.center[1],self.center[0],marker='x', color='k', alpha=0.5, s=35)
+            plt.scatter(self.center[1],self.center[0],marker='x', color='k', alpha=0.5, s=35)
         plt.tight_layout()
         if save:
-                ax.savefig('plots/'+filename+'.pdf', format='pdf', dpi=250,bbox_inches='tight' )
-                ax.savefig('plots/'+filename+'.png', format='png', dpi=250,bbox_inches='tight' )
-                ax.close()
-        else:
-            if len(cbarlabel)!=0:
-                return ax, cbar
+                plt.savefig('plots/'+filename+'.pdf', format='pdf', dpi=250,bbox_inches='tight' )
+                plt.savefig('plots/'+filename+'.png', format='png', dpi=250,bbox_inches='tight' )
+                plt.close()
     
 def write_starlight(wl, flux, err, flag, filename):
     out_ = np.vstack([wl, flux, err, flag]).transpose()
@@ -1087,37 +1076,240 @@ load_aps=True
 write_sl = False
 load_sl=True
 bco3n = True
+'''
 xu104 = Reduced_Cube('data/xu104_bco3n_starlighted.fits', 'xu104',0.118, load_cutouts=load_cutouts, plot=plot, load_aps=load_aps, write_sl=write_sl, load_sl=load_sl, bco3n=bco3n)
 xu104.get_dobby_fits(load_full=True)
+
 xr31 = Reduced_Cube('data/xr31_bco3n_starlighted.fits', 'xr31',0.0712, load_cutouts=load_cutouts, plot=plot, load_aps=load_aps, write_sl=write_sl, load_sl=load_sl, bco3n=bco3n)
 xr31.get_dobby_fits( load_full=True)    
-
+'''
 xu210 = Reduced_Cube('data/xu210_bco3n_starlighted.fits', 'xu210',0.101388, load_cutouts=load_cutouts, plot=plot, load_aps=load_aps, write_sl=write_sl, load_sl=load_sl, bco3n=bco3n)
 xu210.get_dobby_fits( load_full=True)
+'''
 xu22 = Reduced_Cube('data/xu22_bco3n_starlighted.fits', 'xu22', 0.0949, load_cutouts=load_cutouts, plot=plot, load_aps=load_aps, write_sl=write_sl, load_sl=load_sl, bco3n=bco3n)
 xu22.get_dobby_fits(load_full=True)
 
 xu23 = Reduced_Cube('data/xu23_bco3n_starlighted.fits', 'xu23', 0.096, load_cutouts=load_cutouts, plot=plot, load_aps=load_aps, write_sl=write_sl, load_sl=load_sl, bco3n=bco3n)
 xu23.get_dobby_fits(load_full=True)
-
+'''
 
 #xr10 = Cube('xr10_het_starlighted.fits', ext=1, unit=1e-20)
 
 
 
+
+'''
+
+muse_cubes = {'xr31':xr31, 'xu22':xu22, 'xu23':xu23, 'xu104':xu104,'xu210':xu210}
+for obj in muse_cubes.keys():
     
-sdss_xu22 = SDSS_spec('/geode2/home/u020/cjagosti/Carbonate/drive/iu grad/research/bpt_bias/observations/muse/xu22/sdss_xu22.fits',0.0949)
-sdss_xu23 = SDSS_spec('/geode2/home/u020/cjagosti/Carbonate/drive/iu grad/research/bpt_bias/observations/muse/xu23/sdss_xu23.fits',0.096)
-sdss_xu104 = SDSS_spec('/geode2/home/u020/cjagosti/Carbonate/drive/iu grad/research/bpt_bias/observations/muse/xu104/sdss_xu104.fits',0.118) #/home/caug/gdrive/FromBox/research/bpt_bias/observations/muse/xu104/sdss_xu104.fits',0.118)
-sdss_xu210 = SDSS_spec('/geode2/home/u020/cjagosti/Carbonate/drive/iu grad/research/bpt_bias/observations/muse/xu210/sdss_xu210.fits',0.101388)
+    o3hbs = []
+    n2has = []
+    n2sns = []
+    hasns = []
+    o3sns = []
+    hbsns = []
 
-sdss_xr31 = SDSS_spec('/geode2/home/u020/cjagosti/Carbonate/drive/iu grad/research/bpt_bias/observations/muse/xr31/sdss_xr31.fits',0.0712)
+    for dob in muse_cubes[obj].aperture_dobs:
+        o3hbs.append(dob.o3hb)
+        n2has.append(dob.n2ha)
+        n2sns.append(dob.n2_sn)
+        hasns.append(dob.ha_sn)
+        hbsns.append(dob.hb_sn)
+        o3sns.append(dob.o3_sn)
+    plotbptnormal([], [],nx=20, ny=20, kewley=True, mod_kauff=False, nobj=False)
+    for i in range(len(o3hbs)):
+        if n2sns[i] >2 and hasns[i]>2 and hbsns[i]>2 and o3sns[i]>2:
+            plt.scatter(n2has[i], o3hbs[i], s=(i+1)*10, marker='o', edgecolor='k',facecolor='none')
+        elif n2sns[i]>2 and hasns[i]>2:
+            plt.scatter(n2has[i], 1.7, s=(i+1)*10, marker='o',edgecolor='k',facecolor='none')
+    plt.savefig('plots/'+obj+'_bpt_diag_apertures.pdf', dpi=250, format='pdf', bbox_inches='tight')
+    plt.savefig('plots/'+obj+'_bpt_diag_apertures.png', dpi=250, format='png', bbox_inches='tight')
+    plt.close()  
+    
+obj = 'xr31'
+xobj = muse_cubes[obj]
 
-sdss_xu22.load_starlight('/geode2/home/u020/cjagosti/Carbonate/drive/iu grad/research/bpt_bias/observations/muse/xu22/xu22_sdss.out')
-sdss_xu23.load_starlight('/geode2/home/u020/cjagosti/Carbonate/drive/iu grad/research/bpt_bias/observations/muse/xu23/xu23_sdss.out')
-sdss_xu104.load_starlight('/geode2/home/u020/cjagosti/Carbonate/drive/iu grad/research/bpt_bias/observations/muse/xu104/xu104_sdss.out')#/home/caug/gdrive/FromBox/research/bpt_bias/observations/muse/xu104/xu104_sdss.out')
-sdss_xr31.load_starlight('/geode2/home/u020/cjagosti/Carbonate/drive/iu grad/research/bpt_bias/observations/muse/xr31/xr31_sdss.out')
-sdss_xu210.load_starlight('/geode2/home/u020/cjagosti/Carbonate/drive/iu grad/research/bpt_bias/observations/muse/xu210/xu210_sdss.out')
+sdss_spec, sdss_dob = xobj.get_single_dobby_fit(xobj.sdss.starlight_res*1e17, 
+                                      xobj.sdss.resampled_flux_err, 
+                                      xobj.sdss.resampled_flag, xobj.sdss.starlight_fsyn*1e17,
+                                      wdisp = xobj.sdss.resampled_wdisp, 
+                                      lamb=xobj.sdss.resampled_wl_starlight, 
+                                      plot=False, save_plot=False, outfile='sdss_'+obj)
+plotbptnormal([], [],nx=20, ny=20, kewley=True, mod_kauff=False, nobj=False)
+plt.scatter(xragn_bpt_sf_df.niiha.iloc[28], xragn_bpt_sf_df.oiiihb.iloc[28], marker='x', label='MPA SDSS')
+
+plt.scatter(sdss_dob.n2ha, sdss_dob.o3hb, marker='^', label='Dobby SDSS')
+
+plt.scatter(xr31.spec_sub_3arc_dob.n2ha, xr31.spec_sub_3arc_dob.o3hb, marker='^', label="Dobby 3'' MUSE")
+plt.legend()
+
+plt.savefig('plots/'+obj+'_bpt_lr_comparison_3arc.pdf', dpi=250, format='pdf', bbox_inches='tight')
+plt.savefig('plots/'+obj+'_bpt_lr_comparison_3arc.png', dpi=250, format='png', bbox_inches='tight')
+plt.close()
+
+
+for obj in xu_cubes.keys():
+    
+    xobj = xu_cubes[obj]
+    sdss_spec, sdss_dob = xobj.get_single_dobby_fit(xobj.sdss.starlight_res*1e17, 
+                                          xobj.sdss.resampled_flux_err, 
+                                          xobj.sdss.resampled_flag, xobj.sdss.starlight_fsyn*1e17,
+                                          wdisp = xobj.sdss.resampled_wdisp, 
+                                          lamb=xobj.sdss.resampled_wl_starlight, 
+                                          plot=False, save_plot=False, outfile='sdss_'+str(obj))
+    
+    plotbptnormal([], [],nx=20, ny=20, kewley=True, mod_kauff=False, nobj=False)
+    
+    
+    
+    if xragn_unclass_p1.niiflux_sn.iloc[obj] >2 and xragn_unclass_p1.halpflux_sn.iloc[obj] >2:
+        if xragn_unclass_p1.oiiiflux_sn.iloc[obj] >2 and xragn_unclass_p1.hbetaflux_sn.iloc[obj] >2:
+            plt.scatter(xragn_unclass_p1.niiha.iloc[obj], xragn_unclass_p1.oiiihb.iloc[obj], marker='x', label='MPA SDSS')
+        else:
+            plt.scatter(xragn_unclass_p1.niiha.iloc[obj],1.7, marker='x', label='MPA SDSS')
+    if sdss_dob.n2_sn >2 and sdss_dob.ha_sn >2:
+        if sdss_dob.o3_sn >2 and sdss_dob.hb_sn.iloc[obj] >2:
+            plt.scatter(sdss_dob.n2ha, sdss_dob.o3hb, marker='^', label='Dobby SDSS')
+        else:
+            plt.scatter(sdss_dob.n2ha,1.7, marker='^', label='Dobby SDSS')
+    xr3arc = xobj.spec_sub_3arc_dob
+    if xr3arc.n2_sn >2 and xr3arc.ha_sn >2:
+        if xr3arc.o3_sn >2 and xr3arc.hb_sn.iloc[obj] >2:
+            plt.scatter(xr3arc.n2ha, xr3arc.o3hb, marker='o', label="Dobby 3'' MUSE")
+        else:
+            plt.scatter(xr3arc.n2ha,1.7, marker='o', label="Dobby 3'' MUSE")
+
+
+    plt.legend()        
+    plt.savefig('plots/xu'+str(obj)+'_bpt_lr_comparison_3arc.pdf', dpi=250, format='pdf', bbox_inches='tight')
+    plt.savefig('plots/xu'+str(obj)+'_bpt_lr_comparison_3arc.png', dpi=250, format='png', bbox_inches='tight')
+    plt.close()    
+        
+        
+for obj in muse_cubes.keys():
+        
+    #muse_cubes[obj].plot_im(muse_cubes[obj].obs_rgb, filename=obj+'rgb', save=True)
+    ximg = muse_cubes[obj].dobby
+    
+    low_sn_o3_mask = ximg.o3_sn<2
+    o3_copy = np.copy(ximg.o3_flux)
+    o3_copy[low_sn_o3_mask] = np.nan
+    muse_cubes[obj].plot_im(np.log10(o3_copy), cbarlabel=r'log(F$_{\mathrm{[OIII}}$)', filename=obj+'_o3flux',center=True, save=True)
+    
+    
+    low_sn_n2_mask = ximg.n2_sn<2
+    n2_copy = np.copy(ximg.n2_flux)
+    n2_copy[low_sn_n2_mask] = np.nan
+    muse_cubes[obj].plot_im(np.log10(n2_copy), cbarlabel=r'log(F$_{\mathrm{[NII}}$)', filename=obj+'_n2flux', save=True,center=True)
+
+    low_sn_ha_mask = ximg.ha_sn<2
+    ha_copy = np.copy(ximg.ha_flux)
+    ha_copy[low_sn_ha_mask] = np.nan
+    muse_cubes[obj].plot_im(np.log10(ha_copy), cbarlabel=r'log(F$_{\mathrm{H}\alpha}$)', filename=obj+'_haflux', save=True,center=True)
+
+    low_sn_hb_mask = ximg.hb_sn<2
+    hb_copy = np.copy(ximg.hb_flux)
+    hb_copy[low_sn_hb_mask] = np.nan
+    muse_cubes[obj].plot_im(np.log10(hb_copy), cbarlabel=r'log(F$_{\mathrm{H}\beta}$)', filename=obj+'_hbflux', save=True,center=True)
+
+    low_sn_n2ha = (low_sn_ha_mask | low_sn_n2_mask)
+    n2ha_copy = np.copy(ximg.n2ha)
+    n2ha_copy[low_sn_n2ha] = np.nan
+    muse_cubes[obj].plot_im(n2ha_copy, cbarlabel=r'log([NII]/H$\alpha$)', filename=obj+'_n2ha', save=True, vmin=-1, vmax=0.5,center=True)
+   
+    low_sn_o3hb  = (low_sn_hb_mask | low_sn_o3_mask)
+    o3hb_copy = np.copy(ximg.o3hb)
+    o3hb_copy[low_sn_o3hb] = np.nan
+    muse_cubes[obj].plot_im(o3hb_copy, cbarlabel=r'log([OIII]/H$\beta$)', filename=obj+'_o3hb', save=True, vmin=-1, vmax=1,center=True)
+    
+    
+    low_sn_bpt = (low_sn_n2ha | low_sn_o3hb)
+    bptmap_copy = np.copy(ximg.bpt_map_)
+    bptmap_copy[low_sn_bpt] = np.nan    
+    ykau = np.log10(y1_kauffmann(n2ha_copy))
+    bptmap_copy = np.where(o3hb_copy>ykau, 2, 1)
+    bptmap_copy = np.where(n2ha_copy>0, 2, bptmap_copy)
+    bptmap_copy = np.where(low_sn_bpt, np.nan, bptmap_copy)
+    
+    muse_cubes[obj].plot_im(bptmap_copy, cbarlabel=r'BPT Class', cbarticklabels=['SF','AGN'], filename=obj+'_bpt_class', save=True, vmin=1, vmax=2,center=True)
+    
+    plotbptnormal(n2ha_copy.flatten(), o3hb_copy.flatten(),nx=20, ny=20, kewley=True, mod_kauff=False)
+    plt.savefig('plots/'+obj+'_bpt_diag.pdf', dpi=250, format='pdf', bbox_inches='tight')
+    plt.savefig('plots/'+obj+'_bpt_diag.png', dpi=250, format='png', bbox_inches='tight')
+    plt.close()    
+    
+    
+    
+    
+    
+    par_dict = {'halpflux': [ximg.ha_flux, r'log(F$_{\mathrm{H}\alpha}$)'],'hbetaflux':[ximg.hb_flux, r'log(F$_{\mathrm{H}\beta}$)'],
+                     'n2flux': [ximg.n2_flux,r'log(F$_{\mathrm{[NII]}}$)'], 'o3flux':[ximg.o3_flux, r'log(F$_{\mathrm{[OIII}}$)'], 
+                     's2flux': [ximg.s2_flux,r'log(F$_{\mathrm{[SII]}}$)'], 'o1flux':[ximg.o1_flux, r'log(F$_{\mathrm{[OI}}$)'], 
+                     'n2ha': [ximg.n2ha,r'log([NII]/H$\alpha$)'], 'o3hb':[ximg.o3hb, r'log([OIII]/H$\beta$)'],
+                     's2ha': [ximg.s2ha,r'log([SII]/H$\alpha$)'], 'o1ha':[ximg.o1ha, r'log([OI]/H$\alpha$)'],
+                     'bptmap': [ximg.bpt_map_,r'BPT Class']}
+    
+
+for i in range(len(muse_cubes['xr31'].aperture_dobs)): 
+    o3fluxes_aps = []
+    o3flux_errors_aps = []
+
+    for obj in muse_cubes.keys():
+    
+        o3fluxes_aps.append( muse_cubes[obj].aperture_dobs[i].o3_flux)
+        o3flux_errors_aps.append( muse_cubes[obj].aperture_dobs[i].o3_flux)
+        
+    o3lums = getlumfromflux(np.array(o3fluxes_aps)/1e20, np.array(redshifts))
+    o3lums_down = getlumfromflux((np.array(o3fluxes_aps)-np.array(o3flux_errors_aps))/1e20, np.array(redshifts))
+    o3lums_up = getlumfromflux((np.array(o3fluxes_aps)+np.array(o3flux_errors_aps))/1e20, np.array(redshifts))
+    
+    
+    plt.errorbar(high_sn_o3_xray_sample_all.full_xraylum, high_sn_o3_xray_sample_all.oiiilum, 
+                 xerr=[high_sn_o3_xray_sample_all.full_xraylum-high_sn_o3_xray_sample_all.e_full_xraylum_down, 
+                       high_sn_o3_xray_sample_all.e_full_xraylum_up-high_sn_o3_xray_sample_all.full_xraylum], 
+                 fmt='none', yerr=[high_sn_o3_xray_sample_all.oiiilum-high_sn_o3_xray_sample_all.oiiilum_down, 
+                                   high_sn_o3_xray_sample_all.oiiilum_up-high_sn_o3_xray_sample_all.oiiilum])
+    plt.ylabel('log(L$_{\mathrm{[OIII]}}$)')
+    plt.xlabel('log(L$_{\mathrm{X}}$)')
+    plt.ylim([37,44])
+    
+    plt.gca().set_aspect('equal')
+    plt.errorbar( xraylums[1:],np.log10(o3lums)[1:],yerr=[np.log10(o3lums[1:])-np.log10(o3lums_down[1:]), 
+                                                          np.log10(o3lums_up[1:])-np.log10(o3lums[1:])],color='r', fmt='none')
+    plt.tight_layout()
+    plt.savefig('plots/lx_lo3_allxragn_'+str((i+1)*0.5)+'arc.pdf', bbox_inches='tight', dpi=250, format='pdf')
+    plt.savefig('plots/lx_lo3_allxragn_'+str((i+1)*0.5)+'arc.png', bbox_inches='tight', dpi=250, format='png')
+    plt.close()
+    plt.scatter(merged_xr_all.full_xraylum,merged_xr_all.oiiilum, s=3)
+
+    plt.ylabel('log(L$_{\mathrm{[OIII]}}$)')
+    plt.xlabel('log(L$_{\mathrm{X}}$)')
+    plt.ylim([37,44])
+    
+    plt.gca().set_aspect('equal')
+    plt.errorbar( xraylums[1:],np.log10(o3lums)[1:],yerr=[np.log10(o3lums)-np.log10(o3lums_down), 
+                                                          np.log10(o3lums_up)-np.log10(o3lums)],color='r', fmt='none')
+    plt.tight_layout()
+    plt.savefig('plots/lx_lo3_bpt_'+str((i+1)*0.5)+'arc.pdf', bbox_inches='tight', dpi=250, format='pdf')
+    plt.savefig('plots/lx_lo3_bpt_'+str((i+1)*0.5)+'arc.png', bbox_inches='tight', dpi=250, format='png')
+    plt.close()
+    
+'''
+
+    
+sdss_xu22 = SDSS_spec('/geode2/home/u020/cjagosti/Carbonate/gdrive/FromBox/research/bpt_bias/observations/muse/xu22/sdss_xu22.fits',0.0949)
+sdss_xu23 = SDSS_spec('/geode2/home/u020/cjagosti/Carbonate/gdrive/FromBox/research/bpt_bias/observations/muse/xu23/sdss_xu23.fits',0.096)
+sdss_xu104 = SDSS_spec('/geode2/home/u020/cjagosti/Carbonate/gdrive/FromBox/research/bpt_bias/observations/muse/xu104/sdss_xu104.fits',0.118) #/home/caug/gdrive/FromBox/research/bpt_bias/observations/muse/xu104/sdss_xu104.fits',0.118)
+sdss_xu210 = SDSS_spec('/geode2/home/u020/cjagosti/Carbonate/gdrive/FromBox/research/bpt_bias/observations/muse/xu210/sdss_xu210.fits',0.101388)
+
+sdss_xr31 = SDSS_spec('/geode2/home/u020/cjagosti/Carbonate/gdrive/FromBox/research/bpt_bias/observations/muse/xr31/sdss_xr31.fits',0.0712)
+
+sdss_xu22.load_starlight('/geode2/home/u020/cjagosti/Carbonate/gdrive/FromBox/research/bpt_bias/observations/muse/xu22/xu22_sdss.out')
+sdss_xu23.load_starlight('/geode2/home/u020/cjagosti/Carbonate/gdrive/FromBox/research/bpt_bias/observations/muse/xu23/xu23_sdss.out')
+sdss_xu104.load_starlight('/geode2/home/u020/cjagosti/Carbonate/gdrive/FromBox/research/bpt_bias/observations/muse/xu104/xu104_sdss.out')#/home/caug/gdrive/FromBox/research/bpt_bias/observations/muse/xu104/xu104_sdss.out')
+sdss_xr31.load_starlight('/geode2/home/u020/cjagosti/Carbonate/gdrive/FromBox/research/bpt_bias/observations/muse/xr31/xr31_sdss.out')
+sdss_xu210.load_starlight('/geode2/home/u020/cjagosti/Carbonate/gdrive/FromBox/research/bpt_bias/observations/muse/xu210/xu210_sdss.out')
 
 
 xr31.sdss = sdss_xr31
@@ -1129,14 +1321,45 @@ xu210.sdss = sdss_xu210
 
 
 
-muse_cubes = {'SF-1':xr31, 'WL-3':xu22, 'WL-2':xu23, 'WL-4':xu104,'WL-1':xu210}
+muse_cubes = {'xr31':xr31, 'xu22':xu22, 'xu23':xu23, 'xu104':xu104, 'xu210':xu210}
 
-xu_cubes = {22:xu22, 23:xu23,  104:xu104,210:xu210}
+xu_cubes = {22:xu22, 23:xu23, 104:xu104, 210:xu210}
 
 
-xraylums = [41.74,42.06, 42.43, 42.035, 42.17]
-
-redshifts = [0.0712,0.0949, 0.096, 0.118, 0.101388]
+xraylums = [41.74,42.06, 42.43, 42.03, 42.17]
 
 
 
+'''
+for obj in muse_cubes.keys():
+    xobj = muse_cubes[obj]
+    spec, dob = xobj.get_single_dobby_fit(xobj.sdss.starlight_res*1e17, 
+                                          xobj.sdss.resampled_flux_err, 
+                                          xobj.sdss.resampled_flag, xobj.sdss.starlight_fsyn*1e17,
+                                          wdisp = xobj.sdss.resampled_wdisp, 
+                                          lamb=xobj.sdss.resampled_wl_starlight, 
+                                          plot=True, save_plot=True, outfile='sdss_'+obj)
+
+#Figures
+
+xim = xu22
+ximg = xim.dobby
+wcs = WCS(xim.cont_sub.data_header)
+wcs = wcs.dropaxis(2)
+xname = 'xu22'
+
+def implot(par_name, xname, wcs,save=True):
+    plt.subplot(projection=wcs)
+    plt.imshow(np.log10(par_dict[par_name][0]), origin='lower')
+    cbar = plt.colorbar()
+    cbar.set_label(par_dict[par_name][1], fontsize=20)
+    plt.xlabel('RA')
+    plt.ylabel('Dec.')
+    
+    plt.savefig('plots/'+xname+'_'+par_name+'.pdf', format='pdf', dpi=250,bbox_inches='tight' )
+    plt.savefig('plots/'+xname+'_'+par_name+'.png', format='png', dpi=250,bbox_inches='tight' )
+    plt.close()
+for key in par_dict.keys():
+    implot(key, xname, wcs)
+
+'''
