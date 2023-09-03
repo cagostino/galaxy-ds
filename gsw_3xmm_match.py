@@ -12,14 +12,16 @@ sedind = 7
 av_ind = 8
 av_err_ind = 9
 a_uv_ind=10
+sfrerrorind = 11
+masserrorind = 12
 
-sigma1_ind=11
-nyuenv_ind=12
-baldenv_ind=13
-irx_ind=14
-axisrat_ind =15
-nuv_ind=16
-fuv_ind=17
+sigma1_ind=13
+nyuenv_ind=14
+baldenv_ind=15
+irx_ind=16
+axisrat_ind =17
+nuv_ind=18
+fuv_ind=19
 
 class GSWCat:
     def __init__(self, goodinds, gswlcids, redshift, sfrplus, sedflag=0):
@@ -36,7 +38,9 @@ class GSWCat:
         self.alldec = sfrplus[decind]
 
         self.sfr=sfrplus[sfrind][self.inds][self.sedfilt]
+        self.sfr_error = sfrplus[sfrerrorind][self.inds][self.sedfilt]
         self.mass = sfrplus[massind][self.inds][self.sedfilt]
+        self.mass_error = sfrplus[masserrorind][self.inds][self.sedfilt]
         self.plate = sfrplus[plateind][self.inds][self.sedfilt]
         self.fiber = sfrplus[fiberind][self.inds][self.sedfilt]
         self.mjd = sfrplus[mjdind][self.inds][self.sedfilt]        

@@ -551,19 +551,19 @@ EL_qsos = ELObj(mpa_spec_qsos.spec_inds_prac , sdssobj, mpa_spec_qsos.make_prac,
 EL_m2 = ELObj(mpa_spec_allm2.spec_inds_prac , sdssobj, gsw_sedfilt_mpamake, m2Cat_GSW,gsw=True, dustbinning=True, empirdust=True)
 EL_first = ELObj(mpa_spec_allm2_first.spec_inds_prac , sdssobj, mpa_spec_allm2_first.make_prac,m2Cat_GSW_first,gsw=True, dustbinning=False, empirdust=False, radio = True )
 
-fil = open('EL_m2.pkl', 'wb')
-pickle.dump(EL_m2, fil)
-fil.close()
+EL_m2.EL_gsw_df.to_csv('EL_m2_df.csv')
+EL_m2.bpt_EL_gsw_df.to_csv('EL_m2_bpt_EL_gsw_df.csv')
+
 EL_3xmm  = ELObj(mpa_spec_m2_3xmm.spec_inds_prac , sdssobj, mpa_spec_m2_3xmm.make_prac,m2Cat_GSW_3xmm, xr=True, xmm=True, empirdust=False)
 EL_4xmm  = ELObj(mpa_spec_m2_4xmm.spec_inds_prac , sdssobj, mpa_spec_m2_4xmm.make_prac,m2Cat_GSW_4xmm, xr=True, xmm=True, empirdust=False)
-
-fil = open('EL_4xmm.pkl', 'wb')
-pickle.dump(EL_4xmm, fil)
-fil.close()
+EL_4xmm.EL_gsw_df.to_csv('EL_4xmm_df.csv')
 EL_csc  = ELObj(mpa_spec_m2_csc.spec_inds_prac , sdssobj, mpa_spec_m2_csc.make_prac,m2Cat_GSW_csc, xr=True)
 
 EL_3xmm_all = ELObj(mpa_spec_m2_3xmm_all.spec_inds_prac , sdssobj, mpa_spec_m2_3xmm_all.make_prac, m2Cat_GSW_3xmm_all, xr=True, xmm=True, empirdust=False)
 EL_4xmm_all = ELObj(mpa_spec_m2_4xmm_all.spec_inds_prac , sdssobj, mpa_spec_m2_4xmm_all.make_prac, m2Cat_GSW_4xmm_all, xr=True, xmm=True, empirdust=False)
+EL_4xmm_all.EL_gsw_df.to_csv('EL_4xmm_all_df.csv')
+EL_4xmm_all.not_bpt_EL_gsw_df.to_csv('EL_4xmm_not_bpt_EL_gsw_df.csv')
+EL_4xmm_all.bpt_sf_df.to_csv('EL_4xmm_bpt_sf_df.csv')
 
 EL_3xmm_all_qsos = ELObj(mpa_spec_m2_3xmm_all_qsos.spec_inds_prac , sdssobj, mpa_spec_m2_3xmm_all_qsos.make_prac, m2Cat_GSW_3xmm_all_qsos, xr=True, xmm=True, empirdust=False)
 EL_4xmm_all_qsos = ELObj(mpa_spec_m2_4xmm_all_qsos.spec_inds_prac , sdssobj, mpa_spec_m2_4xmm_all_qsos.make_prac, m2Cat_GSW_4xmm_all_qsos, xr=True, xmm=True, empirdust=False)

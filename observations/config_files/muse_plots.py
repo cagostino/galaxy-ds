@@ -11,20 +11,61 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import sys
+import pickle
 sys.path.append("../..")
 #from Fits_set import *
 #from ast_func import *
 #from ELObj import *
 
-fil = open('../../EL_m2.pkl', 'rb')
-EL_m2 = pickle.load(fil)
+EL_m2 = pd.read_csv('../../EL_m2_df.csv')            
+bpt_EL_gsw_df = pd.read_csv('../../EL_m2_bpt_EL_gsw_df.csv')            
 
-filx = open('../../EL_4xmm.pkl', 'rb')
-EL_4xmm = pickle.load(filx)
-filxall = open('../../EL_4xmm_all.pkl', 'rb')
-EL_4xmm_all = pickle.load(filxall)
+EL_4xmm = pd.read_csv('../../EL_4xmm_df.csv')
+EL_4xmm_all = pd.read_csv('../../EL_4xmm_all_df.csv')
+
+not_bpt_EL_gsw_df = pd.read_csv('../../EL_4xmm_not_bpt_EL_gsw_df.csv')
+bpt_sf_df = pd.read_csv('../../EL_4xmm_bpt_sf_df.csv')
+
+
+muse_c = ['g','b','gray', 'r', 'k']
+muse_sym = ['o','s','>','d', 'v']
+redshifts=[]
+
+names = np.array(['SF-1','WL-3','WL-2','WL-EXT-1', 'WL-1'])
+
+
+xu = not_bpt_EL_gsw_df.iloc[[25,26, 143, 281]]
+xu1  = not_bpt_EL_gsw_df.iloc[25]
+xu2 = not_bpt_EL_gsw_df.iloc[26]
+xu3 = not_bpt_EL_gsw_df.iloc[143]
+xu4 = not_bpt_EL_gsw_df.iloc[281]
+
+xr  = bpt_sf_df.iloc[112]
+muse_samp = {'SF-1':xr,'WL-3': xu1,'WL-2': xu2,'WL-EXT-1': xu3, 'WL-1':xu4}
 
 #EL_m2 = np.load('../../EL_m2.npy', allow_pickle=True)
+muse_cubes = {'SF-1':xr31, 'WL-3':xu22, 'WL-2':xu23, 'WL-EXT-1':xu104,'WL-1':xu210}
+
+
+lum_arr = np.logspace(34,46,1000)
+loglum_arr = np.log10(lum_arr)
+
+sfrsoft = 2.2e-40*lum_arr
+logsfrsoft = np.log10(sfrsoft)#from salpeter IMF
+logsfrsoft = logsfrsoft - 0.2 #converted to Chabrier IMF
+
+sfrhard = 2.0e-40*lum_arr
+logsfrhard = np.log10(sfrhard)#from salpeter IMF
+logsfrhard =logsfrhard - 0.2 #converted to Chabrier IMF
+#combine the supposed sfr form soft and hard to get the full
+sfrfull= 1.05e-40*lum_arr
+logsfrfull = np.log10(sfrfull) -0.2
+xrayranallidict = {'soft':1/(1.39e-40),'hard':1/(1.26e-40),'full':1/(0.66e-40)}
+lsfrrelat = {'soft': [r'SFR/M$_{*} = 1.39\cdot 10^{-40}$ L$_{\rm x}/$M$_{*}$', r'SFR = $1.39\cdot 10^{-40}$ L$_{\rm x}$',logsfrsoft],
+             'hard': [r'SFR/M$_{*} = 1.26\cdot 10^{-40} $L$_{\rm x}$/M$_{*}$', r'SFR = $1.26\cdot 10^{-40}$ L$_{\rm x}$',logsfrhard],
+             'full': [r'SFR/M$_{*} = 0.66\cdot 10^{-40}$ L$_{\rm x}$/M$_{*}$',r'SFR = $0.66\cdot 10^{-40}$ L$_{\rm x}$', logsfrfull]  }
+
+
 
 '''
 
@@ -48,14 +89,14 @@ dob_out_xu210 = get_bpt_from_dobby(dob_xu210)
 lst_dob_sdss = [dob_out_xr31, dob_out_xu22, dob_out_xu23, dob_out_xu104, dob_out_xu210]
 
 
-xu = EL_4xmm_all.not_bpt_EL_gsw_df.iloc[[25,26, 143, 281]]
-xu1  =EL_4xmm_all.not_bpt_EL_gsw_df.iloc[25]
-xu2 = EL_4xmm_all.not_bpt_EL_gsw_df.iloc[26]
-xu3 = EL_4xmm_all.not_bpt_EL_gsw_df.iloc[143]
-xu4 = EL_4xmm_all.not_bpt_EL_gsw_df.iloc[281]
+xu = not_bpt_EL_gsw_df.iloc[[25,26, 143, 281]]
+xu1  = not_bpt_EL_gsw_df.iloc[25]
+xu2 = not_bpt_EL_gsw_df.iloc[26]
+xu3 = not_bpt_EL_gsw_df.iloc[143]
+xu4 = not_bpt_EL_gsw_df.iloc[281]
 
-xr  = EL_4xmm_all.bpt_sf_df.iloc[112]
-muse_samp = {'SF-1':xr,'WL-3': xu1,'WL-2': xu2,'WL-4': xu3, 'WL-1':xu4}
+xr  = bpt_sf_df.iloc[112]
+muse_samp = {'SF-1':xr,'WL-3': xu1,'WL-2': xu2,'WL-EXT-1': xu3, 'WL-1':xu4}
 sampkeys = list(muse_samp.keys())
 for i, dob in enumerate(lst_dob_sdss):
     print(sampkeys[i])
@@ -66,7 +107,7 @@ for i, dob in enumerate(lst_dob_sdss):
 
 
 [24,25,215]
-muse_cubes = {'SF-1':xr31, 'WL-3':xu22, 'WL-2':xu23, 'WL-4':xu104,'WL-1':xu210}
+muse_cubes = {'SF-1':xr31, 'WL-3':xu22, 'WL-2':xu23, 'WL-EXT-1':xu104,'WL-1':xu210}
 
 fig = plt.figure(figsize=(4, 7))
 spec = fig.add_gridspec(ncols=1, nrows=3)
@@ -109,7 +150,7 @@ for i, obj in enumerate(muse_keys):
     
 
     #ax1 = fig.add_subplot(spec[0,i])
-    counts,ybins,xbins = np.histogram2d(EL_m2.bpt_EL_gsw_df.niiha, EL_m2.bpt_EL_gsw_df.oiiihb, bins=(50,50))
+    counts,ybins,xbins = np.histogram2d(bpt_EL_gsw_df.niiha, bpt_EL_gsw_df.oiiihb, bins=(50,50))
     
     
     #plotbptnormal(n2ha_copy.flatten(), o3hb_copy.flatten(),nx=50, ny=50,lim=True, nobj=False, mod_kauff=True, fig = fig, ax=ax1)
@@ -118,7 +159,7 @@ for i, obj in enumerate(muse_keys):
     ax2 = fig.add_subplot(spec[i])
     #counts = scipy.ndimage.zoom(counts, 3)
 
-    plotbptnormal(EL_m2.bpt_EL_gsw_df.niiha, EL_m2.bpt_EL_gsw_df.oiiihb, mod_kauff=True,maxx=1.1, minx=-2,maxy=1.3, miny=-1.2, setplotlims=True,nobj=False, fig=fig, ax=ax2)
+    plotbptnormal(bpt_EL_gsw_df.niiha, bpt_EL_gsw_df.oiiihb, mod_kauff=True,maxx=1.1, minx=-2,maxy=1.3, miny=-1.2, setplotlims=True,nobj=False, fig=fig, ax=ax2)
     #ax2.contour(counts.transpose(),extent=[ybins.min(),ybins.max(),xbins.min(),xbins.max()],linewidths=1,levels=[50, 200, 1000], cmap='plasma')
     #ax1.set_yticks([-0.5, 0,0.5, 1])
     ax2.set_yticks([-1, 0, 1])
@@ -495,7 +536,7 @@ muse_c = ['g','b','gray', 'r', 'k']
 muse_sym = ['o','s','>','d', 'v']
 redshifts=[]
 
-names = np.array(['SF-1','WL-3','WL-2','WL-4', 'WL-1'])
+names = np.array(['SF-1','WL-3','WL-2','WL-EXT-1', 'WL-1'])
 for i,obj in enumerate(muse_cubes.keys()):
     redshifts.append(muse_samp[i]['z'])
     o3fluxes_aps_3.append( muse_cubes[obj].aperture_dobs[-1].o3_flux)
@@ -557,27 +598,59 @@ o3lums_3 = np.array(o3lums_3)
 o3lums_05 = np.array(o3lums_05)
 
 xraylums = np.array(xraylums)
-#o3lums_down = np.array(o3lums_down)
-#o3lums_up = np.array(o3lums_up)
+o3lums_down_3 = np.array(o3lums_down_3)
+o3lums_up_3 = np.array(o3lums_up_3)
+o3lums_down_05 = np.array(o3lums_down_05)
+o3lums_up_05 = np.array(o3lums_up_05)
+
+o3lums_error_3 = abs(np.log10(o3lums_3) - (np.log10(o3lums_down_3)+np.log10(o3lums_up_3))/2)
+o3lums_error_05= abs(np.log10(o3lums_05) - (np.log10(o3lums_down_05)+np.log10(o3lums_up_05))/2)
 
 muse_samp = [xr, xu1, xu2, xu3, xu4]
 
 for i in [0,2,4]:
-    plt.scatter( xraylums[i],
-             np.log10(o3lums_corr_host_3)[i],zorder=10+i,
-             marker=muse_sym[i],facecolor='none', edgecolor=muse_c[i],label=names[i], s=250, linewidth=3)
-
-    plt.scatter( xraylums[i],
-             np.log10(o3lums_corr_host_05)[i],zorder=10+i,
-             marker=muse_sym[i],facecolor='none', edgecolor=muse_c[i], s=100)
-    plt.scatter( xraylums[i],
-             (muse_samp[i].oiiilum),zorder=10+i,
-             marker=muse_sym[i],facecolor='none', edgecolor=muse_c[i], s=200, linewidth=2)
+    print(names[i])
+    plt.errorbar( xraylums[i],
+             np.log10(o3lums_corr_host_3)[i],
+             xerr =  (muse_samp[i].e_hard_xraylum_up  + muse_samp[i].e_hard_xraylum_down)/2 ,
+             yerr =  o3lums_error_3[i],
+             zorder=10+i,
+             marker=muse_sym[i],
+             c=muse_c[i],
+             markersize=5,
+             capsize=10, elinewidth=0.5)
+    plt.errorbar( xraylums[i],
+             np.log10(o3lums_corr_host_05)[i],
+             xerr =  (muse_samp[i].e_hard_xraylum_up  + muse_samp[i].e_hard_xraylum_down)/2 ,
+             yerr =  o3lums_error_05[i] ,
+             zorder=10+i,
+             marker=muse_sym[i],
+             c=muse_c[i],
+             markersize=5,
+             capsize=10, elinewidth=0.5)
+    plt.errorbar( xraylums[i],
+             (muse_samp[i].oiiilum),             
+             xerr =  (muse_samp[i].e_hard_xraylum_up  + muse_samp[i].e_hard_xraylum_down)/2 ,
+             yerr =  (muse_samp[i].e_oiiilum_up  + muse_samp[i].e_oiiilum_down)/2 ,
+             zorder=10+i,
+             marker=muse_sym[i],
+             c=muse_c[i],
+             label=names[i],
+             markersize=5,
+             capsize=10, elinewidth=0.5)
 
 i=1
-plt.scatter( xraylums[i],
-         np.log10(o3lums_corr_host_3)[i],zorder=10+i,
-         marker=muse_sym[i],edgecolor=muse_c[i],facecolor='none', label=names[i], s=250, linewidth=3)
+plt.errorbar( xraylums[i],
+            np.log10(o3lums_corr_host_3)[i],
+            xerr =  (muse_samp[i].e_hard_xraylum_up  + muse_samp[i].e_hard_xraylum_down)/2 ,
+            yerr =  o3lums_error_3[i],
+            zorder=10+i,
+            marker=muse_sym[i],
+            c=muse_c[i],
+            label=names[i],
+
+            markersize=5,
+            capsize=10, elinewidth=0.5)
 #plt.scatter( xraylums[i],
 #         np.log10(o3lums_corr_host_05)[i],zorder=10+i,
 #         marker=muse_sym[i],edgecolor=muse_c[i],facecolor='none', s=100)
@@ -593,7 +666,7 @@ plt.scatter( xraylums[i],
 plt.tight_layout()
 
 handles, labels = ax1.get_legend_handles_labels()
-order = [1, 0,2,4,3,5]
+order = [0,1,2,4,3,5]
 ax1.legend([handles[idx] for idx in order],[labels[idx] for idx in order], fontsize=15)
 
 ax1.set_xticks([38,40,42,44])
@@ -609,17 +682,26 @@ scat=0.6
 fig = plt.figure()
 ax = fig.add_subplot(111)
 plt.plot(loglum_arr,lsfrrelat[label][2],'k--',zorder=3)
+
 plt.fill_between(loglum_arr+scat,lsfrrelat[label][2],y2=lsfrrelat[label][2]-20,color='gray', zorder=0,alpha=0.3,linewidth=0)
 
 
 plt.xlabel(r'log(L$_{\rm X, 0.5-10\ keV}$)',fontsize=20)
 plt.ylabel(r'log(SFR)',fontsize=20)
+
 for i, obj in enumerate(muse_samp.keys()):
     print(i, obj, muse_sym[i], names[i])
-    plt.scatter( muse_samp[obj].full_xraylum,
-             muse_samp[obj].sfr,zorder=10+i,
-             marker=muse_sym[i],color=muse_c[i],label=names[i], s=100)
-
+    plt.errorbar( muse_samp[obj].full_xraylum,
+             muse_samp[obj].sfr,
+             xerr =  (muse_samp[obj].e_full_xraylum_up  + muse_samp[obj].e_full_xraylum_down)/2 ,
+             yerr =  muse_samp[obj].sfr_error,
+             zorder=10+i,
+             marker=muse_sym[i],
+             color=muse_c[i],
+             label=names[i],
+             markersize=5,
+             capsize=10, elinewidth=0.5
+             )
 scatter(xr_agn_props['x4_sn1_o3_hx_allz_noext_nobptsf'].full_xraylum, xr_agn_props['x4_sn1_o3_hx_allz_noext_nobptsf'].sfr, 
         label='X-ray AGNs', marker='s',edgecolor='magenta', facecolor='magenta')
 #scatter(xr_agn_props['x4_sn1_o3_hx_allz_ext_nobptsf'].full_xraylum, xr_agn_props['x4_sn1_o3_hx_allz_ext_nobptsf'].sfr, 
@@ -628,7 +710,7 @@ plt.text(43.1,-3.05,'X-ray AGN\n Candidates', fontsize=14, rotation=0)
 plt.xlim([37.,45.5])
 plt.ylim([-3.5, 5])
 ax.set(adjustable='box', aspect='equal')
-order = [5,0,4,2,1,3]
+order = [0, 1,5, 3, 2,4]
 handles, labels = ax.get_legend_handles_labels()
 
 ax.legend([handles[idx] for idx in order],[labels[idx] for idx in order], fontsize=12)
@@ -640,9 +722,16 @@ plt.close()
 fig = plt.figure()
 ax = fig.add_subplot(111)
 for i, obj in enumerate(muse_samp.keys()):
-    plt.scatter( muse_samp[obj].mass,
-             muse_samp[obj].ssfr,zorder=10+i,
-             marker=muse_sym[i],color=muse_c[i],label=names[i], s=100)
+    plt.errorbar( muse_samp[obj].mass,
+             muse_samp[obj].ssfr,         
+             xerr =  (muse_samp[obj].mass_error) ,
+             yerr =  np.sqrt(muse_samp[obj].sfr_error**2+muse_samp[obj].mass_error**2),
+             zorder=10+i,
+             marker=muse_sym[i],
+             color=muse_c[i],
+             label=names[i],
+             markersize=5,
+             capsize=10, elinewidth=0.5)
     
 scatter(xr_agn_props['x4_sn1_o3_hx_allz_noext_nobptsf'].mass, xr_agn_props['x4_sn1_o3_hx_allz_noext_nobptsf'].ssfr, 
       label='X-ray AGNs', marker='s',edgecolor='magenta', facecolor='magenta')
@@ -650,11 +739,11 @@ scatter(xr_agn_props['x4_sn1_o3_hx_allz_noext_nobptsf'].mass, xr_agn_props['x4_s
 #scatter(xr_agn_props['x4_sn1_o3_hx_allz_ext_nobptsf'].mass, xr_agn_props['x4_sn1_o3_hx_allz_ext_nobptsf'].ssfr, 
 #       label='Extended X-ray Sources',  marker='^', edgecolor='cyan', facecolor='cyan')
 
-order = [0,4,2,1,3,5]
+order = [1, 5,3,2,4,0]
 handles, labels = ax.get_legend_handles_labels()
 
 ax.legend([handles[idx] for idx in order],[labels[idx] for idx in order], fontsize=12)
-plot2dhist(EL_m2.bpt_EL_gsw_df.mass, EL_m2.bpt_EL_gsw_df.ssfr, minx=7.5, maxx=12.5, miny=-15, maxy=-8)
+plot2dhist(bpt_EL_gsw_df.mass, bpt_EL_gsw_df.ssfr, minx=7.5, maxx=12.5, miny=-15, maxy=-8)
 plt.ylabel(r'log(sSFR)',fontsize=20)
 plt.xlabel(r'log(M$_{\mathrm{*}})$',fontsize=20)
 plt.savefig('plots/ssfrm_muse.pdf', bbox_inches='tight', dpi=250, format='pdf')
@@ -671,61 +760,181 @@ w4 = np.array([8.247	,8.581,8.373,8.163])
 
 #whan
 
-
-fig = plt.figure()
-ax = fig.add_subplot(111)
-plotwhan(EL_m2.bpt_EL_gsw_df.niiha, np.log10(-EL_m2.bpt_EL_gsw_df.halp_eqw), lim=False, fig = fig, ax = ax)
-
-
-scatter(xr_agn_props['x4_sn1_o3_hx_allz_noext_nobptsf'].niiha, np.log10(-xr_agn_props['x4_sn1_o3_hx_allz_noext_nobptsf'].halp_eqw), 
-      label='X-ray AGNs', marker='s',edgecolor='magenta', facecolor='magenta')
-
-for i, obj in enumerate(muse_samp.keys()):
-    if i !=1:
-        print(i, obj, muse_sym[i], names[i])
-        ax.scatter( muse_samp[obj].niiha,
-                 np.log10(-muse_samp[obj].halp_eqw) , zorder=10+i,
-                 marker=muse_sym[i],
-                 color=muse_c[i],
-                 label=names[i],
-                 s=100)
-handles, labels = ax.get_legend_handles_labels()
-order = [0, 1, 4, 2,3]
-ax.legend([handles[idx] for idx in order],[labels[idx] for idx in order], loc=3)
-
-
-
-
-plt.savefig('plots/whan_muse.pdf', dpi=250, format='pdf', bbox_inches='tight')
-plt.savefig('plots/whan_muse.png', dpi=250, format='png', bbox_inches='tight')
-
-
 halp_eqws=[]
 niihas = []
 
 xr31halp_eqw3 = np.log10(xr31.spec_sub_3arc_dob.ha_fit[0][12][7])
 xr31halp_eqw05 = np.log10(xr31.spec_sub_05arc_dob.ha_fit[0][12][7])
 
+xr31n2ha_3 = (xr31.spec_sub_3arc_dob.n2ha)
+xr31n2ha_05 = (xr31.spec_sub_05arc_dob.n2ha)
+
 print(xr31halp_eqw05, xr31halp_eqw3, np.log10(-muse_samp['SF-1'].halp_eqw))
 
 xu22halp_eqw3 = np.log10(xu22.spec_sub_3arc_dob.ha_fit[0][12][7])
 xu22halp_eqw05 = np.log10(xu22.spec_sub_05arc_dob.ha_fit[0][12][7])
+xu22n2ha_3 = (xu22.spec_sub_3arc_dob.n2ha)
+xu22n2ha_05 = (xu22.spec_sub_05arc_dob.n2ha)
+
 print(xu22halp_eqw05, xu22halp_eqw3, np.log10(-muse_samp['WL-3'].halp_eqw))
 
 
 xu23halp_eqw3 = np.log10(xu23.spec_sub_3arc_dob.ha_fit[0][12][7])
 xu23halp_eqw05 = np.log10(xu23.spec_sub_05arc_dob.ha_fit[0][12][7])
+xu23n2ha_3 = (xu23.spec_sub_3arc_dob.n2ha)
+xu23n2ha_05 = (xu23.spec_sub_05arc_dob.n2ha)
+
 print(xu23halp_eqw05, xu23halp_eqw3, np.log10(-muse_samp['WL-2'].halp_eqw))
 
 xu104halp_eqw3 = np.log10(xu104.spec_sub_3arc_dob.ha_fit[0][12][7])
 xu104halp_eqw05 = np.log10(xu104.spec_sub_05arc_dob.ha_fit[0][12][7])
+xu104n2ha_3 = (xu104.spec_sub_3arc_dob.n2ha)
+xu104n2ha_05 = (xu104.spec_sub_05arc_dob.n2ha)
 
-print(xu104halp_eqw05, xu104halp_eqw3, np.log10(-muse_samp['WL-4'].halp_eqw))
+print(xu104halp_eqw05, xu104halp_eqw3, np.log10(-muse_samp['WL-EXT-1'].halp_eqw))
 
 
 xu210halp_eqw3 = np.log10(xu210.spec_sub_3arc_dob.ha_fit[0][12][7])
 xu210halp_eqw05 = np.log10(xu210.spec_sub_05arc_dob.ha_fit[0][12][7])
+xu210n2ha_3 = (xu210.spec_sub_3arc_dob.n2ha)
+xu210n2ha_05 = (xu210.spec_sub_05arc_dob.n2ha)
+
 print(xu210halp_eqw05, xu210halp_eqw3, np.log10(-muse_samp['WL-1'].halp_eqw))
+
+
+
+fig = plt.figure()
+ax = fig.add_subplot(111)
+plotwhan(bpt_EL_gsw_df.niiha, 
+         np.log10(-bpt_EL_gsw_df.halp_eqw), lim=False, fig = fig, ax = ax)
+
+
+ax.scatter(xr_agn_props['x4_sn1_o3_hx_allz_noext_nobptsf'].niiha, 
+        np.log10(-xr_agn_props['x4_sn1_o3_hx_allz_noext_nobptsf'].halp_eqw), 
+      label='X-ray AGNs', marker='s',edgecolor='k', facecolor='magenta', linewidth=0.1, zorder=0, s= 5)
+i=0
+obj='SF-1'
+ax.scatter( muse_samp[obj].niiha,
+         np.log10(-muse_samp[obj].halp_eqw) , zorder=10+i+1,
+         marker=muse_sym[i],
+         edgecolor=muse_c[i], facecolor='white',
+         label=names[i],
+         linewidth=1, 
+         s=200)
+i=0
+obj='SF-1'
+ax.scatter( xr31n2ha_05,
+         xr31halp_eqw05 , zorder=10+i+2,
+         marker=muse_sym[i],
+         edgecolor=muse_c[i], facecolor='white',
+         linewidth=0.5,
+         s=150)
+
+i=0
+obj='SF-1'
+ax.scatter( xr31n2ha_3,
+         xr31halp_eqw3 , zorder=10+i,
+         marker=muse_sym[i],
+         edgecolor=muse_c[i], facecolor='white',
+         linewidth=2,
+         s=250)
+
+i = 2
+obj='WL-2'
+ax.scatter( muse_samp[obj].niiha,
+         np.log10(-muse_samp[obj].halp_eqw) , zorder=10+i,
+         marker=muse_sym[i],
+         edgecolor=muse_c[i], facecolor='white',
+         label=names[i],
+         
+         s=200, linewidth=1)
+i = 2
+obj='WL-2'
+ax.scatter( xu23n2ha_05,
+         xu23halp_eqw05, zorder=10+i,
+         marker=muse_sym[i],
+         edgecolor=muse_c[i], facecolor='white',
+         linewidth=0.5,
+         s=150)
+i = 2
+obj='WL-2'
+ax.scatter( xu23n2ha_3,
+         xu23halp_eqw3, zorder=10+i,
+         marker=muse_sym[i],
+         edgecolor=muse_c[i], facecolor='white',
+         linewidth=2,
+         s=250)
+
+
+i = 3
+obj='WL-EXT-1'
+ax.scatter( muse_samp[obj].niiha,
+         np.log10(-muse_samp[obj].halp_eqw) , zorder=10+i,
+         marker=muse_sym[i],
+         edgecolor=muse_c[i], facecolor='none',
+         label=names[i],
+         linewidth = 1,
+         s=200)
+i = 3
+obj='WL-EXT-1'
+ax.scatter( xu104n2ha_05,
+         xu104halp_eqw05 , zorder=10+i,
+         marker=muse_sym[i],
+         edgecolor=muse_c[i],
+         facecolor='none', 
+         
+         linewidth=0.5,
+         s=150)
+i = 3
+obj='WL-EXT-1'
+ax.scatter( xu104n2ha_3,
+         xu104halp_eqw3 , zorder=10+i,
+         marker=muse_sym[i],
+         edgecolor=muse_c[i], facecolor='none',
+         s=250, linewidth=2)
+
+i=4
+obj='WL-1'
+ax.scatter( xu210n2ha_05,
+         xu210halp_eqw05 , zorder=10+i,
+         marker=muse_sym[i],
+         edgecolor=muse_c[i], facecolor='none',
+         linewidth=0.5,
+         label=names[i],
+         s=150)
+i=4
+obj='WL-1'
+ax.scatter( xu210n2ha_3,
+         xu210halp_eqw3 , zorder=10+i,
+         marker=muse_sym[i],
+         edgecolor=muse_c[i], facecolor='none',
+         linewidth=2,
+         s=250)
+
+i=4
+obj='WL-1'
+ax.scatter( muse_samp[obj].niiha,
+         np.log10(-muse_samp[obj].halp_eqw) , zorder=10+i,
+         marker=muse_sym[i],
+         edgecolor=muse_c[i], facecolor='none', hatch = '//',
+         linewidth=1,
+         s=200)
+
+
+
+
+
+
+
+
+
+handles, labels = ax.get_legend_handles_labels()
+order = [0, 1, 4, 2,3]
+ax.legend([handles[idx] for idx in order],[labels[idx] for idx in order], loc=3, bbox_to_anchor=(0.01, 0.03))
+plt.savefig('plots/whan_muse.pdf', dpi=250, format='pdf', bbox_inches='tight')
+plt.savefig('plots/whan_muse.png', dpi=250, format='png', bbox_inches='tight')
+
+
 
 
 

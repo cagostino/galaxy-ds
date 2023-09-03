@@ -561,6 +561,9 @@ class ELObj:
 
         self.EL_dict_gsw['ids'] = self.gswcat.ids[self.make_spec]
         self.EL_dict_gsw['sfr'] = self.gswcat.sfr[self.make_spec]
+        self.EL_dict_gsw['sfr_error'] = self.gswcat.sfr_error[self.make_spec]
+        self.EL_dict_gsw['mass_error'] = self.gswcat.mass_error[self.make_spec]
+        
         self.EL_dict_gsw['sigma1'] = self.gswcat.sigma1[self.make_spec]
         self.EL_dict_gsw['nyuenv'] = np.log10(self.gswcat.nyuenv[self.make_spec])+2*0.2
         

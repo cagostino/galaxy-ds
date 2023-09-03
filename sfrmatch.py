@@ -673,11 +673,11 @@ class SFRMatch:
 
             for i in range(len(self.eldiag.lines)):
                 print(lines[i])
-                flux_sub = np.copy(np.array(agn_eldiags[num].loc[:,lines[i]])-np.array(match_eldiags[num].loc[:,lines[i]])*distrat)
-                flux_sub_err = np.copy(np.sqrt(np.array(agn_eldiags[num].loc[:,line_errs[i]])**2+(np.array(match_eldiags[num].loc[:,line_errs[i]]*distrat))**2))
+                flux_sub = np.array(agn_eldiags[num].loc[:,lines[i]])-np.array(match_eldiags[num].loc[:,lines[i]])*distrat
+                flux_sub_err = np.sqrt(np.array(agn_eldiags[num].loc[:,line_errs[i]])**2+(np.array(match_eldiags[num].loc[:,line_errs[i]]*distrat))**2)
                 flux_sub_sn = flux_sub/flux_sub_err
-                flux_sfratio = np.copy(np.array(match_eldiags[num].loc[:,lines[i]])*distrat / (np.array(agn_eldiags[num].loc[:,lines[i]])))
-                flux_agnratio = np.copy(flux_sub /(np.array(agn_eldiags[num].loc[:,lines[i]]) ))
+                flux_sfratio = np.array(match_eldiags[num].loc[:,lines[i]])*distrat / (np.array(agn_eldiags[num].loc[:,lines[i]]))
+                flux_agnratio = flux_sub /(np.array(agn_eldiags[num].loc[:,lines[i]]) )
                 
                 agn_eldiags[num][lines[i]+'_sub']= np.array(flux_sub)
                 agn_eldiags[num][line_errs[i]+'_sub']= np.array(flux_sub_err)
@@ -692,27 +692,27 @@ class SFRMatch:
             agn_eldiags[num]['xvals3_bpt_sub'] = agn_eldiags[num]['oiflux_sub']/agn_eldiags[num]['halpflux_sub']
             
             
-            agn_eldiags[num]['niiha_sub'] = np.log10(np.copy(agn_eldiags[num]['xvals1_bpt_sub']))
-            agn_eldiags[num]['siiha_sub'] = np.log10(np.copy(agn_eldiags[num]['xvals2_bpt_sub']))          
-            agn_eldiags[num]['oiha_sub'] = np.log10(np.copy(agn_eldiags[num]['xvals3_bpt_sub']))
-            agn_eldiags[num]['oiiihb_sub'] = np.log10(np.copy(agn_eldiags[num]['yvals_bpt_sub']))
-            agn_eldiags[num]['ji_p1_sub'] = (np.copy(agn_eldiags[num]['niiha_sub']*0.63 + 0.51*agn_eldiags[num]['siiha_sub']*0.51 + 0.59*agn_eldiags[num]['oiiihb_sub']) )
-            agn_eldiags[num]['ji_p2_sub'] =  (np.copy(agn_eldiags[num]['niiha_sub']*(-0.63) + agn_eldiags[num]['siiha_sub']*0.78) )
-            agn_eldiags[num]['ji_p3_sub'] = (np.copy(agn_eldiags[num]['niiha_sub']*(-0.46) -0.37*agn_eldiags[num]['siiha_sub'] + 0.81*agn_eldiags[num]['oiiihb_sub']) )
+            agn_eldiags[num]['niiha_sub'] = np.log10((agn_eldiags[num]['xvals1_bpt_sub']))
+            agn_eldiags[num]['siiha_sub'] = np.log10((agn_eldiags[num]['xvals2_bpt_sub']))          
+            agn_eldiags[num]['oiha_sub'] = np.log10((agn_eldiags[num]['xvals3_bpt_sub']))
+            agn_eldiags[num]['oiiihb_sub'] = np.log10((agn_eldiags[num]['yvals_bpt_sub']))
+            agn_eldiags[num]['ji_p1_sub'] = ((agn_eldiags[num]['niiha_sub']*0.63 + 0.51*agn_eldiags[num]['siiha_sub']*0.51 + 0.59*agn_eldiags[num]['oiiihb_sub']) )
+            agn_eldiags[num]['ji_p2_sub'] =  ((agn_eldiags[num]['niiha_sub']*(-0.63) + agn_eldiags[num]['siiha_sub']*0.78) )
+            agn_eldiags[num]['ji_p3_sub'] = ((agn_eldiags[num]['niiha_sub']*(-0.46) -0.37*agn_eldiags[num]['siiha_sub'] + 0.81*agn_eldiags[num]['oiiihb_sub']) )
             
             agn_eldiags[num]['oi_sii_sub'] = np.log10(agn_eldiags[num]['oiflux_sub']/agn_eldiags[num]['siiflux_sub'])
             agn_eldiags[num]['av_sub'] = extinction(agn_eldiags[num]['halpflux_sub'], agn_eldiags[num]['hbetaflux_sub'])
             agn_eldiags[num]['av_sub_agn'] = extinction(agn_eldiags[num]['halpflux_sub'], agn_eldiags[num]['hbetaflux_sub'], agn=True)
         
             
-            agn_eldiags[num]['offset_oiiihb'] = np.copy(agn_eldiags[num]['oiiihb_sub'] - agn_eldiags[num]['oiiihb'] ) 
-            agn_eldiags[num]['offset_niiha'] = np.copy(agn_eldiags[num]['niiha_sub'] - agn_eldiags[num]['niiha'] ) 
+            agn_eldiags[num]['offset_oiiihb'] = (agn_eldiags[num]['oiiihb_sub'] - agn_eldiags[num]['oiiihb'] ) 
+            agn_eldiags[num]['offset_niiha'] = (agn_eldiags[num]['niiha_sub'] - agn_eldiags[num]['niiha'] ) 
             agn_eldiags[num]['offset_tot'] = np.sqrt(agn_eldiags[num]['offset_oiiihb']**2+agn_eldiags[num]['offset_niiha']**2)
             
-            agn_eldiags[num]['offset_oiii'] = np.copy(np.log10(agn_eldiags[num]['oiiiflux_sub']) - np.log10(agn_eldiags[num]['oiiiflux'] ) )
-            agn_eldiags[num]['offset_nii'] = np.copy(np.log10(agn_eldiags[num]['niiflux_sub']) - np.log10(agn_eldiags[num]['niiflux'] ) )
-            agn_eldiags[num]['offset_hb'] = np.copy(np.log10(agn_eldiags[num]['hbetaflux_sub']) - np.log10(agn_eldiags[num]['hbetaflux'] )) 
-            agn_eldiags[num]['offset_ha'] = np.copy(np.log10(agn_eldiags[num]['halpflux_sub']) - np.log10(agn_eldiags[num]['halpflux']) ) 
+            agn_eldiags[num]['offset_oiii'] = (np.log10(agn_eldiags[num]['oiiiflux_sub']) - np.log10(agn_eldiags[num]['oiiiflux'] ) )
+            agn_eldiags[num]['offset_nii'] = (np.log10(agn_eldiags[num]['niiflux_sub']) - np.log10(agn_eldiags[num]['niiflux'] ) )
+            agn_eldiags[num]['offset_hb'] = (np.log10(agn_eldiags[num]['hbetaflux_sub']) - np.log10(agn_eldiags[num]['hbetaflux'] )) 
+            agn_eldiags[num]['offset_ha'] = (np.log10(agn_eldiags[num]['halpflux_sub']) - np.log10(agn_eldiags[num]['halpflux']) ) 
         #derived params: metallicity, (nii/oii), ionization parameter (oiii/oii), electron density (sii)
             
         self.allagn_df=pd.concat([self.agn_df,self.agnplus_df, self.neither_agn_df],join='outer')
@@ -851,10 +851,10 @@ class SFRMatch:
         self.fullagn_df['halplum_uncorr_sub'] = getlumfromflux(self.fullagn_df['oiiiflux_sub'], self.fullagn_df['z'])
 
         self.fullagn_df['halpfibsfr_sub'] = halptofibsfr_corr(10**self.fullagn_df['halplum_sub_dered'])
-        self.fullagn_df['halphbeta_sub_ratio']= np.copy(np.array(self.fullagn_df['halpflux_sub']/self.fullagn_df['hbetaflux_sub']))
-        self.fullagn_df['halphbeta_sub_ratio_err']= np.copy(self.fullagn_df['halphbeta_sub_ratio']*np.sqrt((self.fullagn_df['halp_err_sub']/(self.fullagn_df['halpflux_sub']))**2 + 
+        self.fullagn_df['halphbeta_sub_ratio']= (np.array(self.fullagn_df['halpflux_sub']/self.fullagn_df['hbetaflux_sub']))
+        self.fullagn_df['halphbeta_sub_ratio_err']= (self.fullagn_df['halphbeta_sub_ratio']*np.sqrt((self.fullagn_df['halp_err_sub']/(self.fullagn_df['halpflux_sub']))**2 + 
                                                             (self.fullagn_df['hbeta_err_sub']/(self.fullagn_df['hbetaflux_sub']))**2) )
-        self.fullagn_df['halphbeta_sub_ratio_sn']= np.copy(np.array(self.fullagn_df['halphbeta_sub_ratio']/self.fullagn_df['halphbeta_sub_ratio_err']))
+        self.fullagn_df['halphbeta_sub_ratio_sn']= (np.array(self.fullagn_df['halphbeta_sub_ratio']/self.fullagn_df['halphbeta_sub_ratio_err']))
         
 
         self.fullagn_df['nii_oii_sub'] =np.log10(self.fullagn_df['niiflux_corr_sub']/self.fullagn_df['oiiflux_corr_sub'])
@@ -1320,25 +1320,25 @@ class SFRMatch:
                                       (self.fullagn_df.niiha.iloc[liner2] < xvals[i+1] )
                                       )[0]
 
-                match_dist_bpt = np.copy(self.mindists_best[self.agn_dist_inds])[valid_bpt]
-                match_dist_plus = np.copy(self.mindists_best[self.agn_plus_dist_inds])[valid_plus]
-                match_dist_neither = np.copy(self.mindists_best[self.agn_neither_dist_inds])[valid_neither]
-                match_dist_sing = np.copy(self.mindists_best_sing_ord)[full_agn[valid_sing]]
-                match_dist_high = np.copy(self.mindists_best_sing_ord)[valid_high]
-                match_dist_low = np.copy(self.mindists_best_sing_ord)[valid_low]
+                match_dist_bpt = (self.mindists_best[self.agn_dist_inds])[valid_bpt]
+                match_dist_plus = (self.mindists_best[self.agn_plus_dist_inds])[valid_plus]
+                match_dist_neither = (self.mindists_best[self.agn_neither_dist_inds])[valid_neither]
+                match_dist_sing = (self.mindists_best_sing_ord)[full_agn[valid_sing]]
+                match_dist_high = (self.mindists_best_sing_ord)[valid_high]
+                match_dist_low = (self.mindists_best_sing_ord)[valid_low]
                 
-                match_dist_clustering = np.copy(self.mindists_best_sing_ord)[val1]
+                match_dist_clustering = (self.mindists_best_sing_ord)[val1]
 
-                match_dist_clust1 = np.copy(self.mindists_best_sing_ord)[sy2[valid_clust1]]
-                match_dist_clust2 = np.copy(self.mindists_best_sing_ord)[sf[valid_clust2]]
-                match_dist_clust3 = np.copy(self.mindists_best_sing_ord)[liner2[valid_clust3]]
+                match_dist_clust1 = (self.mindists_best_sing_ord)[sy2[valid_clust1]]
+                match_dist_clust2 = (self.mindists_best_sing_ord)[sf[valid_clust2]]
+                match_dist_clust3 = (self.mindists_best_sing_ord)[liner2[valid_clust3]]
                 
-                match_dist_sy2 = np.copy(self.mindists_best_sing_ord)[valid_sy2]
-                match_dist_liner_high = np.copy(self.mindists_best_sing_ord)[valid_liner_high_ssfr]
-                match_dist_liner_low = np.copy(self.mindists_best_sing_ord)[valid_liner_low_ssfr]
+                match_dist_sy2 = (self.mindists_best_sing_ord)[valid_sy2]
+                match_dist_liner_high = (self.mindists_best_sing_ord)[valid_liner_high_ssfr]
+                match_dist_liner_low = (self.mindists_best_sing_ord)[valid_liner_low_ssfr]
                 if valid_clustering.size > 10:
-                    distro_clustering_x = np.copy(self.fullagn_df.offset_niiha.iloc[val1[valid_clustering]])
-                    distro_clustering_y = np.copy(self.fullagn_df.offset_oiiihb.iloc[val1[valid_clustering]])
+                    distro_clustering_x = (self.fullagn_df.offset_niiha.iloc[val1[valid_clustering]])
+                    distro_clustering_y = (self.fullagn_df.offset_oiiihb.iloc[val1[valid_clustering]])
 
                     mn_x_clustering = np.mean(distro_clustering_x)
                     mn_y_clustering = np.mean(distro_clustering_y)
@@ -1351,8 +1351,8 @@ class SFRMatch:
                     clustering_set.append([i,j,mid_x[i], mid_y[j],0, 0, 0, 0, [], [],[], []])
 
                 if valid_clust1.size > 10:
-                    distro_clust1_x = np.copy(self.fullagn_df.offset_niiha.iloc[sy2[valid_clust1]])
-                    distro_clust1_y = np.copy(self.fullagn_df.offset_oiiihb.iloc[sy2[valid_clust1]])
+                    distro_clust1_x = (self.fullagn_df.offset_niiha.iloc[sy2[valid_clust1]])
+                    distro_clust1_y = (self.fullagn_df.offset_oiiihb.iloc[sy2[valid_clust1]])
 
                     mn_x_clust1 = np.mean(distro_clust1_x)
                     mn_y_clust1 = np.mean(distro_clust1_y)
@@ -1365,8 +1365,8 @@ class SFRMatch:
                     clust1_set.append([i,j,mid_x[i], mid_y[j],0, 0, 0, 0, [], [],[], []])
 
                 if valid_clust2.size > 10:
-                    distro_clust2_x = np.copy(self.fullagn_df.offset_niiha.iloc[sf[valid_clust2]])
-                    distro_clust2_y = np.copy(self.fullagn_df.offset_oiiihb.iloc[sf[valid_clust2]])
+                    distro_clust2_x = (self.fullagn_df.offset_niiha.iloc[sf[valid_clust2]])
+                    distro_clust2_y = (self.fullagn_df.offset_oiiihb.iloc[sf[valid_clust2]])
 
                     mn_x_clust2 = np.mean(distro_clust2_x)
                     mn_y_clust2 = np.mean(distro_clust2_y)
@@ -1379,8 +1379,8 @@ class SFRMatch:
                     clust2_set.append([i,j,mid_x[i], mid_y[j],0, 0, 0, 0, [], [],[], []])
 
                 if valid_clust3.size > 10:
-                    distro_clust3_x = np.copy(self.fullagn_df.offset_niiha.iloc[liner2[valid_clust3]])
-                    distro_clust3_y = np.copy(self.fullagn_df.offset_oiiihb.iloc[liner2[valid_clust3]])
+                    distro_clust3_x = (self.fullagn_df.offset_niiha.iloc[liner2[valid_clust3]])
+                    distro_clust3_y = (self.fullagn_df.offset_oiiihb.iloc[liner2[valid_clust3]])
 
                     mn_x_clust3 = np.mean(distro_clust3_x)
                     mn_y_clust3 = np.mean(distro_clust3_y)
@@ -1393,8 +1393,8 @@ class SFRMatch:
                     clust3_set.append([i,j,mid_x[i], mid_y[j],0, 0, 0, 0, [], [],[], []])
 
                 if valid_sy2.size > 10:
-                    distro_sy2_x = np.copy(self.filts['sy2_liner_bool']['up_df_siiflux_sub'].offset_niiha.iloc[valid_sy2])
-                    distro_sy2_y = np.copy(self.filts['sy2_liner_bool']['up_df_siiflux_sub'].offset_oiiihb.iloc[valid_sy2])
+                    distro_sy2_x = (self.filts['sy2_liner_bool']['up_df_siiflux_sub'].offset_niiha.iloc[valid_sy2])
+                    distro_sy2_y = (self.filts['sy2_liner_bool']['up_df_siiflux_sub'].offset_oiiihb.iloc[valid_sy2])
 
                     mn_x_sy2 = np.mean(distro_sy2_x)
                     mn_y_sy2 = np.mean(distro_sy2_y)
@@ -1406,8 +1406,8 @@ class SFRMatch:
                 else:
                     sy2_set.append([i,j,mid_x[i], mid_y[j],0, 0, 0, 0, [], [],[], []])
                 if valid_liner_high_ssfr.size > 10:
-                    distro_liner_high_x = np.copy(self.filts['delta_ssfr']['up_down_sy2_liner_bool_siiflux_sub_df'].offset_niiha.iloc[valid_liner_high_ssfr])
-                    distro_liner_high_y = np.copy(self.filts['delta_ssfr']['up_down_sy2_liner_bool_siiflux_sub_df'].offset_oiiihb.iloc[valid_liner_high_ssfr])
+                    distro_liner_high_x = (self.filts['delta_ssfr']['up_down_sy2_liner_bool_siiflux_sub_df'].offset_niiha.iloc[valid_liner_high_ssfr])
+                    distro_liner_high_y = (self.filts['delta_ssfr']['up_down_sy2_liner_bool_siiflux_sub_df'].offset_oiiihb.iloc[valid_liner_high_ssfr])
 
                     mn_x_liner_high = np.mean(distro_liner_high_x)
                     mn_y_liner_high = np.mean(distro_liner_high_y)
@@ -1419,8 +1419,8 @@ class SFRMatch:
                 else:
                     liner_high_set.append([i,j,mid_x[i], mid_y[j],0, 0, 0, 0, [], [],[], []])
                 if valid_liner_low_ssfr.size > 10:
-                    distro_liner_low_x = np.copy(self.filts['delta_ssfr']['down_down_sy2_liner_bool_siiflux_sub_df'].offset_niiha.iloc[valid_liner_low_ssfr])
-                    distro_liner_low_y = np.copy(self.filts['delta_ssfr']['down_down_sy2_liner_bool_siiflux_sub_df'].offset_oiiihb.iloc[valid_liner_low_ssfr])
+                    distro_liner_low_x = (self.filts['delta_ssfr']['down_down_sy2_liner_bool_siiflux_sub_df'].offset_niiha.iloc[valid_liner_low_ssfr])
+                    distro_liner_low_y = (self.filts['delta_ssfr']['down_down_sy2_liner_bool_siiflux_sub_df'].offset_oiiihb.iloc[valid_liner_low_ssfr])
 
                     mn_x_liner_low = np.mean(distro_liner_low_x)
                     mn_y_liner_low = np.mean(distro_liner_low_y)
@@ -1434,8 +1434,8 @@ class SFRMatch:
                                              
                 
                 if valid_sing.size > 10:
-                    distro_full_x = np.copy(self.fullagn_df.offset_niiha.iloc[full_agn[valid_sing]])
-                    distro_full_y = np.copy(self.fullagn_df.offset_oiiihb.iloc[full_agn[valid_sing]])
+                    distro_full_x = (self.fullagn_df.offset_niiha.iloc[full_agn[valid_sing]])
+                    distro_full_y = (self.fullagn_df.offset_oiiihb.iloc[full_agn[valid_sing]])
 
                     mn_x_full = np.mean(distro_full_x)
                     mn_y_full = np.mean(distro_full_y)
@@ -1449,8 +1449,8 @@ class SFRMatch:
                     sing_set.append([i,j,mid_x[i], mid_y[j],0, 0, 0, 0, [], [],[], []])
                 
                 if valid_high.size > 10:
-                    distro_high_x = np.copy(self.filts['delta_ssfr']['up_df'].offset_niiha.iloc[valid_high])
-                    distro_high_y = np.copy(self.filts['delta_ssfr']['up_df'].offset_oiiihb.iloc[valid_high])
+                    distro_high_x = self.filts['delta_ssfr']['up_df'].offset_niiha.iloc[valid_high]
+                    distro_high_y = (self.filts['delta_ssfr']['up_df'].offset_oiiihb.iloc[valid_high])
 
                     mn_x_high = np.mean(distro_high_x)
                     mn_y_high = np.mean(distro_high_y)
@@ -1463,8 +1463,8 @@ class SFRMatch:
                     high_set.append([i,j,mid_x[i], mid_y[j],0, 0, 0, 0, [], [],[], []])
                
                 if valid_low.size > 10:
-                    distro_low_x = np.copy(self.filts['delta_ssfr']['down_df'].offset_niiha.iloc[valid_low])
-                    distro_low_y = np.copy(self.filts['delta_ssfr']['down_df'].offset_oiiihb.iloc[valid_low])             
+                    distro_low_x = (self.filts['delta_ssfr']['down_df'].offset_niiha.iloc[valid_low])
+                    distro_low_y = (self.filts['delta_ssfr']['down_df'].offset_oiiihb.iloc[valid_low])             
                     mn_x_low = np.mean(distro_low_x)
                     mn_y_low = np.mean(distro_low_y)
                     med_x_low = np.median(distro_low_x)
@@ -1478,8 +1478,8 @@ class SFRMatch:
                 
 
                 if valid_bpt.size >10:
-                    distro_bpt_x = np.copy(self.agn_df.offset_niiha.iloc[valid_bpt])
-                    distro_bpt_y = np.copy(self.agn_df.offset_oiiihb.iloc[valid_bpt])
+                    distro_bpt_x = (self.agn_df.offset_niiha.iloc[valid_bpt])
+                    distro_bpt_y = (self.agn_df.offset_oiiihb.iloc[valid_bpt])
                     mn_x_bpt = np.mean(distro_bpt_x)
                     mn_y_bpt = np.mean(distro_bpt_y)
                     med_x_bpt = np.median(distro_bpt_x)
@@ -1491,8 +1491,8 @@ class SFRMatch:
                     #goodinds_pt.append(i*j)
                 
                 if valid_plus.size > 10:
-                    distro_plus_x = np.copy(self.agnplus_df.offset_niiha.iloc[valid_plus])
-                    distro_plus_y = np.copy(self.agnplus_df.offset_oiiihb.iloc[valid_plus])
+                    distro_plus_x = (self.agnplus_df.offset_niiha.iloc[valid_plus])
+                    distro_plus_y = (self.agnplus_df.offset_oiiihb.iloc[valid_plus])
 
                     mn_x_plus = np.mean(distro_plus_x)
                     mn_y_plus = np.mean(distro_plus_y)
@@ -1505,8 +1505,8 @@ class SFRMatch:
                 
                 
                 if valid_neither.size >10:
-                    distro_neither_x = np.copy(self.neither_agn_df.offset_niiha.iloc[valid_neither])
-                    distro_neither_y = np.copy(self.neither_agn_df.offset_oiiihb.iloc[valid_neither])
+                    distro_neither_x = (self.neither_agn_df.offset_niiha.iloc[valid_neither])
+                    distro_neither_y = (self.neither_agn_df.offset_oiiihb.iloc[valid_neither])
 
                     mn_x_neither = np.mean(distro_neither_x)
                     mn_y_neither = np.mean(distro_neither_y)

@@ -5578,11 +5578,11 @@ def plotwhan(bgx,bgy,save=False,filename='',
     #ax.plot(np.log10(xline3_agn), np.log10(yline3_agn),'k--')
     if labels:
         
-        ax.text(-0.8,1.5,'SF',fontsize=12, color='r')
-        ax.text(0.55,0.505,'wAGN',fontsize=12, color='r', zorder=20)
-        ax.text(0.4,1.8,'sAGN',fontsize=12, color='r')
-        ax.text(0.4,0,'Retired',fontsize=12, color='r')
-        ax.text(-0.4,-0.8,'Passive',fontsize=12, color='r')
+        ax.text(-1.8,1.,'SF',fontsize=12, color='r',  zorder=20)
+        ax.text(0.55,0.605,'wAGN',fontsize=12, color='r', zorder=20)
+        ax.text(0.4,1.8,'sAGN',fontsize=12, color='r',  zorder=20)
+        ax.text(0.75,0,'Retired',fontsize=12, color='r',  zorder=20)
+        ax.text(-0.4,-1.05,'Passive',fontsize=12, color='r', zorder=20)
     ax.set_ylabel(r'log(W$_{\mathrm{H}\alpha}$)',fontsize=20)
     ax.set_xlabel(r'log([NII]/H$\rm \alpha$)',fontsize=20)
     ax.set_ylim([miny-0.1,maxy])

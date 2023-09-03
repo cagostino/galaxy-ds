@@ -3,15 +3,16 @@ import numpy as np
 print('loading GSW')
 m2 = np.loadtxt(catfold+"GSWLC-M2.dat", unpack = True, usecols=(0,1), dtype=np.int64)
 redshift_m2 = np.loadtxt(catfold+"GSWLC-M2.dat", unpack = True, usecols=(7,))
-allm2 = np.loadtxt(catfold+"GSWLC-M2.dat", unpack = True, usecols=(5, 6, 11, 9, 2, 4, 3, 19, 17, 18,13))
+header=  ['']
+allm2 = np.loadtxt(catfold+"GSWLC-M2.dat", unpack = True, usecols=(5, 6, 11, 9, 2, 4, 3, 19, 17, 18,13, 12, 10))
 
 a2 = np.loadtxt(catfold+"GSWLC-A2.dat", unpack = True, usecols=(0,1), dtype=np.int64)
 redshift_a2 = np.loadtxt(catfold+"GSWLC-A2.dat", unpack = True, usecols=(7,))
-alla2 = np.loadtxt(catfold+"GSWLC-A2.dat", unpack = True, usecols=(5, 6, 11, 9, 2, 4, 3, 19, 17, 18,13))
+alla2 = np.loadtxt(catfold+"GSWLC-A2.dat", unpack = True, usecols=(5, 6, 11, 9, 2, 4, 3, 19, 17, 18,13, 12, 10))
 
 x2 = np.loadtxt(catfold+"GSWLC-X2.dat", unpack = True, usecols=(0,1), dtype=np.int64)
 redshift_x2 = np.loadtxt(catfold+"GSWLC-X2.dat", unpack = True, usecols=(7,))
-allx2 = np.loadtxt(catfold+"GSWLC-X2.dat", unpack = True, usecols=(5, 6, 11, 9, 2, 4, 3, 19, 17, 18,13))
+allx2 = np.loadtxt(catfold+"GSWLC-X2.dat", unpack = True, usecols=(5, 6, 11, 9, 2, 4, 3, 19, 17, 18,13, 12, 10))
 
 
 #for getting r mags for doing x-ray duplicate removal
