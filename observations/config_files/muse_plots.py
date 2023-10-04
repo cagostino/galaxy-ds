@@ -722,16 +722,11 @@ plt.close()
 fig = plt.figure()
 ax = fig.add_subplot(111)
 for i, obj in enumerate(muse_samp.keys()):
-    plt.errorbar( muse_samp[obj].mass,
+    plt.scatter( muse_samp[obj].mass,
              muse_samp[obj].ssfr,         
-             xerr =  (muse_samp[obj].mass_error) ,
-             yerr =  np.sqrt(muse_samp[obj].sfr_error**2+muse_samp[obj].mass_error**2),
-             zorder=10+i,
              marker=muse_sym[i],
              color=muse_c[i],
-             label=names[i],
-             markersize=5,
-             capsize=10, elinewidth=0.5)
+             label=names[i], zorder=10)
     
 scatter(xr_agn_props['x4_sn1_o3_hx_allz_noext_nobptsf'].mass, xr_agn_props['x4_sn1_o3_hx_allz_noext_nobptsf'].ssfr, 
       label='X-ray AGNs', marker='s',edgecolor='magenta', facecolor='magenta')
@@ -739,7 +734,7 @@ scatter(xr_agn_props['x4_sn1_o3_hx_allz_noext_nobptsf'].mass, xr_agn_props['x4_s
 #scatter(xr_agn_props['x4_sn1_o3_hx_allz_ext_nobptsf'].mass, xr_agn_props['x4_sn1_o3_hx_allz_ext_nobptsf'].ssfr, 
 #       label='Extended X-ray Sources',  marker='^', edgecolor='cyan', facecolor='cyan')
 
-order = [1, 5,3,2,4,0]
+order = [0, 4,2,1,3,5]
 handles, labels = ax.get_legend_handles_labels()
 
 ax.legend([handles[idx] for idx in order],[labels[idx] for idx in order], fontsize=12)
@@ -811,59 +806,27 @@ plotwhan(bpt_EL_gsw_df.niiha,
 
 ax.scatter(xr_agn_props['x4_sn1_o3_hx_allz_noext_nobptsf'].niiha, 
         np.log10(-xr_agn_props['x4_sn1_o3_hx_allz_noext_nobptsf'].halp_eqw), 
-      label='X-ray AGNs', marker='s',edgecolor='k', facecolor='magenta', linewidth=0.1, zorder=0, s= 5)
+      label='X-ray AGNs', marker='s', facecolor='magenta', linewidth=0.1, zorder=0, s= 5)
 i=0
 obj='SF-1'
 ax.scatter( muse_samp[obj].niiha,
          np.log10(-muse_samp[obj].halp_eqw) , zorder=10+i+1,
          marker=muse_sym[i],
-         edgecolor=muse_c[i], facecolor='white',
+         facecolor=muse_c[i], edgecolor='k',
          label=names[i],
          linewidth=1, 
          s=200)
-i=0
-obj='SF-1'
-ax.scatter( xr31n2ha_05,
-         xr31halp_eqw05 , zorder=10+i+2,
-         marker=muse_sym[i],
-         edgecolor=muse_c[i], facecolor='white',
-         linewidth=0.5,
-         s=150)
 
-i=0
-obj='SF-1'
-ax.scatter( xr31n2ha_3,
-         xr31halp_eqw3 , zorder=10+i,
-         marker=muse_sym[i],
-         edgecolor=muse_c[i], facecolor='white',
-         linewidth=2,
-         s=250)
 
 i = 2
 obj='WL-2'
 ax.scatter( muse_samp[obj].niiha,
          np.log10(-muse_samp[obj].halp_eqw) , zorder=10+i,
          marker=muse_sym[i],
-         edgecolor=muse_c[i], facecolor='white',
+         facecolor=muse_c[i], edgecolor='k',
          label=names[i],
          
          s=200, linewidth=1)
-i = 2
-obj='WL-2'
-ax.scatter( xu23n2ha_05,
-         xu23halp_eqw05, zorder=10+i,
-         marker=muse_sym[i],
-         edgecolor=muse_c[i], facecolor='white',
-         linewidth=0.5,
-         s=150)
-i = 2
-obj='WL-2'
-ax.scatter( xu23n2ha_3,
-         xu23halp_eqw3, zorder=10+i,
-         marker=muse_sym[i],
-         edgecolor=muse_c[i], facecolor='white',
-         linewidth=2,
-         s=250)
 
 
 i = 3
@@ -871,53 +834,20 @@ obj='WL-EXT-1'
 ax.scatter( muse_samp[obj].niiha,
          np.log10(-muse_samp[obj].halp_eqw) , zorder=10+i,
          marker=muse_sym[i],
-         edgecolor=muse_c[i], facecolor='none',
+         facecolor=muse_c[i], edgecolor='k',
          label=names[i],
          linewidth = 1,
          s=200)
-i = 3
-obj='WL-EXT-1'
-ax.scatter( xu104n2ha_05,
-         xu104halp_eqw05 , zorder=10+i,
-         marker=muse_sym[i],
-         edgecolor=muse_c[i],
-         facecolor='none', 
-         
-         linewidth=0.5,
-         s=150)
-i = 3
-obj='WL-EXT-1'
-ax.scatter( xu104n2ha_3,
-         xu104halp_eqw3 , zorder=10+i,
-         marker=muse_sym[i],
-         edgecolor=muse_c[i], facecolor='none',
-         s=250, linewidth=2)
 
-i=4
-obj='WL-1'
-ax.scatter( xu210n2ha_05,
-         xu210halp_eqw05 , zorder=10+i,
-         marker=muse_sym[i],
-         edgecolor=muse_c[i], facecolor='none',
-         linewidth=0.5,
-         label=names[i],
-         s=150)
-i=4
-obj='WL-1'
-ax.scatter( xu210n2ha_3,
-         xu210halp_eqw3 , zorder=10+i,
-         marker=muse_sym[i],
-         edgecolor=muse_c[i], facecolor='none',
-         linewidth=2,
-         s=250)
+
 
 i=4
 obj='WL-1'
 ax.scatter( muse_samp[obj].niiha,
          np.log10(-muse_samp[obj].halp_eqw) , zorder=10+i,
          marker=muse_sym[i],
-         edgecolor=muse_c[i], facecolor='none', hatch = '//',
-         linewidth=1,
+         facecolor=muse_c[i], edgecolor='k', hatch = '//',
+         linewidth=1,label=names[i],
          s=200)
 
 
@@ -936,8 +866,74 @@ plt.savefig('plots/whan_muse.png', dpi=250, format='png', bbox_inches='tight')
 
 
 
+i=4
+obj='WL-1'
+ax.scatter( xu210n2ha_05,
+         xu210halp_eqw05 , zorder=10+i,
+         marker=muse_sym[i],
+         facecolor=muse_c[i], edgecolor='k',
+         linewidth=0.5,
+         label=names[i],
+         s=150)
+i=4
+obj='WL-1'
+ax.scatter( xu210n2ha_3,
+         xu210halp_eqw3 , zorder=10+i,
+         marker=muse_sym[i],
+         facecolor=muse_c[i], edgecolor='none',
+         linewidth=2,
+         s=250)
+i = 3
+obj='WL-EXT-1'
+ax.scatter( xu104n2ha_05,
+         xu104halp_eqw05 , zorder=10+i,
+         marker=muse_sym[i],
+         facecolor=muse_c[i],
+         edgecolor='none', 
+         
+         linewidth=0.5,
+         s=150)
+i = 3
+obj='WL-EXT-1'
+ax.scatter( xu104n2ha_3,
+         xu104halp_eqw3 , zorder=10+i,
+         marker=muse_sym[i],
+         facecolor=muse_c[i], edgecolor='k',
+         s=250, linewidth=2)
+i = 2
+obj='WL-2'
+ax.scatter( xu23n2ha_05,
+         xu23halp_eqw05, zorder=10+i,
+         marker=muse_sym[i],
+         facecolor=muse_c[i], facecolor='k',
+         linewidth=0.5,
+         s=150)
+i = 2
+obj='WL-2'
+ax.scatter( xu23n2ha_3,
+         xu23halp_eqw3, zorder=10+i,
+         marker=muse_sym[i],
+         edgecolor=muse_c[i], facecolor='white',
+         linewidth=2,
+         s=250)
 
 
-        
+        i=0
+        obj='SF-1'
+        ax.scatter( xr31n2ha_05,
+                 xr31halp_eqw05 , zorder=10+i+2,
+                 marker=muse_sym[i],
+                 edgecolor=muse_c[i], facecolor='white',
+                 linewidth=0.5,
+                 s=150)
+
+        i=0
+        obj='SF-1'
+        ax.scatter( xr31n2ha_3,
+                 xr31halp_eqw3 , zorder=10+i,
+                 marker=muse_sym[i],
+                 edgecolor=muse_c[i], facecolor='white',
+                 linewidth=2,
+                 s=250)
         
 '''

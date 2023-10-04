@@ -1,32 +1,46 @@
 catfold='catalogs/'
 import numpy as np
 print('loading GSW')
-m2 = np.loadtxt(catfold+"GSWLC-M2.dat", unpack = True, usecols=(0,1), dtype=np.int64)
-redshift_m2 = np.loadtxt(catfold+"GSWLC-M2.dat", unpack = True, usecols=(7,))
-header=  ['']
-allm2 = np.loadtxt(catfold+"GSWLC-M2.dat", unpack = True, usecols=(5, 6, 11, 9, 2, 4, 3, 19, 17, 18,13, 12, 10))
-
-a2 = np.loadtxt(catfold+"GSWLC-A2.dat", unpack = True, usecols=(0,1), dtype=np.int64)
-redshift_a2 = np.loadtxt(catfold+"GSWLC-A2.dat", unpack = True, usecols=(7,))
-alla2 = np.loadtxt(catfold+"GSWLC-A2.dat", unpack = True, usecols=(5, 6, 11, 9, 2, 4, 3, 19, 17, 18,13, 12, 10))
-
-x2 = np.loadtxt(catfold+"GSWLC-X2.dat", unpack = True, usecols=(0,1), dtype=np.int64)
-redshift_x2 = np.loadtxt(catfold+"GSWLC-X2.dat", unpack = True, usecols=(7,))
-allx2 = np.loadtxt(catfold+"GSWLC-X2.dat", unpack = True, usecols=(5, 6, 11, 9, 2, 4, 3, 19, 17, 18,13, 12, 10))
 
 
-#for getting r mags for doing x-ray duplicate removal
-m1_photcatids = np.loadtxt(catfold+'gs_mis_sdss_phot.dat', unpack=True,usecols=(6,),dtype=np.int64)
-m1_modelrflux = np.loadtxt(catfold+'gs_mis_sdss_phot.dat', unpack=True, usecols=(41,))
-ind2_m1phot = np.loadtxt(catfold+'photmatchinginds.txt', dtype=np.int64)
-sigma1_m = np.loadtxt(catfold+'sigma1_mis.dat', dtype=np.float64, usecols=(2), unpack=True)
-env_nyu_m = np.loadtxt(catfold+'envir_nyu_mis.dat', dtype=np.float64, usecols=(0), unpack=False)
-env_bald_m = np.loadtxt(catfold+'baldry_mis.dat', dtype=np.float64, usecols=(4), unpack=True)
-irx_m = np.loadtxt(catfold+'irexcess_mis.dat', dtype=np.float64, usecols=(0), unpack=True)
+import pandas as pd 
 
-nuv, nuverr, fuv, fuverr = np.loadtxt(catfold+'gs_mis_galex_br.dat', usecols =(14,15,18,19),unpack=True)
 
-axisrat = 1-np.loadtxt(catfold+'simard_ellip_mis.dat', dtype=np.float64, usecols=(1), unpack=True)
 
-allm2 = np.vstack((allm2, sigma1_m,env_nyu_m, env_bald_m, irx_m, axisrat, allm2[0]*0-999, allm2[0]*0-999)) #nuv[ind2_m1phot], fuv[ind2_m1phot]))
-allx2 = np.vstack((allx2, allx2[0]*0 - 999,allx2[0]*0 - 999,allx2[0]*0 - 999, allx2[0]*0-999, allx2[0]*0-999,allx2[0]*0-999,allx2[0]*0-999))
+def read_data(catfold, filename, columns):
+    filepath = catfold + filename
+    return pd.read_csv(filepath, delim_whitespace=True, header=None, names=columns)
+
+def load_catalogs(catfold):
+    # Define column names based on the provided information
+    columns = [
+        'ObjID', 'GLXID', 'plate', 'MJD', 'fiber_ID',
+        'RA', 'Decl', 'z', '2r', 'mass', 'mass_Error',
+        'sfr', 'sfr_error', 'afuv', 'afuv_error',
+        'ab', 'ab_error', 'av_gsw', 'av_gsw_error', 'flag_sed',
+        'uv_survey', 'flag_uv', 'flag_midir', 'flag_mgs'
+    ]
+    
+    # Load data into Pandas DataFrames
+    m2_df = read_data(catfold, "GSWLC-M2.dat", columns)
+    a2_df = read_data(catfold, "GSWLC-A2.dat", columns)
+    x2_df = read_data(catfold, "GSWLC-X2.dat", columns)
+
+    # Additional data to be concatenated
+    additional_data_files = [
+        ('sigma1_mis.dat', [2], 'sigma1_m'),
+        ('envir_nyu_mis.dat', [0], 'env_nyu_m'),
+        ('baldry_mis.dat', [4], 'env_bald_m'),
+        ('irexcess_mis.dat', [0], 'irx_m'),
+        ('simard_ellip_mis.dat', [1], 'axisrat')
+    ]
+
+    for file, cols, new_col_name in additional_data_files:
+        additional_df = read_data(catfold, file, cols)
+        m2_df[new_col_name] = additional_df.iloc[:, 0]
+
+    return m2_df, a2_df, x2_df
+
+m2_df, a2_df, x2_df = load_catalogs(catfold)
+
+print('GSW loaded')
