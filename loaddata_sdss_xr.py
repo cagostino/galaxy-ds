@@ -5,15 +5,7 @@ from Fits_set import *
 catfold='catalogs/'
 import numpy as np
 import pandas as pd
-class SDSSObj:
-    def __init__(self):
-        '''
-        made for storing various SDSS quantities that are needed throughout
-        '''
-        pass
 m2 = np.loadtxt(catfold+"GSWLC-M2.dat", unpack = True, usecols=(0,1), dtype=np.int64)
-
-
 galinfo  = Fits_set(catfold+'gal_info_dr7_v5_2.fit')
 galline = Fits_set(catfold+'gal_line_dr7_v5_2.fit')
 galfiboh = Fits_set(catfold+'gal_fiboh_dr7_v5_2.fits')
@@ -22,8 +14,6 @@ galmass = Fits_set(catfold+'totlgm_dr7_v5_2b.fit')
 fibmass = Fits_set(catfold+'fiblgm_dr7_v5_2.fit')
 fibsfr = Fits_set(catfold+'gal_fibsfr_dr7_v5_2.fits')
 fibssfr = Fits_set(catfold+'gal_fibspecsfr_dr7_v5_2.fits')
-
-
 '''
 Load info from X-ray Surveys
 '''
@@ -32,52 +22,68 @@ xmm = Fits_set(catfold+'XMM_multiwavelength_cat.fits')
 #xmmfu = fits_set(catfold+'XMM_followup.fits')
 xmmfu= Fits_set(catfold+'XMM_followup_all.fits')
 
+data_dict = {
+    'fiboh': galfiboh.data['AVG'],
+    'allplateids': galinfo.data['PLATEID'],
+    'allmjds': galinfo.data['MJD'],
+    'allfiberids': galinfo.data['FIBERID'],
+    'all_fibmass': fibmass.data['AVG'],
+    #'all_fibmags': galinfo.data['PLUG_MAG'],
+    'all_fibsfr_mpa': fibsfr.data['AVG'],
+    'all_fibssfr_mpa': fibssfr.data['AVG'],
+    #'all_gmags': np.transpose(galinfo.data['PLUG_MAG'])[1],
+    'all_spectype': galinfo.data['SPECTROTYPE'],
+    'allhdelta': galline.data['H_DELTA_FLUX'],
+    'allhdelta_err': galline.data['H_DELTA_FLUX_ERR'],
+    'allhgamma': galline.data['H_GAMMA_FLUX'],
+    'allhgamma_err': galline.data['H_GAMMA_FLUX_ERR'],
+    'alloIII4363': galline.data['OIII_4363_FLUX'],
+    'alloIII4363_err': galline.data['OIII_4363_FLUX_ERR'],
+    'alloIII4959': galline.data['OIII_4959_FLUX'],
+    'alloIII4959_err': galline.data['OIII_4959_FLUX_ERR'],
+    'allheI': galline.data['HEI_5876_FLUX'],
+    'allheI_err': galline.data['HEI_5876_FLUX_ERR'],
+    'alld4000': galindx.data['D4000_N'],
+    'hdelta_lick': galindx.data['LICK_HD_A'],
+    'tauv_cont': galindx.data['TAUV_CONT'],
+    'alloII3726': galline.data['OII_3726_FLUX'],
+    'alloII3726err': galline.data['OII_3726_FLUX_ERR'],
+    'alloII3729': galline.data['OII_3729_FLUX'],
+    'alloII3729err': galline.data['OII_3729_FLUX_ERR'],
+    'allneIII': galline.data['NEIII_3869_FLUX_ERR'],
+    'allneIIIerr': galline.data['NEIII_3869_FLUX'],
+    'alloI': galline.data['OI_6300_FLUX'],
+    'alloI_err': galline.data['OI_6300_FLUX_ERR'],
+    'allSII_6717': galline.data['SII_6717_FLUX'],
+    'allSII_6717_err': galline.data['SII_6717_FLUX_ERR'],
+    'allSII_6731': galline.data['SII_6731_FLUX'],
+    'allSII_6731_err': galline.data['SII_6731_FLUX_ERR'],
+    'alloIII': galline.data['OIII_5007_FLUX'],
+    'alloIII_err': galline.data['OIII_5007_FLUX_ERR'],
+    'allhbeta': galline.data['H_BETA_FLUX'],
+    'allhbeta_err': galline.data['H_BETA_FLUX_ERR'],
+    'alloIII_eqw': galline.data['OIII_5007_EQW'],
+    'alloIII_eqw_err': galline.data['OIII_5007_EQW_ERR'],
+    'allnII': galline.data['NII_6584_FLUX'],
+    'allnII_err': galline.data['NII_6584_FLUX_ERR'],
+    'allhalpha': galline.data['H_ALPHA_FLUX'],
+    'allhalpha_err': galline.data['H_ALPHA_FLUX_ERR'],
+    'allha_eqw': galline.data['H_ALPHA_EQW'],
+    'allha_eqw_err': galline.data['H_ALPHA_EQW_ERR'],
+    'allnII_6548': galline.data['NII_6548_FLUX'],
+    'allnII_6548_err': galline.data['NII_6548_FLUX_ERR'],
+    'all_sdss_avgmasses': galmass.data['AVG'],
+    'allvdisp': galinfo.data['V_DISP'],
+    'allbalmerdisperr': galline.data['SIGMA_BALMER_ERR'],
+    'allbalmerdisp': galline.data['SIGMA_BALMER'],
+    'allforbiddendisp': galline.data['SIGMA_FORBIDDEN'],
+    'allforbiddendisperr': galline.data['SIGMA_FORBIDDEN_ERR']
+}
+
+# Create a DataFrame
+sdssobj = pd.DataFrame(data_dict)
 
 
-sdssobj = SDSSObj()
-
-#from dr7
-print('loading DR7')
-sdssobj.fiboh = galfiboh.getcol('AVG')
-sdssobj.allplateids,sdssobj.allmjds,sdssobj.allfiberids =galinfo.getcol(['PLATEID','MJD','FIBERID'])
-sdssobj.all_fibmass = fibmass.getcol('AVG')
-sdssobj.all_fibmags = galinfo.getcol('PLUG_MAG')
-sdssobj.all_fibsfr_mpa = fibsfr.getcol('AVG')
-sdssobj.all_fibssfr_mpa = fibssfr.getcol('AVG')
-sdssobj.all_gmags = np.transpose(sdssobj.all_fibmags)[1]
-sdssobj.all_spectype = galinfo.getcol('SPECTROTYPE')
-
-sdssobj.allhdelta, sdssobj.allhdelta_err = galline.getcol(['H_DELTA_FLUX','H_DELTA_FLUX_ERR'])
-sdssobj.allhgamma, sdssobj.allhgamma_err = galline.getcol(['H_GAMMA_FLUX','H_GAMMA_FLUX_ERR'])
-sdssobj.alloIII4363, sdssobj.alloIII4363_err = galline.getcol(['OIII_4363_FLUX','OIII_4363_FLUX_ERR'])
-sdssobj.alloIII4959, sdssobj.alloIII4959_err = galline.getcol(['OIII_4959_FLUX','OIII_4959_FLUX_ERR'])
-sdssobj.allheI, sdssobj.allheI_err = galline.getcol(['HEI_5876_FLUX','HEI_5876_FLUX_ERR'])
-sdssobj.alld4000 = galindx.getcol('D4000_n')
-sdssobj.hdelta_lick = galindx.getcol('Lick_Hd_A')
-sdssobj.tauv_cont = galindx.getcol('tauv_cont')
-
-sdssobj.alloII3726, sdssobj.alloII3726err = galline.getcol(['OII_3726_FLUX','OII_3726_FLUX_ERR'])
-sdssobj.alloII3729, sdssobj.alloII3729err = galline.getcol(['OII_3729_FLUX','OII_3729_FLUX_ERR'])
-sdssobj.alloII = sdssobj.alloII3726 + sdssobj.alloII3729
-sdssobj.alloII_err = np.sqrt(sdssobj.alloII3726err**2 + sdssobj.alloII3729err**2)
-
-sdssobj.allneIII, sdssobj.allneIIIerr = galline.getcol(['NEIII_3869_FLUX_ERR', 'NEIII_3869_FLUX'])
-
-sdssobj.alloI, sdssobj.alloI_err, sdssobj.allSII_6717, sdssobj.allSII_6717_err = galline.getcol(['OI_6300_FLUX', 'OI_6300_FLUX_ERR', 'SII_6717_FLUX', 'SII_6717_FLUX_ERR'])
-sdssobj.allSII_6731,sdssobj.allSII_6731_err,sdssobj.alloIII,sdssobj.alloIII_err,sdssobj.allhbeta,sdssobj.allhbeta_err = galline.getcol(['SII_6731_FLUX','SII_6731_FLUX_ERR','OIII_5007_FLUX','OIII_5007_FLUX_ERR','H_BETA_FLUX','H_BETA_FLUX_ERR'])
-sdssobj.alloIII_eqw, sdssobj.alloIII_eqw_err = galline.getcol(['OIII_5007_EQW', 'OIII_5007_EQW_ERR'])
-sdssobj.allSII = sdssobj.allSII_6731+sdssobj.allSII_6717
-sdssobj.allSII_err = np.sqrt(sdssobj.allSII_6731_err**2 + sdssobj.allSII_6717_err**2)
-sdssobj.allnII, sdssobj.allnII_err, sdssobj.allhalpha, sdssobj.allhalpha_err = galline.getcol(['NII_6584_FLUX', 'NII_6584_FLUX_ERR', 'H_ALPHA_FLUX', 'H_ALPHA_FLUX_ERR'])
-sdssobj.allha_eqw, sdssobj.allha_eqw_err = galline.getcol(['H_ALPHA_EQW','H_ALPHA_EQW_ERR'])
-sdssobj.allnII_6548, sdssobj.allnII_6548_err = galline.getcol(['NII_6548_FLUX', 'NII_6548_FLUX_ERR'])
-
-sdssobj.all_sdss_avgmasses = galmass.getcol('AVG')
-sdssobj.allvdisp = galinfo.getcol('V_DISP')
-sdssobj.allbalmerdisperr = galline.getcol('SIGMA_BALMER_ERR')
-sdssobj.allbalmerdisp = galline.getcol('SIGMA_BALMER')
-sdssobj.allforbiddendisp = galline.getcol('SIGMA_FORBIDDEN')
-sdssobj.allforbiddendisperr = galline.getcol('SIGMA_FORBIDDEN_ERR')
 
 xmm3 = Fits_set(catfold+'3xmm.fits')
 xmm3obs = Fits_set(catfold+'3xmmobs.fits')
@@ -142,70 +148,18 @@ liu_spec = Fits_set(catfold+'liu_qsos_spec.fits')
 liu_mw = Fits_set(catfold+'liu_qsos_multiwavelength.fits')
 
 
-'''
 
-match_liu_to_xmm = []
-match_x_liu = []
-for i in range(len(liu_basic.getcol('DEC'))):
-    radiff = (liu_basic.getcol('RA')[i] - x4.ra)
-    decdiff = (liu_basic.getcol('DEC')[i] - x4.dec)
-    dist = np.sqrt((radiff*np.cos(np.mean(np.radians(liu_basic.getcol('DEC')[i]))))**2+decdiff**2)
-    mind = np.where(dist<7*arcsec)[0]
-    if len(mind) >1:
-        print(mind, dist[mind]/arcsec)
-        maxflx = np.where(x4.fullflux[mind] == np.max(x4.fullflux[mind]))[0]
-        mind = mind[maxflx]
-    if len(mind)==1:            
-        print(i)
-        match_liu_to_xmm.append(mind[0])
-        match_x_liu.append(i)
-
-match_to_gsw = []
-match_stern = []
-for i in range(len(sterntab1.getcol('_DE'))):
-    radiff = (sterntab1.getcol('_RA')[i] - m2Cat_GSW.allra)
-    decdiff = (sterntab1.getcol('_DE')[i] - m2Cat_GSW.alldec)
-    dist = np.sqrt((radiff*np.cos(np.radians(sterntab1.getcol('_DE')[i])))**2+decdiff**2)
-    mind = np.where(dist<3*arcsec)[0]
-    if len(mind) >1:
-        print(mind, dist[mind]/arcsec)
-    elif len(mind) == 1:
-        print(i, mind)
-        match_to_gsw.append(mind[0])
-        match_stern.append(i)
-        
-match_to_xmm = []
-match_x_stern = []
-for i in range(len(sterntab1.getcol('_DE')[sternspec_pass])):
-    radiff = (sterntab1.getcol('_RA')[sternspec_pass][i] - x4.ra)
-    decdiff = (sterntab1.getcol('_DE')[sternspec_pass][i] - x4.dec)
-    dist = np.sqrt((radiff*np.cos(np.radians(sterntab1.getcol('_DE')[sternspec_pass][i])))**2+decdiff**2)
-    mind = np.where(dist<7*arcsec)[0]
-    if len(mind) >1:
-        print(mind, dist[mind]/arcsec)
-        maxflx = np.where(x4.fullflux[mind] == np.max(x4.fullflux[mind]))[0]
-        mind = mind[maxflx]
-    elif len(mind) == 1:
-        match_to_xmm.append(mind[0])
-        match_x_stern.append(i)
-'''
-
-
-'''
-csc2_names = []
-for i in range(len(csc_sdss_pd.CSC2)):
-    splitted = (str(csc_sdss_pd.CSC2.iloc[i]).split('_'))
-    csc2_names.append(splitted[1])
-    
-cscx_names = []
-for i in range(len(csc_pd._2CXO)):
-    splitted =str(csc_pd._2CXO.iloc[i])[1:-1]
-    cscx_names.append(splitted)
-'''
 merged_csc= pd.read_csv(catfold+'merged_csc.csv')
 
 first = Fits_set(catfold+'FIRST.fits')
-firstobj = SDSSObj()
+first_data_dict = {
+    'allplateids': first.data['SPEC_PLATE'],
+    'allmjds': first.data['SPEC_MJD'],
+    'allfiberids': first.data['SPEC_FIBERID'],
+    'nvss_flux': first.data['NVSS_FLUX'],
+    'first_flux': first.data['FIRST_FINT'],
+    'wenss_flux': first.data['WENSS_FLUX'],
+    'vlss_flux': first.data['VLSS_FLUX']
+}
 
-firstobj.allplateids,firstobj.allmjds,firstobj.allfiberids =first.getcol(['SPEC_PLATE','SPEC_MJD','SPEC_FIBERID'])
-firstobj.nvss_flux, firstobj.first_flux, firstobj.wenss_flux, firstobj.vlss_flux = first.getcol(['NVSS_FLUX', 'FIRST_FINT', 'WENSS_FLUX', 'VLSS_FLUX'])
+firstobj_df = pd.DataFrame(first_data_dict)

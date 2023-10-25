@@ -25,6 +25,7 @@ def load_catalogs(catfold):
     m2_df = read_data(catfold, "GSWLC-M2.dat", columns)
     a2_df = read_data(catfold, "GSWLC-A2.dat", columns)
     x2_df = read_data(catfold, "GSWLC-X2.dat", columns)
+    m2_df.reset_index(drop=True, inplace=True)
 
     # Additional data to be concatenated
     additional_data_files = [
@@ -37,6 +38,7 @@ def load_catalogs(catfold):
 
     for file, cols, new_col_name in additional_data_files:
         additional_df = read_data(catfold, file, cols)
+        additional_df.reset_index(drop=True, inplace=True)
         m2_df[new_col_name] = additional_df.iloc[:, 0]
 
     return m2_df, a2_df, x2_df

@@ -24,66 +24,17 @@ nuv_ind=18
 fuv_ind=19
 
 class GSWCat:
-    def __init__(self, goodinds, gswlcids, redshift, sfrplus, sedflag=0):
+    def __init__(self, goodinds, sfrplus, sedflag=0):
         self.inds = goodinds
-        self.sedfilt = np.where(sfrplus[sedind][self.inds]==sedflag)[0]
-        self.z = redshift[self.inds][self.sedfilt]
-        self.sedflags = sfrplus[sedind][self.inds][self.sedfilt]
-        self.gids = gswlcids[1][self.inds][self.sedfilt]
-        self.ids = gswlcids[0][self.inds][self.sedfilt]
-        self.ra =sfrplus[raind][self.inds][self.sedfilt]
-        self.dec = sfrplus[decind][self.inds][self.sedfilt]
-
-        self.allra =sfrplus[raind]
-        self.alldec = sfrplus[decind]
-
-        self.sfr=sfrplus[sfrind][self.inds][self.sedfilt]
-        self.sfr_error = sfrplus[sfrerrorind][self.inds][self.sedfilt]
-        self.mass = sfrplus[massind][self.inds][self.sedfilt]
-        self.mass_error = sfrplus[masserrorind][self.inds][self.sedfilt]
-        self.plate = sfrplus[plateind][self.inds][self.sedfilt]
-        self.fiber = sfrplus[fiberind][self.inds][self.sedfilt]
-        self.mjd = sfrplus[mjdind][self.inds][self.sedfilt]        
-        self.av = sfrplus[av_ind][self.inds][self.sedfilt]
-        self.av_err = sfrplus[av_err_ind][self.inds][self.sedfilt]
-        self.a_uv = sfrplus[a_uv_ind][self.inds][self.sedfilt]
+        self.sedfilt = np.where(sfrplus['flag_sed'][self.inds]==sedflag)[0]
+        self.gsw_df = sfrplus.iloc[self.inds].iloc[self.sedfilt]
         
-        self.sigma1 = sfrplus[sigma1_ind][self.inds][self.sedfilt]
-        self.nyuenv = sfrplus[nyuenv_ind][self.inds][self.sedfilt]
-        self.baldenv = sfrplus[baldenv_ind][self.inds][self.sedfilt]
-        self.irx = sfrplus[irx_ind][self.inds][self.sedfilt]
-        self.axisrat = sfrplus[axisrat_ind][self.inds][self.sedfilt]
-        self.nuv = sfrplus[nuv_ind][self.inds][self.sedfilt]
-        self.fuv = sfrplus[fuv_ind][self.inds][self.sedfilt]
-        
-        self.gsw_dict = {'z':self.z,
-                         'sedflags':self.sedflags,
-                         'ids':self.ids,
-                         'ra': self.ra,
-                         'dec': self.dec,
-                         'sfr':self.sfr,
-                         'mass':self.mass,
-                         'plate':self.plate,
-                         'fiber': self.fiber,
-                         'mjd':self.mjd,
-                         'av':self.av,
-                         'sigma1':self.sigma1,
-                         'baldenv':self.baldenv,
-                         'nyuenv':self.nyuenv,
-                         'irx':self.irx,
-                         'axisrat':self.axisrat,
-                         'av_err':self.av_err,
-                         'a_uv':self.a_uv,
-                         'nuv':self.nuv,
-                         'fuv':self.fuv
-                         }
-        self.gsw_df = pd.DataFrame(self.gsw_dict)
         
 
 class GSWCatmatch3xmm(GSWCat):
-    def __init__(self, goodinds, gswlcids, redshift, sfrplus, xrayflag, fullflux_filt, 
+    def __init__(self, goodinds, sfrplus, xrayflag, fullflux_filt, 
                  efullflux_filt ,hardflux_filt, ehardflux_filt, hardflux2_filt, softflux_filt, esoftflux_filt, ext, hr1, hr2, hr3, hr4, sedflag=0):
-        super().__init__(goodinds, gswlcids, redshift, sfrplus, sedflag=sedflag)
+        super().__init__(goodinds, sfrplus, sedflag=sedflag)
         
         self.gsw_df['softflux'] = softflux_filt[self.sedfilt]
         self.gsw_df['hardflux'] = hardflux_filt[self.sedfilt]
@@ -124,9 +75,9 @@ class GSWCatmatch3xmm(GSWCat):
         self.xrayflag = xrayflag[self.sedfilt]
         
 class GSWCatmatch_CSC(GSWCat):
-    def __init__(self, goodinds, gswlcids, redshift, sfrplus,  fullflux_filt, 
+    def __init__(self, goodinds, sfrplus,  fullflux_filt, 
                   hardflux_filt, softflux_filt, sedflag=0): #, ext, hr1, hr2, hr3, hr4,efullflux_filtxrayflag
-        super().__init__(goodinds, gswlcids, redshift, sfrplus, sedflag=sedflag)
+        super().__init__(goodinds, sfrplus, sedflag=sedflag)
         
         self.gsw_df['softflux'] = softflux_filt[self.sedfilt]
         self.gsw_df['hardflux'] = hardflux_filt[self.sedfilt]
@@ -158,9 +109,9 @@ class GSWCatmatch_CSC(GSWCat):
         '''
         
 class GSWCatmatch_radio(GSWCat):
-    def __init__(self, goodinds, gswlcids, redshift, sfrplus,  nvss_flux,
+    def __init__(self, goodinds,  sfrplus,  nvss_flux,
             first_flux , wenss_flux ,vlss_flux, sedflag=0): 
-        super().__init__(goodinds, gswlcids, redshift, sfrplus, sedflag=sedflag)
+        super().__init__(goodinds, sfrplus, sedflag=sedflag)
         
         self.gsw_df['nvss_flux'] = nvss_flux[self.sedfilt]
         self.gsw_df['first_flux'] = first_flux[self.sedfilt]

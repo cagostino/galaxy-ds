@@ -39,8 +39,8 @@ plt.rc('font', family='serif')
 
 
 #commid, ind1_m2, ind2_m2phot = commonpts1d(m2[0], m1_photcatids)
-m2_photrfluxmatched = m1_modelrflux[ind2_m1phot]
-posflux = np.where(m2_photrfluxmatched >0 )[0]
+#m2_photrfluxmatched = m1_modelrflux[ind2_m1phot]
+#posflux = np.where(m2_photrfluxmatched >0 )[0]
 #np.savetxt(catfold+'photmatchinginds.txt', ind2_m2phot,fmt='%s')
 def get_massfrac(fibmass, totmass):
     '''
@@ -52,7 +52,7 @@ def get_massfrac(fibmass, totmass):
     mass_frac[val_masses] = 10**(fibmass[val_masses])/(10**(totmass[val_masses]))
     mass_frac[inval_masses] *= -99
     return mass_frac, val_masses
-all_sdss_massfrac, val_massinds  = get_massfrac(sdssobj.all_fibmass, sdssobj.all_sdss_avgmasses)
+#all_sdss_massfrac, val_massinds  = get_massfrac(sdssobj.all_fibmass, sdssobj.all_sdss_avgmasses)
 
 def get_stat_quant(quant, quantmin=0, quantmax=999):
     quant_val = quant[(quant>quantmin)&(quant<quantmax)]
@@ -369,60 +369,29 @@ csc_cat.gswmatch_inds = gsw_csc
 #%% GSW loading
 
 #a1Cat_GSW_3xmm = GSWCatmatch3xmm(x3,x3.ida[x3.good_all][x3.alltimefilt], a1, redshift_a1, alla1)
-m2Cat_GSW_qsos = GSWCat( np.arange(len(m2[0])), m2, redshift_m2, allm2, sedflag=1)
+m2Cat_GSW_qsos = GSWCat( np.arange(len(m2[0])),  m2_df, sedflag=1)
 
-m2Cat_GSW = GSWCat( np.arange(len(m2[0])), m2, redshift_m2, allm2)
-x2Cat_GSW = GSWCat( np.arange(len(x2[0])), x2, redshift_x2, allx2)
+m2Cat_GSW = GSWCat( np.arange(len(m2[0])), m2_df)
 
 
-m2Cat_GSW_3xmm = GSWCatmatch3xmm(x3.idm2[x3.medtimefilt], m2, redshift_m2, allm2, x3.qualflag_filt,
-                                 x3.fullflux_filt, x3.efullflux_filt, 
-                                 x3.hardflux_filt, x3.ehardflux_filt, x3.hardflux2_filt, x3.softflux_filt, x3.esoftflux_filt, x3.ext_filt,
-                                 x3.HR1_filt, x3.HR2_filt, x3.HR3_filt, x3.HR4_filt)
-m2Cat_GSW_4xmm = GSWCatmatch3xmm(x4.idm2[x4.medtimefilt], m2, redshift_m2, allm2, x4.qualflag, #softflux here should be qualflag
+m2Cat_GSW_4xmm = GSWCatmatch3xmm(x4.idm2[x4.medtimefilt], m2_df, x4.qualflag, #softflux here should be qualflag
                                  x4.fullflux_filt, x4.efullflux_filt, 
                                  x4.hardflux_filt, x4.ehardflux_filt,x4.hardflux2_filt, x4.softflux_filt,x4.esoftflux_filt, x4.ext_filt, #second softflux should be ext
                                  x4.HR1_filt, x4.HR2_filt, x4.HR3_filt, x4.HR4_filt)
 
-m2Cat_GSW_csc = GSWCatmatch_CSC(csc_cat.gswmatch_inds, m2, redshift_m2, allm2, 
-                                 x3.fullflux, #x3.efullflux_filt, 
-                                 x3.hardflux, x3.softflux)#, x3.ext_filt,
-                                 #x3.HR1_filt, x3.HR2_filt, x3.HR3_filt, x3.HR4_filt)
 
 
-m2Cat_GSW_3xmm_all = GSWCatmatch3xmm( x3.idm2[x3.medtimefilt_all], m2, 
-                                     redshift_m2, allm2, x3.qualflag_all, x3.fullflux_all, 
-                                     x3.efullflux_all,x3.hardflux_all, x3.ehardflux_all,
-                                     x3.hardflux2_all, x3.softflux_all,x3.esoftflux_all, x3.ext_all,
-                                     x3.HR1_all, x3.HR2_all, x3.HR3_all, x3.HR4_all)
-m2Cat_GSW_4xmm_all = GSWCatmatch3xmm( x4.idm2[x4.medtimefilt_all], m2, 
-                                     redshift_m2, allm2, x4.qualflag_all, x4.fullflux_all, 
+m2Cat_GSW_4xmm_all = GSWCatmatch3xmm( x4.idm2[x4.medtimefilt_all], m2_df, 
+                                     x4.qualflag_all, x4.fullflux_all, 
                                      x4.efullflux_all,x4.hardflux_all, x4.ehardflux_all,
                                      x4.hardflux2_all, x4.softflux_all,x4.esoftflux_all, x4.ext_all,
                                      x4.HR1_all, x4.HR2_all, x4.HR3_all, x4.HR4_all)
 
-m2Cat_GSW_3xmm_all_qsos = GSWCatmatch3xmm( x3.idm2[x3.medtimefilt_all], m2, 
-                                     redshift_m2, allm2, x3.qualflag_all, x3.fullflux_all, 
-                                     x3.efullflux_all,x3.hardflux_all, x3.ehardflux_all, 
-                                     x3.hardflux2_all, x3.softflux_all,x3.esoftflux_all, x3.ext_all,
-                                     x3.HR1_all, x3.HR2_all, x3.HR3_all, x3.HR4_all, sedflag=1)
-m2Cat_GSW_4xmm_all_qsos = GSWCatmatch3xmm( x4.idm2[x4.medtimefilt_all], m2, 
-                                     redshift_m2, allm2, x4.qualflag_all, x4.fullflux_all, 
+m2Cat_GSW_4xmm_all_qsos = GSWCatmatch3xmm( x4.idm2[x4.medtimefilt_all], m2_df, 
+                                     x4.qualflag_all, x4.fullflux_all, 
                                      x4.efullflux_all,x4.hardflux_all, x4.ehardflux_all,
                                      x4.hardflux2_all, x4.softflux_all, x4.esoftflux_all,x4.ext_all,
                                      x4.HR1_all, x4.HR2_all, x4.HR3_all, x4.HR4_all, sedflag=1)
-
-
-m2Cat_GSW_3xmm.gsw_df['exptimes'] = x3.logmedtimes[x3.medtimefilt][m2Cat_GSW_3xmm.sedfilt]
-m2Cat_GSW_3xmm_all.gsw_df['exptimes'] = x3.logmedtimes[x3.medtimefilt_all][m2Cat_GSW_3xmm_all.sedfilt]
-m2Cat_GSW_3xmm.gsw_df['matchxrayra'] = x3.goodra[x3.medtimefilt][m2Cat_GSW_3xmm.sedfilt]
-m2Cat_GSW_3xmm.gsw_df['matchxraydec'] = x3.gooddec[x3.medtimefilt][m2Cat_GSW_3xmm.sedfilt]
-#m2Cat_GSW_3xmm.xraysourceids = x3.sourceids[x3.good_med][x3.medtimefilt][m2Cat_GSW_3xmm.sedfilt]
-#m2Cat_GSW_3xmm.gsw_df['xrayobsids'] =  x3.obsids_matches[x3.medtimefilt][m2Cat_GSW_3xmm.sedfilt]
-m2Cat_GSW_3xmm_all.gsw_df['matchxrayra'] = x3.goodra[x3.medtimefilt_all][m2Cat_GSW_3xmm_all.sedfilt]
-m2Cat_GSW_3xmm_all.gsw_df['matchxraydec'] = x3.gooddec[x3.medtimefilt_all][m2Cat_GSW_3xmm_all.sedfilt]
-
-
 
 m2Cat_GSW_4xmm.gsw_df['exptimes'] = x4.logmedtimes[x4.medtimefilt][m2Cat_GSW_4xmm.sedfilt]
 m2Cat_GSW_4xmm_all.gsw_df['exptimes'] = x4.logmedtimes[x4.medtimefilt_all][m2Cat_GSW_4xmm_all.sedfilt]
@@ -435,13 +404,9 @@ m2Cat_GSW_4xmm.gsw_df['matchxraydec'] = x4.gooddec[x4.medtimefilt][m2Cat_GSW_4xm
 m2Cat_GSW_4xmm_all.gsw_df['matchxrayra'] = x4.goodra[x4.medtimefilt_all][m2Cat_GSW_4xmm_all.sedfilt]
 m2Cat_GSW_4xmm_all.gsw_df['matchxraydec'] = x4.gooddec[x4.medtimefilt_all][m2Cat_GSW_4xmm_all.sedfilt]
 
-m2Cat_GSW_3xmm_all_qsos.gsw_df['exptimes'] = x3.logmedtimes[x3.medtimefilt_all][m2Cat_GSW_3xmm_all_qsos.sedfilt]
 m2Cat_GSW_4xmm_all_qsos.gsw_df['exptimes'] = x4.logmedtimes[x4.medtimefilt_all][m2Cat_GSW_4xmm_all_qsos.sedfilt]
 
 #m2Cat_GSW_3xmm_all_qsos.gsw_df['xrayobsids'] =  x4.obsids_matches[x4.medtimefilt_all][m2Cat_GSW_3xmm_all_qsos.sedfilt]
-
-m2Cat_GSW_3xmm_all_qsos.gsw_df['matchxrayra'] = x4.goodra[x4.medtimefilt_all][m2Cat_GSW_3xmm_all_qsos.sedfilt]
-m2Cat_GSW_3xmm_all_qsos.gsw_df['matchxraydec'] = x4.gooddec[x4.medtimefilt_all][m2Cat_GSW_3xmm_all_qsos.sedfilt]
 
 #m2Cat_GSW_4xmm_all_qsos.gsw_df['xrayobsids'] =  x4.obsids_matches[x4.medtimefilt_all][m2Cat_GSW_4xmm_all_qsos.sedfilt]
 
@@ -453,22 +418,17 @@ m2Cat_GSW_4xmm_all_qsos.gsw_df['matchxraydec'] = x4.gooddec[x4.medtimefilt_all][
 
 #%% mpa matching
 
-mpa_spec_m2_3xmm = MPAJHU_Spec(m2Cat_GSW_3xmm, sdssobj)
 mpa_spec_m2_4xmm = MPAJHU_Spec(m2Cat_GSW_4xmm, sdssobj)
 
-mpa_spec_m2_csc= MPAJHU_Spec(m2Cat_GSW_csc, sdssobj)
 
 mpa_spec_qsos = MPAJHU_Spec(m2Cat_GSW_qsos, sdssobj, sedtyp=1)
 
-mpa_spec_m2_3xmm_all = MPAJHU_Spec(m2Cat_GSW_3xmm_all, sdssobj)
 mpa_spec_m2_4xmm_all = MPAJHU_Spec(m2Cat_GSW_4xmm_all, sdssobj)
 
-mpa_spec_m2_3xmm_all_qsos = MPAJHU_Spec(m2Cat_GSW_3xmm_all_qsos, sdssobj, sedtyp=1)
 mpa_spec_m2_4xmm_all_qsos = MPAJHU_Spec(m2Cat_GSW_4xmm_all_qsos, sdssobj, sedtyp=1)
 
 
 mpa_spec_allm2 = MPAJHU_Spec(m2Cat_GSW, sdssobj, find=False, gsw=True)
-mpa_spec_allx2 = MPAJHU_Spec(x2Cat_GSW, sdssobj, find=False, gsw=True)
 
 first_spec_allm2 = FIRST_Spec(m2Cat_GSW, firstobj, find=False, gsw=True)
 first_spec_allm2.spec_inds_prac, first_spec_allm2.spec_plates_prac, first_spec_allm2.spec_fibers_prac, first_spec_allm2.make_prac = np.int64(np.loadtxt(catfold+'first_gsw2_matching_info.txt', dtype=np.float64))
@@ -490,8 +450,6 @@ mpa_spec_allm2_first = MPAJHU_Spec(m2Cat_GSW_first, sdssobj, find=False, gsw=Tru
 #first_dr7matching_info = np.vstack([mpa_spec_allm2_first.spec_inds_prac, mpa_spec_allm2_first.spec_plates_prac, mpa_spec_allm2_first.spec_fibers_prac, mpa_spec_allm2_first.make_prac ])
 
 mpa_spec_allm2.spec_inds_prac, mpa_spec_allm2.spec_plates_prac, mpa_spec_allm2.spec_fibers_prac, mpa_spec_allm2.spec_mass_prac, mpa_spec_allm2.make_prac = np.loadtxt(catfold+'gsw2_dr7_matching_info.txt')
-mpa_spec_allx2.spec_inds_prac, mpa_spec_allx2.spec_plates_prac, mpa_spec_allx2.spec_fibers_prac, mpa_spec_allx2.spec_mass_prac, mpa_spec_allx2.make_prac = np.loadtxt(catfold+'gsw2_x2_dr7_matching_info.txt')
-
 mpa_spec_allm2_first.spec_inds_prac, mpa_spec_allm2_first.spec_plates_prac, mpa_spec_allm2_first.spec_fibers_prac, mpa_spec_allm2_first.make_prac = np.loadtxt(catfold+'first_dr7_matching_info.txt', unpack=True)
 
 inds_comm, gsw_sedfilt_mpamake,mpamake_gsw_sedfilt=np.intersect1d(m2Cat_GSW.sedfilt, mpa_spec_allm2.make_prac, return_indices=True)
@@ -510,27 +468,19 @@ inds_comm, gsw_sedfilt_mpamake,mpamake_gsw_sedfilt=np.intersect1d(m2Cat_GSW.sedf
 #spec_inds_allm2, spec_plates_allm2, spec_fibers_allm2, mass_allm2,make_allm2 = np.loadtxt(catfold+'gsw_dr7_matching_info.txt')
 mpa_spec_allm2.spec_inds_prac = np.int64(mpa_spec_allm2.spec_inds_prac).reshape(-1)
 mpa_spec_allm2.make_prac = np.int64(mpa_spec_allm2.make_prac).reshape(-1)
-mpa_spec_allx2.spec_inds_prac = np.int64(mpa_spec_allx2.spec_inds_prac).reshape(-1)
-mpa_spec_allx2.make_prac = np.int64(mpa_spec_allx2.make_prac).reshape(-1)
 
 mpa_spec_qsos.spec_inds_prac = np.int64(mpa_spec_qsos.spec_inds_prac).reshape(-1)
 mpa_spec_qsos.make_prac = np.int64(mpa_spec_qsos.make_prac).reshape(-1)
-mpa_spec_m2_3xmm.spec_inds_prac = np.int64(mpa_spec_m2_3xmm.spec_inds_prac ).reshape(-1)
-mpa_spec_m2_3xmm_all.spec_inds_prac  = np.int64(mpa_spec_m2_3xmm_all.spec_inds_prac ).reshape(-1)
+
 mpa_spec_m2_4xmm.spec_inds_prac = np.int64(mpa_spec_m2_4xmm.spec_inds_prac ).reshape(-1)
 mpa_spec_m2_4xmm_all.spec_inds_prac  = np.int64(mpa_spec_m2_4xmm_all.spec_inds_prac ).reshape(-1)
-mpa_spec_m2_3xmm_all_qsos.spec_inds_prac = np.int64(mpa_spec_m2_3xmm_all_qsos.spec_inds_prac ).reshape(-1)
 mpa_spec_m2_4xmm_all_qsos.spec_inds_prac  = np.int64(mpa_spec_m2_4xmm_all_qsos.spec_inds_prac ).reshape(-1)
 
-mpa_spec_m2_3xmm.make_prac = np.int64(mpa_spec_m2_3xmm.make_prac ).reshape(-1)
-mpa_spec_m2_3xmm_all.make_prac  = np.int64(mpa_spec_m2_3xmm_all.make_prac ).reshape(-1)
 mpa_spec_m2_4xmm.make_prac = np.int64(mpa_spec_m2_4xmm.make_prac ).reshape(-1)
 mpa_spec_m2_4xmm_all.make_prac  = np.int64(mpa_spec_m2_4xmm_all.make_prac ).reshape(-1)
-mpa_spec_m2_3xmm_all_qsos.make_prac = np.int64(mpa_spec_m2_3xmm_all_qsos.make_prac ).reshape(-1)
 mpa_spec_m2_4xmm_all_qsos.make_prac  = np.int64(mpa_spec_m2_4xmm_all_qsos.make_prac ).reshape(-1)
 
 
-mpa_spec_m2_csc.spec_inds_prac = np.int64(mpa_spec_m2_csc.spec_inds_prac ).reshape(-1)
 mpa_spec_allm2_first.spec_inds_prac = np.int64(mpa_spec_allm2_first.spec_inds_prac ).reshape(-1)
 mpa_spec_allm2_first.make_prac = np.int64(mpa_spec_allm2_first.make_prac ).reshape(-1)
 mpa_spec_allm2_first.spec_plates_prac = np.int64(mpa_spec_allm2_first.spec_plates_prac ).reshape(-1)
@@ -553,23 +503,14 @@ EL_first = ELObj(mpa_spec_allm2_first.spec_inds_prac , sdssobj, mpa_spec_allm2_f
 
 EL_m2.EL_gsw_df.to_csv('EL_m2_df.csv')
 EL_m2.bpt_EL_gsw_df.to_csv('EL_m2_bpt_EL_gsw_df.csv')
-
-EL_3xmm  = ELObj(mpa_spec_m2_3xmm.spec_inds_prac , sdssobj, mpa_spec_m2_3xmm.make_prac,m2Cat_GSW_3xmm, xr=True, xmm=True, empirdust=False)
 EL_4xmm  = ELObj(mpa_spec_m2_4xmm.spec_inds_prac , sdssobj, mpa_spec_m2_4xmm.make_prac,m2Cat_GSW_4xmm, xr=True, xmm=True, empirdust=False)
 EL_4xmm.EL_gsw_df.to_csv('EL_4xmm_df.csv')
-EL_csc  = ELObj(mpa_spec_m2_csc.spec_inds_prac , sdssobj, mpa_spec_m2_csc.make_prac,m2Cat_GSW_csc, xr=True)
 
-EL_3xmm_all = ELObj(mpa_spec_m2_3xmm_all.spec_inds_prac , sdssobj, mpa_spec_m2_3xmm_all.make_prac, m2Cat_GSW_3xmm_all, xr=True, xmm=True, empirdust=False)
 EL_4xmm_all = ELObj(mpa_spec_m2_4xmm_all.spec_inds_prac , sdssobj, mpa_spec_m2_4xmm_all.make_prac, m2Cat_GSW_4xmm_all, xr=True, xmm=True, empirdust=False)
 EL_4xmm_all.EL_gsw_df.to_csv('EL_4xmm_all_df.csv')
 EL_4xmm_all.not_bpt_EL_gsw_df.to_csv('EL_4xmm_not_bpt_EL_gsw_df.csv')
 EL_4xmm_all.bpt_sf_df.to_csv('EL_4xmm_bpt_sf_df.csv')
-
-EL_3xmm_all_qsos = ELObj(mpa_spec_m2_3xmm_all_qsos.spec_inds_prac , sdssobj, mpa_spec_m2_3xmm_all_qsos.make_prac, m2Cat_GSW_3xmm_all_qsos, xr=True, xmm=True, empirdust=False)
 EL_4xmm_all_qsos = ELObj(mpa_spec_m2_4xmm_all_qsos.spec_inds_prac , sdssobj, mpa_spec_m2_4xmm_all_qsos.make_prac, m2Cat_GSW_4xmm_all_qsos, xr=True, xmm=True, empirdust=False)
-
-
-
 
 
 #%% X-ray lum sfr filtering
@@ -578,18 +519,6 @@ XRAY LUM -SFR
 '''
 
 
-softxray_xmm = Xraysfr(np.array(m2Cat_GSW_3xmm.gsw_df.softlumsrf), m2Cat_GSW_3xmm, 
-                       mpa_spec_m2_3xmm.make_prac[EL_3xmm.bpt_sn_filt], 
-                       EL_3xmm.bptagn,EL_3xmm.bptsf, 'soft')
-hardxray_xmm = Xraysfr(np.array(m2Cat_GSW_3xmm.gsw_df.hardlumsrf), m2Cat_GSW_3xmm, 
-                       mpa_spec_m2_3xmm.make_prac[EL_3xmm.bpt_sn_filt], 
-                       EL_3xmm.bptagn,EL_3xmm.bptsf,'hard')
-fullxray_xmm = Xraysfr(np.array(m2Cat_GSW_3xmm.gsw_df.fulllumsrf), m2Cat_GSW_3xmm,
-                       mpa_spec_m2_3xmm.make_prac[EL_3xmm.bpt_sn_filt], 
-                       EL_3xmm.bptagn, EL_3xmm.bptsf, 'full')
-fullxray_xmm_bptplus = Xraysfr(np.array(m2Cat_GSW_3xmm.gsw_df.fulllumsrf), m2Cat_GSW_3xmm,
-                       mpa_spec_m2_3xmm.make_prac[EL_3xmm.bpt_sn_filt], 
-                       EL_3xmm.bptplsagn, EL_3xmm.bptplssf, 'full')
 
 fullxray_xmm4 = Xraysfr(np.array(m2Cat_GSW_4xmm.gsw_df.fulllumsrf), m2Cat_GSW_4xmm,
                        mpa_spec_m2_4xmm.make_prac[EL_4xmm.bpt_sn_filt], 
@@ -597,22 +526,9 @@ fullxray_xmm4 = Xraysfr(np.array(m2Cat_GSW_4xmm.gsw_df.fulllumsrf), m2Cat_GSW_4x
 fullxray_xmm4_bptplus = Xraysfr(np.array(m2Cat_GSW_4xmm.gsw_df.fulllumsrf), m2Cat_GSW_4xmm,
                        mpa_spec_m2_4xmm.make_prac[EL_4xmm.bpt_sn_filt], 
                        EL_4xmm.bptplsagn, EL_4xmm.bptplssf, 'full')
-fullxray_csc = Xraysfr(np.array(m2Cat_GSW_csc.gsw_df.fulllumsrf), m2Cat_GSW_csc,
-                       mpa_spec_m2_csc.make_prac[EL_csc.bpt_sn_filt], 
-                       EL_csc.bptagn, EL_csc.bptsf, 'full')
 
-fullxray_xmm_dr7 = Xraysfr(np.array(m2Cat_GSW_3xmm.gsw_df.fulllumsrf), m2Cat_GSW_3xmm, mpa_spec_m2_3xmm.make_prac,  EL_3xmm.bptagn, EL_3xmm.bptsf, 'full')
 fullxray_xmm4_dr7 = Xraysfr(np.array(m2Cat_GSW_4xmm.gsw_df.fulllumsrf), m2Cat_GSW_4xmm, mpa_spec_m2_4xmm.make_prac,  EL_4xmm.bptagn, EL_4xmm.bptsf, 'full')
 
-softxray_xmm_all = Xraysfr(np.array(m2Cat_GSW_3xmm_all.gsw_df.softlumsrf), m2Cat_GSW_3xmm_all, 
-                           mpa_spec_m2_3xmm_all.make_prac[EL_3xmm_all.bpt_sn_filt], 
-                           EL_3xmm_all.bptagn,EL_3xmm_all.bptsf, 'soft')
-hardxray_xmm_all = Xraysfr(np.array(m2Cat_GSW_3xmm_all.gsw_df.hardlumsrf), m2Cat_GSW_3xmm_all,
-                           mpa_spec_m2_3xmm_all.make_prac[EL_3xmm_all.bpt_sn_filt],
-                           EL_3xmm_all.bptagn,EL_3xmm_all.bptsf, 'hard')
-fullxray_xmm_all = Xraysfr(np.array(m2Cat_GSW_3xmm_all.gsw_df.fulllumsrf), m2Cat_GSW_3xmm_all, 
-                           mpa_spec_m2_3xmm_all.make_prac[EL_3xmm_all.bpt_sn_filt],
-                           EL_3xmm_all.bptagn, EL_3xmm_all.bptsf, 'full')
 fullxray_xmm4_all = Xraysfr(np.array(m2Cat_GSW_4xmm_all.gsw_df.fulllumsrf), m2Cat_GSW_4xmm_all, 
                            mpa_spec_m2_4xmm_all.make_prac[EL_4xmm_all.bpt_sn_filt],
                            EL_4xmm_all.bptagn, EL_4xmm_all.bptsf, 'full')
@@ -621,15 +537,6 @@ fullxray_xmm4_all_bptplus = Xraysfr(np.array(m2Cat_GSW_4xmm_all.gsw_df.fulllumsr
                            EL_4xmm_all.bptplsagn, EL_4xmm_all.bptplssf, 'full')
 
 
-fullxray_xmm_all_high_sn_o3 = Xraysfr(np.array(m2Cat_GSW_3xmm_all.gsw_df.fulllumsrf), m2Cat_GSW_3xmm_all, 
-                           mpa_spec_m2_3xmm_all.make_prac[EL_3xmm_all.high_sn_o3],
-                           np.arange(len(EL_3xmm_all.high_sn_o3)), [], 'full')
-fullxray_xmm_all_xragn = Xraysfr(np.array(m2Cat_GSW_3xmm_all.gsw_df.fulllumsrf), m2Cat_GSW_3xmm_all, 
-                           mpa_spec_m2_3xmm_all.make_prac,
-                           np.arange(len(EL_3xmm_all.EL_gsw_df)), [], 'full')
-fullxray_xmm_all_bptplus = Xraysfr(np.array(m2Cat_GSW_3xmm_all.gsw_df.fulllumsrf), m2Cat_GSW_3xmm_all, 
-                                   mpa_spec_m2_3xmm_all.make_prac[EL_3xmm_all.bpt_sn_filt], 
-                                   EL_3xmm_all.bptplsagn, EL_3xmm_all.bptplssf, 'full')
 
 fullxray_xmm4_all_high_sn_o3 = Xraysfr(np.array(m2Cat_GSW_4xmm_all.gsw_df.fulllumsrf), m2Cat_GSW_4xmm_all, 
                            mpa_spec_m2_4xmm_all.make_prac[EL_4xmm_all.high_sn_o3],
@@ -640,47 +547,17 @@ fullxray_xmm4_all_xragn = Xraysfr(np.array(m2Cat_GSW_4xmm_all.gsw_df.fulllumsrf)
 fullxray_xmm4_all_bptplus = Xraysfr(np.array(m2Cat_GSW_4xmm_all.gsw_df.fulllumsrf), m2Cat_GSW_4xmm_all, 
                                    mpa_spec_m2_4xmm_all.make_prac[EL_4xmm_all.bpt_sn_filt], 
                                    EL_4xmm_all.bptplsagn, EL_4xmm_all.bptplssf, 'full')
-
-
-
-softxray_xmm_no = Xraysfr(np.array(m2Cat_GSW_3xmm.gsw_df.softlumsrf), m2Cat_GSW_3xmm, mpa_spec_m2_3xmm.make_prac[EL_3xmm.not_bpt_sn_filt_bool], [], [], 'soft')
-hardxray_xmm_no = Xraysfr(np.array(m2Cat_GSW_3xmm.gsw_df.hardlumsrf), m2Cat_GSW_3xmm, mpa_spec_m2_3xmm.make_prac[EL_3xmm.not_bpt_sn_filt_bool], [], [], 'hard')
-fullxray_xmm_no = Xraysfr(np.array(m2Cat_GSW_3xmm.gsw_df.fulllumsrf), m2Cat_GSW_3xmm, mpa_spec_m2_3xmm.make_prac[EL_3xmm.not_bpt_sn_filt_bool], [], [], 'full')
-fullxray_xmm_all_no = Xraysfr(np.array(m2Cat_GSW_3xmm_all.gsw_df.fulllumsrf), m2Cat_GSW_3xmm_all,
-                              mpa_spec_m2_3xmm_all.make_prac[EL_3xmm_all.not_bpt_sn_filt_bool], [], [], 'full')
-fullxray_xmm_all_unclass_p2 = Xraysfr(np.array(m2Cat_GSW_3xmm_all.gsw_df.fulllumsrf), m2Cat_GSW_3xmm_all,
-                              mpa_spec_m2_3xmm_all.make_prac[EL_3xmm_all.neither_filt], [], [], 'full')
-
 fullxray_xmm4_all_unclass_p2 = Xraysfr(np.array(m2Cat_GSW_4xmm_all.gsw_df.fulllumsrf), m2Cat_GSW_4xmm_all,
                               mpa_spec_m2_4xmm_all.make_prac[EL_4xmm_all.neither_filt], [], [], 'full')
 
 fullxray_xmm4_all_no = Xraysfr(np.array(m2Cat_GSW_4xmm_all.gsw_df.fulllumsrf), m2Cat_GSW_4xmm_all,
                               mpa_spec_m2_4xmm_all.make_prac[EL_4xmm_all.not_bpt_sn_filt_bool], [], [], 'full')
 #%% refiltering emission line objects by x-ray properties
-xmm3eldiagmed_xrfilt = ELObj(mpa_spec_m2_3xmm.spec_inds_prac[EL_3xmm.bpt_sn_filt][fullxray_xmm.valid][fullxray_xmm.likelyagn_xr], 
-                             sdssobj,
-                             mpa_spec_m2_3xmm.make_prac[EL_3xmm.bpt_sn_filt][fullxray_xmm.valid][fullxray_xmm.likelyagn_xr], 
-                             m2Cat_GSW_3xmm,xr=True, xmm=True)
 xmm4eldiagmed_xrfilt = ELObj(mpa_spec_m2_4xmm.spec_inds_prac[EL_4xmm.bpt_sn_filt][fullxray_xmm4.valid][fullxray_xmm4.likelyagn_xr], 
                              sdssobj,
                              mpa_spec_m2_4xmm.make_prac[EL_4xmm.bpt_sn_filt][fullxray_xmm4.valid][fullxray_xmm4.likelyagn_xr], 
                              m2Cat_GSW_4xmm,xr=True, xmm=True)
 
-csceldiagmed_xrfilt = ELObj(mpa_spec_m2_csc.spec_inds_prac[EL_csc.bpt_sn_filt][fullxray_csc.valid][fullxray_csc.likelyagn_xr], 
-                             sdssobj,
-                             mpa_spec_m2_csc.make_prac[EL_csc.bpt_sn_filt][fullxray_csc.valid][fullxray_csc.likelyagn_xr], 
-                             m2Cat_GSW_csc,xr=True, xmm=False)
-
-xmm3eldiagmed_xrfiltbptplus = ELObj(mpa_spec_m2_3xmm.spec_inds_prac[EL_3xmm.bpt_sn_filt][fullxray_xmm_bptplus.valid][fullxray_xmm_bptplus.likelyagn_xr], sdssobj,
-                             mpa_spec_m2_3xmm.make_prac[EL_3xmm.bpt_sn_filt][fullxray_xmm_bptplus.valid][fullxray_xmm_bptplus.likelyagn_xr], 
-                             m2Cat_GSW_3xmm,xr=True, xmm=True)
-
-xmm3eldiagmed_xrsffilt = ELObj(mpa_spec_m2_3xmm.spec_inds_prac[EL_3xmm.bpt_sn_filt][fullxray_xmm.valid][fullxray_xmm.likelysf], sdssobj,
-                             mpa_spec_m2_3xmm.make_prac[EL_3xmm.bpt_sn_filt][fullxray_xmm.valid][fullxray_xmm.likelysf], m2Cat_GSW_3xmm,xr=True, xmm=True)
-
-xmm3eldiagmed_xrfilt_all =  ELObj(mpa_spec_m2_3xmm_all.spec_inds_prac[EL_3xmm_all.bpt_sn_filt][fullxray_xmm_all.valid][fullxray_xmm_all.likelyagn_xr], sdssobj,
-                                  mpa_spec_m2_3xmm_all.make_prac[EL_3xmm_all.bpt_sn_filt][fullxray_xmm_all.valid][fullxray_xmm_all.likelyagn_xr], 
-                                  m2Cat_GSW_3xmm_all,xr=True, xmm=True)
 xmm4eldiagmed_xrfilt_all =  ELObj(mpa_spec_m2_4xmm_all.spec_inds_prac[EL_4xmm_all.bpt_sn_filt][fullxray_xmm4_all.valid][fullxray_xmm4_all.likelyagn_xr], sdssobj,
                                   mpa_spec_m2_4xmm_all.make_prac[EL_4xmm_all.bpt_sn_filt][fullxray_xmm4_all.valid][fullxray_xmm4_all.likelyagn_xr], 
                                   m2Cat_GSW_4xmm_all,xr=True, xmm=True)
@@ -688,18 +565,6 @@ xmm4eldiagmed_sffilt_all =  ELObj(mpa_spec_m2_4xmm_all.spec_inds_prac[EL_4xmm_al
                                   mpa_spec_m2_4xmm_all.make_prac[EL_4xmm_all.bpt_sn_filt][fullxray_xmm4_all.valid][fullxray_xmm4_all.likelysf], 
                                   m2Cat_GSW_4xmm_all,xr=True, xmm=True)
 
-xmm3eldiagmed_xrfilt_all_high_sn_o3 =  ELObj(mpa_spec_m2_3xmm_all.spec_inds_prac[EL_3xmm_all.high_sn_o3][fullxray_xmm_all_high_sn_o3.valid][fullxray_xmm_all_high_sn_o3.likelyagn_xr], sdssobj,
-                                  mpa_spec_m2_3xmm_all.make_prac[EL_3xmm_all.high_sn_o3][fullxray_xmm_all_high_sn_o3.valid][fullxray_xmm_all_high_sn_o3.likelyagn_xr], m2Cat_GSW_3xmm_all,xr=True, xmm=True)
-
-xmm3eldiagmed_xrfiltbptplus_all =  ELObj(mpa_spec_m2_3xmm_all.spec_inds_prac[EL_3xmm_all.bpt_sn_filt][fullxray_xmm_all_bptplus.valid][fullxray_xmm_all_bptplus.likelyagn_xr], 
-                                         sdssobj,
-                                  mpa_spec_m2_3xmm_all.make_prac[EL_3xmm_all.bpt_sn_filt][fullxray_xmm_all_bptplus.valid][fullxray_xmm_all_bptplus.likelyagn_xr], 
-                                  m2Cat_GSW_3xmm_all, xr=True, xmm=True)
-
-xmm3eldiagmed_xrfilt_xragn =  ELObj(mpa_spec_m2_3xmm_all.spec_inds_prac[fullxray_xmm_all_xragn.valid][fullxray_xmm_all_xragn.likelyagn_xr], 
-                                    sdssobj,
-                                  mpa_spec_m2_3xmm_all.make_prac[fullxray_xmm_all_xragn.valid][fullxray_xmm_all_xragn.likelyagn_xr], 
-                                  m2Cat_GSW_3xmm_all,xr=True, xmm=True)
 xmm4eldiagmed_xrfilt_xragn =  ELObj(mpa_spec_m2_4xmm_all.spec_inds_prac[fullxray_xmm4_all_xragn.valid][fullxray_xmm4_all_xragn.likelyagn_xr], 
                                     sdssobj,
                                   mpa_spec_m2_4xmm_all.make_prac[fullxray_xmm4_all_xragn.valid][fullxray_xmm4_all_xragn.likelyagn_xr], 
@@ -709,14 +574,6 @@ xmm4eldiagmed_xrfilt_xragn =  ELObj(mpa_spec_m2_4xmm_all.spec_inds_prac[fullxray
 xmm4eldiagmed_xrsffilt = ELObj(mpa_spec_m2_4xmm_all.spec_inds_prac[EL_4xmm_all.bpt_sn_filt][fullxray_xmm4_all.valid][fullxray_xmm4_all.likelysf], sdssobj,
                              mpa_spec_m2_4xmm_all.make_prac[EL_4xmm_all.bpt_sn_filt][fullxray_xmm4_all.valid][fullxray_xmm4_all.likelysf], m2Cat_GSW_4xmm_all,xr=True, xmm=True)
 
-xmm3eldiagmed_xrfilt_unclass_p2 =  ELObj(mpa_spec_m2_3xmm_all.spec_inds_prac[EL_3xmm_all.neither_filt][fullxray_xmm_all_unclass_p2.valid][fullxray_xmm_all_unclass_p2.likelyagn_xr], 
-                                    sdssobj,
-                                  mpa_spec_m2_3xmm_all.make_prac[EL_3xmm_all.neither_filt][fullxray_xmm_all_unclass_p2.valid][fullxray_xmm_all_unclass_p2.likelyagn_xr], 
-                                  m2Cat_GSW_3xmm_all,xr=True, xmm=True, weak_lines=True)
-xmm3eldiagmed_xrfilt_unclass_p1 =  ELObj(mpa_spec_m2_3xmm_all.spec_inds_prac[EL_3xmm_all.not_bpt_sn_filt_bool][fullxray_xmm_all_no.valid][fullxray_xmm_all_no.likelyagn_xr], 
-                                    sdssobj,
-                                  mpa_spec_m2_3xmm_all.make_prac[EL_3xmm_all.not_bpt_sn_filt_bool][fullxray_xmm_all_no.valid][fullxray_xmm_all_no.likelyagn_xr], 
-                                  m2Cat_GSW_3xmm_all,xr=True, xmm=True)
 
 xmm4eldiagmed_xrfilt_unclass_p2 =  ELObj(mpa_spec_m2_4xmm_all.spec_inds_prac[EL_4xmm_all.neither_filt][fullxray_xmm4_all_unclass_p2.valid][fullxray_xmm4_all_unclass_p2.likelyagn_xr], 
                                     sdssobj,
@@ -747,8 +604,6 @@ xmm4eldiagmed_xrfilt_unclass_p1 =  ELObj(mpa_spec_m2_4xmm_all.spec_inds_prac[EL_
 '''
 Gdiffs
 '''
-xmm3inds = m2Cat_GSW_3xmm.inds[m2Cat_GSW_3xmm.sedfilt][mpa_spec_m2_3xmm.make_prac][EL_3xmm.bpt_sn_filt][fullxray_xmm.valid][fullxray_xmm.likelyagn_xr]
-xmm3ids = m2Cat_GSW_3xmm.ids[mpa_spec_m2_3xmm.make_prac][EL_3xmm.bpt_sn_filt][fullxray_xmm.valid][fullxray_xmm.likelyagn_xr]
 gswids = m2[0][mpa_spec_allm2.make_prac][EL_m2.bpt_sn_filt]
 covered_gsw_x3 = np.int64(np.loadtxt('catalogs/xraycov/matched_gals_gsw2xmm3_xrcovg_fields_set.txt'))
 
@@ -771,27 +626,6 @@ def get_gdiffs_set(xr_ids, gswids, covered_inds, xr_df, gsw_df, quantities):
     gdiff_set.nearbyx(x3gswdiffcomm)
     gdiff_set.getdist_by_thresh(3.0)
     return gdiff_set
-
-
-
-xmm3gdiff =get_gdiffs_set(xmm3ids, gswids, covered_gsw_x3,                                  
-                                  xmm3eldiagmed_xrfilt.bpt_EL_gsw_df,EL_m2.bpt_EL_gsw_df, ['mass', 'z', 'niiha', 'oiiihb'])
-
-xmm3gdiff_set_mass_ssfr =get_gdiffs_set(xmm3ids, gswids, covered_gsw_x3,                                  
-                                  xmm3eldiagmed_xrfilt.bpt_EL_gsw_df,EL_m2.bpt_EL_gsw_df, ['mass', 'z', 'ssfr'])
-
-
-binnum = 60
-contaminations_xmm3 = xmm3gdiff.xrgswfracs[:,binnum]
-contaminations_xmm3_2 = xmm3gdiff.xrgswfracs[:, 40]
-contaminations_xmm3_25 = xmm3gdiff.xrgswfracs[:, 50]
-contaminations_xmm3_3 = xmm3gdiff.xrgswfracs[:, 60]
-contaminations_xmm3_35 = xmm3gdiff.xrgswfracs[:, 70]
-contaminations_xmm3_4 = xmm3gdiff.xrgswfracs[:, 80]
-#xmm3gdiff.interpdistgrid(11,11,50,method='linear')
-xmm3eldiagmed_xrfilt.bpt_EL_gsw_df['xrfracs']=contaminations_xmm3_25
-
-
 #%% sfrm
 
 '''
@@ -1087,14 +921,11 @@ line_filts_comb = {'sii_oii_sub':[['siiflux_sub', 'oiiflux_sub'],combo_sncut],
 #sfrm_gsw2.bin_by_bpt( val1, sy2_1, sliner_1, hliner_1,binsize=0.1)
 
 
-cols_to_use = sfrm_gsw2.fullagn_df.columns.difference(xmm3eldiagmed_xrfilt.bpt_EL_gsw_df.columns)
+cols_to_use = sfrm_gsw2.fullagn_df.columns.difference(xmm4eldiagmed_xrfilt.bpt_EL_gsw_df.columns)
 cols_to_use  = cols_to_use.tolist()
 cols_to_use.append('ids')
 
 
-cols_to_use_csc = sfrm_gsw2.fullagn_df.columns.difference(csceldiagmed_xrfilt.bpt_EL_gsw_df.columns)
-cols_to_use_csc  = cols_to_use_csc.tolist()
-cols_to_use_csc.append('ids')
 
 
 merged_xr = pd.merge(xmm4eldiagmed_xrfilt.bpt_EL_gsw_df, sfrm_gsw2.fullagn_df[ cols_to_use], on='ids')
@@ -1146,29 +977,6 @@ merged_xr_liner2_all_combo_allxr.to_csv(catfold+'merged_xr_hliner_all_combo_allx
 merged_xr_sf_all_combo_allxr.to_csv(catfold+'merged_xr_sliner_all_combo_allxr.csv')
 merged_xr_val_all_combo_allxr.to_csv(catfold+'merged_xr_val_all_combo_allxr.csv')
 
-
-
-
-merged_xr_val2 = pd.merge(xmm3eldiagmed_xrfilt.bpt_EL_gsw_df, sfrm_gsw2.fullagn_df[cols_to_use].iloc[val2], on='ids')
-merged_xr_val2_all = pd.merge(xmm3eldiagmed_xrfilt_all.bpt_EL_gsw_df, sfrm_gsw2.fullagn_df[cols_to_use].iloc[val2], on='ids')
-
-merged_xr_sy2_woo1 = pd.merge(xmm3eldiagmed_xrfilt.bpt_EL_gsw_df, sfrm_gsw2.fullagn_df[cols_to_use].iloc[sy2_2], on='ids')
-merged_xr_sf_woo1 = pd.merge(xmm3eldiagmed_xrfilt.bpt_EL_gsw_df, sfrm_gsw2.fullagn_df[cols_to_use].iloc[sliner_2], on='ids')
-merged_xr_liner2_woo1 = pd.merge(xmm3eldiagmed_xrfilt.bpt_EL_gsw_df, sfrm_gsw2.fullagn_df[cols_to_use].iloc[hliner_2], on='ids')
-
-merged_xr_sy2_all_woo1 = pd.merge(xmm3eldiagmed_xrfilt_all.bpt_EL_gsw_df, sfrm_gsw2.fullagn_df[cols_to_use].iloc[sy2_2], on='ids')
-merged_xr_sf_all_woo1 = pd.merge(xmm3eldiagmed_xrfilt_all.bpt_EL_gsw_df, sfrm_gsw2.fullagn_df[cols_to_use].iloc[sliner_2], on='ids')
-merged_xr_liner2_all_woo1 = pd.merge(xmm3eldiagmed_xrfilt_all.bpt_EL_gsw_df, sfrm_gsw2.fullagn_df[cols_to_use].iloc[hliner_2], on='ids')
-
-
-merged_xr_sy2_all_woo1.to_csv(catfold+'merged_xr_sy2_all_woo1.csv')
-merged_xr_liner2_all_woo1.to_csv(catfold+'merged_xr_hliner_all_woo1.csv')
-merged_xr_sf_all_woo1.to_csv(catfold+'merged_xr_sliner_all_woo1.csv')
-merged_xr_val2_all.to_csv(catfold+'merged_xr_val_all_woo1.csv')
-
-
-EL_3xmm_all.high_sn_o3_EL_gsw_df.to_csv(catfold+'high_sn_o3_xray_all_sample.csv')
-EL_3xmm.high_sn_o3_EL_gsw_df.to_csv(catfold+'high_sn_o3_xray_sample.csv')
 EL_4xmm_all.EL_gsw_df.to_csv(catfold+'x4_xray_all_sample.csv')
 xmm4eldiagmed_xrfilt_xragn.EL_gsw_df.to_csv(catfold+'x4_xragn_all_sample.csv')
 
@@ -1176,15 +984,10 @@ xmm4eldiagmed_xrfilt_xragn.bptplus_sf_df.to_csv(catfold+'xragn_bptplussf.csv')
 xmm4eldiagmed_xrfilt_xragn.bptplusnii_agn_df.to_csv(catfold+'xragn_bptplusnii.csv')
 xmm4eldiagmed_xrfilt_xragn.bptplusnii_sf_df.to_csv(catfold+'xragn_bptplusniisf.csv')
 
-xmm3eldiagmed_xrfilt_all.bpt_sf_df.to_csv(catfold+'xragn_bptsf.csv')
 EL_4xmm_all.bpt_sf_df.to_csv(catfold+'xr_bptsf.csv')
 EL_4xmm_all.bptplus_sf_df.to_csv(catfold+'xr_bptplussf.csv')
 
 EL_4xmm_all.bptplusnii_agn_df.to_csv(catfold+'xr_bptniiagn.csv')
-
-
-xmm3eldiagmed_xrfilt_all_high_sn_o3.high_sn_o3_EL_gsw_df.to_csv(catfold+'xragn_high_sn_o3_sample.csv')
-xmm3eldiagmed_xrfilt_xragn.EL_gsw_df.to_csv(catfold+'xragn_sample_no_sn_cuts.csv')
 
 xmm4eldiagmed_xrfilt_unclass_p1.EL_gsw_df.to_csv(catfold+'xragn_sample_unclass_p1_cuts.csv')
 xmm4eldiagmed_xrfilt_unclass_p2.EL_gsw_df.to_csv(catfold+'xragn_sample_unclass_p2_cuts.csv')
@@ -1195,446 +998,8 @@ neither_xr_o3 = EL_4xmm_all.neither_EL_gsw_df.iloc[np.where((EL_4xmm_all.neither
                                                             (EL_4xmm_all.neither_EL_gsw_df.hardflux_sn>2))].copy()
 
 comm_covered_bptplsagn, comm_bptpls, comm_covered = np.intersect1d(EL_m2.bptplsagn, covered_gsw_x3, return_indices=True)
-commdiffidsxmm3_sub, xmm3diffcomm_sub, xmm3gswdiffcomm_sub = commonpts1d(xmm3ids, gswids[covered_gsw_x3[comm_covered]])
-#intersect_covered_, comm_first, comm_second = np.intersect1d(relevant_inds, covered_gsw, return_indices=True)
-comm_covered_bptplsagn_val1, comm_bptpls_val1, comm_covered_val1 = np.intersect1d(np.array(sfrm_gsw2.fullagn_df.ids.iloc[val1]), 
-                                                                                  gswids[covered_gsw_x3[comm_covered]], return_indices=True)
-comm_covered_bptplsagn_sy2, comm_bptpls_sy2, comm_covered_sy2 = np.intersect1d(np.array(sfrm_gsw2.fullagn_df.ids.iloc[sy2_1]),
-                                                                               gswids[covered_gsw_x3[comm_covered]],return_indices=True)
-comm_covered_bptplsagn_liner2, comm_bptpls_liner2, comm_covered_liner2 = np.intersect1d(np.array(sfrm_gsw2.fullagn_df.ids.iloc[hliner_1]), 
-                                                                                        gswids[covered_gsw_x3[comm_covered]], return_indices=True)
-comm_covered_bptplsagn_sf, comm_bptpls_sf, comm_covered_sf = np.intersect1d(np.array(sfrm_gsw2.fullagn_df.ids.iloc[sliner_1]),
-                                                                            gswids[covered_gsw_x3[comm_covered]], return_indices=True)
 
 
-xmm3gdiff_sub_val1 =get_gdiffs_set(merged_xr_val.ids, np.array(sfrm_gsw2.fullagn_df.ids.iloc[val1]), comm_bptpls_val1,                                  
-                                  merged_xr_val,sfrm_gsw2.fullagn_df.iloc[val1].copy(), ['mass', 'z', 'niiha_sub', 'oiiihb_sub'])
-
-xmm3gdiff_sub_sy2 =get_gdiffs_set(merged_xr_sy2.ids, np.array(sfrm_gsw2.fullagn_df.ids.iloc[sy2_1]), comm_bptpls_sy2,                                  
-                                  merged_xr_sy2,sfrm_gsw2.fullagn_df.iloc[sy2_1].copy(), ['mass', 'z', 'niiha_sub', 'oiiihb_sub'])
-
-xmm3gdiff_sub_liner2 =get_gdiffs_set(merged_xr_liner2.ids, np.array(sfrm_gsw2.fullagn_df.ids.iloc[hliner_1]), comm_bptpls_liner2,                                  
-                                  merged_xr_liner2,sfrm_gsw2.fullagn_df.iloc[hliner_1].copy(), ['mass', 'z', 'niiha_sub', 'oiiihb_sub'])
-xmm3gdiff_sub_sf =get_gdiffs_set(merged_xr_sf.ids, np.array(sfrm_gsw2.fullagn_df.ids.iloc[sliner_1]), comm_bptpls_sf,                                  
-                                  merged_xr_sf,sfrm_gsw2.fullagn_df.iloc[sliner_1].copy(), ['mass', 'z', 'niiha_sub', 'oiiihb_sub'])
-
-#xmm3gdiff_set_mass_ssfr =get_gdiffs_set(xmm3ids, gswids, covered_gsw_x3,                                  
- #                                 xmm3eldiagmed_xrfilt.bpt_EL_gsw_df,EL_m2.bpt_EL_gsw_df, ['mass', 'z', 'ssfr'])
-
-
-#e,a,b = np.intersect1d(EL_m2.bptplsagn[sfrm_gsw2.agn_ind_mapping], covered_gsw_x3, return_indices=True)
-#xmm3gdiff_sub_set =get_gdiffs_set(xmm3ids[xmm3eldiagmed_xrfilt.bptplsagn], np.array(sfrm_gsw2.fullagn_df.ids),covered_gsw_x3[b],
-#                                  merged_xr,sfrm_gsw2.fullagn_df, ['mass', 'z', 'niiha_sub','oiiihb_sub'])
-
-''' 
-
-
-xmm3gdiff_sub = Gdiffs(xmm3ids[xmm3eldiagmed_xrfilt.bptplsagn], gswids[EL_m2.bptplsagn],  merged_xr, EL_m2.bpt_EL_gsw_df,
-                   ['mass', 'z', 'niiha', 'oiiihb'])
-
-xmm3gdiff_sub_val1 = Gdiffs(xmm3ids[xmm3eldiagmed_xrfilt.bptplsagn], gswids[EL_m2.bptplsagn],  merged_xr_val, EL_m2.bpt_EL_gsw_df,
-                   ['mass', 'z', 'niiha', 'oiiihb'])
-xmm3gdiff_sub_sy2 = Gdiffs(xmm3ids[xmm3eldiagmed_xrfilt.bptplsagn], gswids[EL_m2.bptplsagn],  merged_xr_sy2, EL_m2.bpt_EL_gsw_df,
-                   ['mass', 'z', 'niiha', 'oiiihb'])
-xmm3gdiff_sub_liner2 = Gdiffs(xmm3ids[xmm3eldiagmed_xrfilt.bptplsagn], gswids[EL_m2.bptplsagn],  merged_xr_liner2, EL_m2.bpt_EL_gsw_df,
-                   ['mass', 'z', 'niiha', 'oiiihb'])
-xmm3gdiff_sub_sf = Gdiffs(xmm3ids[xmm3eldiagmed_xrfilt.bptplsagn], gswids[EL_m2.bptplsagn],  merged_xr_sf, EL_m2.bpt_EL_gsw_df,
-                   ['mass', 'z', 'niiha', 'oiiihb'])
-
-
-
-
-
-
-xmm3gdiff_sub_val1.get_filt(comm_bptpls_val1)
-xmm3gdiff_sub_sy2.get_filt(comm_bptpls_sy2)
-xmm3gdiff_sub_liner2.get_filt(comm_bptpls_liner2)
-xmm3gdiff_sub_sf.get_filt(comm_bptpls_sf)
-
-
-commdiffidsxmm3_sub_val1, xmm3diffcomm_sub, xmm3gswdiffcomm_sub = commonpts1d(xmm3ids, gswids[covered_gsw_x3[comm_covered]])
-
-commdiffidsxmm3_sub_sy2, xmm3diffcomm_sub_sy2, xmm3gswdiffcomm_sub_sy2 = commonpts1d(merged_xr_sy2.ids, gswids[covered_gsw_x3[comm_covered]])
-commdiffidsxmm3_sub_liner2, xmm3diffcomm_sub_liner2, xmm3gswdiffcomm_sub_liner2 = commonpts1d(merged_xr_liner2.ids, gswids[covered_gsw_x3[comm_covered]])
-commdiffidsxmm3_sub_sf, xmm3diffcomm_sub_sf, xmm3gswdiffcomm_sub_sf = commonpts1d(merged_xr_sf.ids, gswids[covered_gsw_x3[comm_covered]])
-
-
-
-
-
-xmm3gdiff_sub_sy2.nearbyx(xmm3gswdiffcomm_sub_sy2)
-xmm3gdiff_sub_liner2.nearbyx(xmm3gswdiffcomm_sub_liner2)
-xmm3gdiff_sub_sf.nearbyx(xmm3gswdiffcomm_sub_sf)
-
-xmm3gdiff_sub.getdist_by_thresh(3.0)
-binnum = 60
-contaminations_xmm3_sub = xmm3gdiff_sub.xrgswfracs[:,binnum]
-
-contaminations_xmm3_15_sub = xmm3gdiff_sub.xrgswfracs[:, 30]
-
-contaminations_xmm3_2_sub = xmm3gdiff_sub.xrgswfracs[:, 40]
-contaminations_xmm3_25_sub = xmm3gdiff_sub.xrgswfracs[:, 50]
-contaminations_xmm3_3_sub = xmm3gdiff_sub.xrgswfracs[:, 60]
-contaminations_xmm3_35_sub = xmm3gdiff_sub.xrgswfracs[:, 70]
-contaminations_xmm3_4_sub = xmm3gdiff_sub.xrgswfracs[:, 80]
-xmm3gdiff.interpdistgrid(11,11,50,method='linear')
-'''
-
-
-
-'''
-d4000m_gsw2 = SFRMatch(EL_m2,EL_m2.bpt_EL_gsw_df,
-                     EL_m2.plus_EL_gsw_df, EL_m2.neither_EL_gsw_df)
-
-d4000m_gsw2.get_highsn_match_only_d4000(EL_m2.bptplsagn, EL_m2.bptplssf, 
-                                EL_m2.bptplsnii_sf, EL_m2.bptplsnii_agn, 
-                                load=True,  sncut_forb=2,sncut_balm=2, with_av=True)
-d4000m_gsw2.subtract_elflux(sncut=2,  halphbeta_sncut=10, second=False)
-d4000m_gsw2.bin_by_bpt(binsize=0.1)
-d4000mhd_gsw2 = SFRMatch(EL_m2,EL_m2.bpt_EL_gsw_df,
-                     EL_m2.plus_EL_gsw_df, EL_m2.neither_EL_gsw_df)
-d4000mhd_gsw2.get_highsn_match_only_d4000_hdelta(EL_m2.bptplsagn, EL_m2.bptplssf, 
-                                EL_m2.bptplsnii_sf, EL_m2.bptplsnii_agn, 
-                                load=True, sncut_forb=2,sncut_balm=2, with_av=True, fname='second_d4_hd_1117')
-d4000mhd_gsw2.subtract_elflux(sncut=2,  halphbeta_sncut=10)
-d4000mhd_gsw2.bin_by_bpt(binsize=0.1)
-d4000mhd_gsw2.get_filt_dfs(filts, gen_filts, match_filts, line_filts, line_filts_comb, loweroiiilum=40.0, upperoiiilum=40.2)
-#d4000mhd_gsw2.bin_by_bpt(binsize=0.1)
-
-
-
-d4000mhd_gsw2 = SFRMatch(EL_m2,EL_m2.bpt_EL_gsw_df,
-                     EL_m2.plus_EL_gsw_df, EL_m2.neither_EL_gsw_df)
-d4000mhd_gsw2.get_highsn_match_only_d4000_hdelta(EL_m2.bptplsagn, EL_m2.bptplssf, 
-                                EL_m2.bptplsnii_sf, EL_m2.bptplsnii_agn, 
-                                load=False,  sncut_forb=2,sncut_balm=2, with_av=True, fname='second_d4_hd_0511_mixed_global_fiber')
-d4000mhd_gsw2.subtract_elflux(sncut=2,  halphbeta_sncut=10)
-#d4000mhd_gsw2.bin_by_bpt(binsize=0.1)
-#d4000mhd_gsw2.get_filt_dfs(filts, gen_filts, match_filts, line_filts, line_filts_comb, loweroiiilum=40.0, upperoiiilum=40.2)
-
-
-
-
-d4000mhd_gsw2 = SFRMatch(EL_m2,EL_m2.bpt_EL_gsw_df,
-                     EL_m2.plus_EL_gsw_df, EL_m2.neither_EL_gsw_df)
-d4000mhd_gsw2.get_highsn_match_only_d4000_hdelta(EL_m2.bptplsagn, EL_m2.bptplssf, 
-                                EL_m2.bptplsnii_sf, EL_m2.bptplsnii_agn, 
-                                load=True,  sncut=2, with_av=True, fname='second_d4_hd_1117')
-d4000mhd_gsw2.subtract_elflux(sncut=2,  halphbeta_sncut=10)
-
-lower_half_ms_sy2 = np.where((sfrm_gsw2.fullagn_df.delta_ssfr.iloc[sy2_1]<0 )&
-                             (sfrm_gsw2.fullagn_df.delta_ssfr.iloc[sy2_1]>-0.7)&
-                             (sfrm_gsw2.fullagn_df.mass.iloc[sy2_1]>10)
-                             )[0]
-lower_half_ms_hliner = np.where((sfrm_gsw2.fullagn_df.delta_ssfr.iloc[hliner_1]<0)&
-                                (sfrm_gsw2.fullagn_df.delta_ssfr.iloc[hliner_1]>-0.7)&
-                                (sfrm_gsw2.fullagn_df.mass.iloc[hliner_1]>10))[0]
-lower_half_ms_sliner = np.where((sfrm_gsw2.fullagn_df.delta_ssfr.iloc[sliner_1]<0)&
-                                (sfrm_gsw2.fullagn_df.delta_ssfr.iloc[sliner_1]>-0.7)&
-                                (sfrm_gsw2.fullagn_df.mass.iloc[sliner_1]>10))[0]
-
-lower_half_ms_nonagn = np.where((EL_m2.allnonagn_df.delta_ssfr<0)&
-                                (EL_m2.allnonagn_df.delta_ssfr>-0.7)&
-                                (EL_m2.allnonagn_df.mass>10))[0]
-
-plt.hist(sfrm_gsw2.fullagn_df.d4000.iloc[sy2_1[lower_half_ms_sy2]],  histtype='step',label='Sy2', range=(1,2.4), bins=20, log=False)
-plt.hist(sfrm_gsw2.fullagn_df.d4000.iloc[hliner_1[lower_half_ms_hliner]], histtype='step', label='H-LINER', range=(1,2.4), bins=20, log=False)
-plt.hist(sfrm_gsw2.fullagn_df.d4000.iloc[sliner_1[lower_half_ms_sliner]], histtype='step', label='S-LINER', range=(1,2.4), bins=20, log=False)
-plt.hist(EL_m2.allnonagn_df.d4000.iloc[lower_half_ms_nonagn], histtype='step', label='Non-AGN', range=(1,2.4), bins=20, log=False)
-plt.legend()
-plt.xlabel(r'D$_{4000}$')
-plt.ylabel('Counts')
-plt.tight_layout()
-
-
-lower_half_ms_sy2 = np.where((d4000mhd_gsw2.fullagn_df.delta_ssfr.iloc[sy2_1_hd]<0 )&
-                             (d4000mhd_gsw2.fullagn_df.delta_ssfr.iloc[sy2_1_hd]>-0.7)&
-                             (d4000mhd_gsw2.fullagn_df.mass.iloc[sy2_1_hd]>10)
-                             )[0]
-lower_half_ms_hliner = np.where((d4000mhd_gsw2.fullagn_df.delta_ssfr.iloc[hliner_1_hd]<0)&
-                                (d4000mhd_gsw2.fullagn_df.delta_ssfr.iloc[hliner_1_hd]>-0.7)&
-                                (d4000mhd_gsw2.fullagn_df.mass.iloc[hliner_1_hd]>10))[0]
-lower_half_ms_sliner = np.where((d4000mhd_gsw2.fullagn_df.delta_ssfr.iloc[sliner_1_hd]<0)&
-                                (d4000mhd_gsw2.fullagn_df.delta_ssfr.iloc[sliner_1_hd]>-0.7)&
-                                (d4000mhd_gsw2.fullagn_df.mass.iloc[sliner_1_hd]>10))[0]
-
-lower_half_ms_nonagn = np.where((EL_m2.allnonagn_df.delta_ssfr<0)&
-                                (EL_m2.allnonagn_df.delta_ssfr>-0.7)&
-                                (EL_m2.allnonagn_df.mass>10))[0]
-
-plt.hist(d4000mhd_gsw2.allagn_df.d4000.iloc[sy2_1_hd[lower_half_ms_sy2]],  histtype='step',label='Sy2', range=(1,2.4), bins=20, log=True)
-plt.hist(d4000mhd_gsw2.allagn_df.d4000.iloc[hliner_1_hd[lower_half_ms_hliner]], histtype='step', label='H-LINER', range=(1,2.4), bins=20, log=True)
-plt.hist(d4000mhd_gsw2.allagn_df.d4000.iloc[sliner_1_hd[lower_half_ms_sliner]], histtype='step', label='S-LINER', range=(1,2.4), bins=20, log=True)
-plt.hist(EL_m2.allnonagn_df.d4000.iloc[lower_half_ms_nonagn], histtype='step', label='Non-AGN', range=(1,2.4), bins=20, log=True)
-plt.legend()
-plt.xlabel(r'D$_{4000}$')
-plt.ylabel('Counts')
-plt.tight_layout()
-
-all_liners = np.append(sliner_1_hd[lower_half_ms_sliner], hliner_1_hd[lower_half_ms_hliner])
-sy2_best_agn = []
-sy2_best_nonagn = []
-sy2_best_agn_dists = []
-sy2_best_nonagn_dists = []
-
-for i in range(len(sy2_1_hd[lower_half_ms_sy2])):
-    sfr_diffs_agn = sfrm_gsw2.get_dists(d4000mhd_gsw2.fullagn_df.sfr.iloc[sy2_1_hd[lower_half_ms_sy2][i]], d4000mhd_gsw2.fullagn_df.sfr.iloc[all_liners])
-    mass_diffs_agn = sfrm_gsw2.get_dists(d4000mhd_gsw2.fullagn_df.mass.iloc[sy2_1_hd[lower_half_ms_sy2][i]], d4000mhd_gsw2.fullagn_df.mass.iloc[all_liners])
-    fibmass_diffs_agn = sfrm_gsw2.get_dists(d4000mhd_gsw2.fullagn_df.fibmass.iloc[sy2_1_hd[lower_half_ms_sy2][i]], d4000mhd_gsw2.fullagn_df.fibmass.iloc[all_liners])
-
-    z_diffs_agn = sfrm_gsw2.get_dists(d4000mhd_gsw2.fullagn_df.z.iloc[sy2_1_hd[lower_half_ms_sy2][i]], d4000mhd_gsw2.fullagn_df.z.iloc[all_liners])/np.var(EL_m2.allnonagn_df.z)
-    av_diffs_agn = sfrm_gsw2.get_dists(d4000mhd_gsw2.fullagn_df.av_gsw.iloc[sy2_1_hd[lower_half_ms_sy2][i]], d4000mhd_gsw2.fullagn_df.av_gsw.iloc[all_liners])
-
-    combined_agn = np.array(np.sqrt(sfr_diffs_agn+mass_diffs_agn+fibmass_diffs_agn+z_diffs_agn+av_diffs_agn))
-    
-    agn_best = np.argmin(combined_agn)
-    print(agn_best)
-    sy2_best_agn_dists.append(combined_agn[agn_best])
-    sy2_best_agn.append(agn_best)
-    
-    sfr_diffs_nonagn = sfrm_gsw2.get_dists(d4000mhd_gsw2.fullagn_df.sfr.iloc[sy2_1_hd[lower_half_ms_sy2][i]], EL_m2.allnonagn_df.sfr)
-    mass_diffs_nonagn = sfrm_gsw2.get_dists(d4000mhd_gsw2.fullagn_df.mass.iloc[sy2_1_hd[lower_half_ms_sy2][i]], EL_m2.allnonagn_df.mass)
-    fibmass_diffs_nonagn = sfrm_gsw2.get_dists(d4000mhd_gsw2.fullagn_df.fibmass.iloc[sy2_1_hd[lower_half_ms_sy2][i]], EL_m2.allnonagn_df.fibmass)
-    z_diffs_nonagn = sfrm_gsw2.get_dists(d4000mhd_gsw2.fullagn_df.z.iloc[sy2_1_hd[lower_half_ms_sy2][i]],EL_m2.allnonagn_df.z)/np.var(EL_m2.allnonagn_df.z)
-
-    av_diffs_nonagn = sfrm_gsw2.get_dists(d4000mhd_gsw2.fullagn_df.av_gsw.iloc[sy2_1_hd[lower_half_ms_sy2][i]], EL_m2.allnonagn_df.av_gsw)
-    combined_nonagn = np.array(np.sqrt(sfr_diffs_nonagn+mass_diffs_nonagn+fibmass_diffs_nonagn+z_diffs_nonagn+av_diffs_nonagn))
-    nonagn_best = np.argmin(combined_nonagn)
-    sy2_best_nonagn_dists.append(combined_nonagn[nonagn_best])
-    sy2_best_nonagn.append(nonagn_best)
-    
-    
-    print(combined_nonagn[nonagn_best], combined_agn[agn_best])
-
-plt.hist(sy2_best_nonagn_dists, bins=15, range=(0,0.3), histtype='step', label='Sy2 with Non-AGN Match')
-plt.hist(sy2_best_agn_dists, bins=15, range=(0,0.3), histtype='step', label='Sy2 with LINER Match')
-plt.xlabel(r'$d$')
-plt.ylabel('Counts')
-plt.legend()
-
-plot2dhist(sfrm_gsw2.fullmatch_df.sfr.iloc[sy2_1],
-           sfrm_gsw2.fullagn_df.sfr.iloc[sy2_1], 
-           minx=-4, maxx=4, miny=-4, maxy=4, setplotlims=True, lim=True ,
-           xlabel=r'log(SFR$_{\mathrm{Match}}$)',ylabel=r'log(SFR$_{\mathrm{AGN}}$)')
-plt.plot([-4,4], [-4,4], 'k-.')
-plt.tight_layout()
-plt.savefig('./plots/sfrmatch/pdf/diagnostic/sfrm_sfr.pdf', format='pdf', bbox_inches='tight', dpi=250)
-plt.savefig('./plots/sfrmatch/png/diagnostic/sfrm_sfr.png', format='png', bbox_inches='tight', dpi=250)
-
-
-plot2dhist(d4000mhd_gsw2.allmatch_df.sfr.iloc[sy2_1_hd],
-           d4000mhd_gsw2.allagn_df.sfr.iloc[sy2_1_hd], 
-           minx=-4, maxx=4, miny=-4, maxy=4, setplotlims=True, lim=True ,
-           xlabel=r'log(SFR$_{\mathrm{Match}}$)',ylabel=r'log(SFR$_{\mathrm{AGN}}$)')
-plt.plot([-4,4], [-4,4], 'k-.')
-plt.tight_layout()
-plt.savefig('./plots/sfrmatch/pdf/diagnostic/d4hd_sfr.pdf', format='pdf', bbox_inches='tight', dpi=250)
-plt.savefig('./plots/sfrmatch/png/diagnostic/d4hd_sfr.png', format='png', bbox_inches='tight', dpi=250)
-
-
-plot2dhist(d4000m_gsw2.allmatch_df.sfr.iloc[d4000m_gsw2.sn2_filt_sy2],
-           d4000m_gsw2.allagn_df.sfr.iloc[d4000m_gsw2.sn2_filt_sy2], 
-           minx=-4, maxx=4, miny=-4, maxy=4, setplotlims=True, lim=True ,
-           xlabel=r'log(SFR$_{\mathrm{Match}}$)',ylabel=r'log(SFR$_{\mathrm{AGN}}$)')
-plt.plot([-4,4], [-4,4], 'k-.')
-plt.tight_layout()
-plt.savefig('./plots/sfrmatch/pdf/diagnostic/d4_sfr.pdf', format='pdf', bbox_inches='tight', dpi=250)
-plt.savefig('./plots/sfrmatch/png/diagnostic/d4_sfr.png', format='png', bbox_inches='tight', dpi=250)
-
-
-
-plot2dhist(sfrm_gsw2.fullmatch_df.mass.iloc[sy2_1],
-           sfrm_gsw2.fullagn_df.mass.iloc[sy2_1], 
-           minx=9, maxx=12, miny=9, maxy=12, setplotlims=True, lim=True ,
-           xlabel=r'log(M$_{*,\mathrm{Match}})$',ylabel=r'log(M$_{*,\mathrm{AGN}})$')
-plt.plot([9,12], [9,12], 'k-.')
-plt.tight_layout()
-plt.savefig('./plots/sfrmatch/pdf/diagnostic/sfrm_mass.pdf', format='pdf', bbox_inches='tight', dpi=250)
-plt.savefig('./plots/sfrmatch/png/diagnostic/sfrm_mass.png', format='png', bbox_inches='tight', dpi=250)
-
-
-plot2dhist(d4000mhd_gsw2.allmatch_df.mass.iloc[sy2_1_hd],
-           d4000mhd_gsw2.allagn_df.mass.iloc[sy2_1_hd], 
-           minx=9, maxx=12, miny=9, maxy=12, setplotlims=True, lim=True ,
-           xlabel=r'log(M$_{*,\mathrm{Match}})$',ylabel=r'log(M$_{*,\mathrm{AGN}})$')
-plt.plot([9,12], [9,12], 'k-.')
-plt.tight_layout()
-plt.savefig('./plots/sfrmatch/pdf/diagnostic/d4hd_mass.pdf', format='pdf', bbox_inches='tight', dpi=250)
-plt.savefig('./plots/sfrmatch/png/diagnostic/d4hd_mass.png', format='png', bbox_inches='tight', dpi=250)
-
-
-plot2dhist(d4000m_gsw2.allmatch_df.mass.iloc[d4000m_gsw2.sn2_filt_sy2],
-           d4000m_gsw2.allagn_df.mass.iloc[d4000m_gsw2.sn2_filt_sy2], 
-           minx=9, maxx=12, miny=9, maxy=12, setplotlims=True, lim=True ,
-           xlabel=r'log(M$_{*,\mathrm{Match}})$',ylabel=r'log(M$_{*,\mathrm{AGN}})$')
-plt.plot([9,12], [9,12], 'k-.')
-plt.tight_layout()
-plt.savefig('./plots/sfrmatch/pdf/diagnostic/d4_mass.pdf', format='pdf', bbox_inches='tight', dpi=250)
-plt.savefig('./plots/sfrmatch/png/diagnostic/d4_mass.png', format='png', bbox_inches='tight', dpi=250)
-
-
-
-
-plot2dhist(sfrm_gsw2.fullmatch_df.av_gsw.iloc[sy2_1],
-           sfrm_gsw2.fullagn_df.av_gsw.iloc[sy2_1], 
-           minx=0, maxx=1.5, miny=0, maxy=1.5, setplotlims=True, lim=True ,
-           xlabel=r'A(V$_{*,\mathrm{Match}})$',ylabel=r'A(V$_{*,\mathrm{AGN}})$')
-plt.plot([0,1.5], [0,1.5], 'k-.')
-plt.tight_layout()
-plt.savefig('./plots/sfrmatch/pdf/diagnostic/sfrm_av_gsw.pdf', format='pdf', bbox_inches='tight', dpi=250)
-plt.savefig('./plots/sfrmatch/png/diagnostic/sfrm_av_gsw.png', format='png', bbox_inches='tight', dpi=250)
-
-
-plot2dhist(d4000mhd_gsw2.allmatch_df.av_gsw.iloc[sy2_1_hd],
-           d4000mhd_gsw2.allagn_df.av_gsw.iloc[sy2_1_hd], 
-           minx=0, maxx=1.5, miny=0, maxy=1.5, setplotlims=True, lim=True ,
-           xlabel=r'A(V$_{*,\mathrm{Match}})$',ylabel=r'A(V$_{*,\mathrm{AGN}})$')
-plt.plot([0,1.5], [0,1.5], 'k-.')
-plt.tight_layout()
-plt.savefig('./plots/sfrmatch/pdf/diagnostic/d4hd_av_gsw.pdf', format='pdf', bbox_inches='tight', dpi=250)
-plt.savefig('./plots/sfrmatch/png/diagnostic/d4hd_av_gsw.png', format='png', bbox_inches='tight', dpi=250)
-
-
-plot2dhist(d4000m_gsw2.allmatch_df.av_gsw.iloc[d4000m_gsw2.sn2_filt_sy2],
-           d4000m_gsw2.allagn_df.av_gsw.iloc[d4000m_gsw2.sn2_filt_sy2], 
-           minx=0, maxx=1.5, miny=0, maxy=1.5, setplotlims=True, lim=True ,
-           xlabel=r'A(V$_{*,\mathrm{Match}})$',ylabel=r'A(V$_{*,\mathrm{AGN}})$')
-plt.plot([0,1.5], [0,1.5], 'k-.')
-plt.tight_layout()
-plt.savefig('./plots/sfrmatch/pdf/diagnostic/d4_av_gsw.pdf', format='pdf', bbox_inches='tight', dpi=250)
-plt.savefig('./plots/sfrmatch/png/diagnostic/d4_av_gsw.png', format='png', bbox_inches='tight', dpi=250)
-
-
-
-
-
-
-
-plot2dhist(sfrm_gsw2.fullmatch_df.sfr.iloc[sy2_1],
-           sfrm_gsw2.fullagn_df.sfr.iloc[sy2_1], 
-           minx=-4, maxx=4, miny=-4, maxy=4, setplotlims=True, lim=True ,
-           xlabel=r'SFR$_{\mathrm{Match}}$',ylabel=r'SFR$_{\mathrm{AGN}}$')
-plt.plot([-4,4], [-4,4], 'k-.')plt.tight_layout()
-plt.savefig('./plots/sfrmatch/pdf/diagnostic/sfrm_d4000.pdf', format='pdf', bbox_inches='tight', dpi=250)
-plt.savefig('./plots/sfrmatch/png/diagnostic/sfrm_d4000.png', format='png', bbox_inches='tight', dpi=250)
-
-
-plot2dhist(d4000mhd_gsw2.allmatch_df.d4000.iloc[sy2_1_hd],
-           d4000mhd_gsw2.allagn_df.d4000.iloc[sy2_1_hd], 
-           minx=0.5, maxx=2.4, miny=0.5, maxy=2.4, setplotlims=True, lim=True ,
-           xlabel=r'D$_{4000, \mathrm{Match}}$',ylabel=r'D$_{4000, \mathrm{AGN}}$')
-plt.plot([0.5,2.4], [0.5,2.4], 'k-.')
-plt.tight_layout()
-plt.savefig('./plots/sfrmatch/pdf/diagnostic/d4hd_d4000.pdf', format='pdf', bbox_inches='tight', dpi=250)
-plt.savefig('./plots/sfrmatch/png/diagnostic/d4hd_d4000.png', format='png', bbox_inches='tight', dpi=250)
-
-
-plot2dhist(d4000m_gsw2.allmatch_df.d4000.iloc[d4000m_gsw2.sn2_filt_sy2],
-           d4000m_gsw2.allagn_df.d4000.iloc[d4000m_gsw2.sn2_filt_sy2], 
-           minx=0.5, maxx=2.4, miny=0.5, maxy=2.4, setplotlims=True, lim=True ,
-           xlabel=r'D$_{4000, \mathrm{Match}}$',ylabel=r'D$_{4000, \mathrm{AGN}}$')
-plt.plot([0.5,2.4], [0.5,2.4], 'k-.')
-plt.tight_layout()
-plt.savefig('./plots/sfrmatch/pdf/diagnostic/d4_d4000.pdf', format='pdf', bbox_inches='tight', dpi=250)
-plt.savefig('./plots/sfrmatch/png/diagnostic/d4_d4000.png', format='png', bbox_inches='tight', dpi=250)
-
-
-
-
-plot2dhist(sfrm_gsw2.fullmatch_df.hdelta_lick.iloc[sy2_1],
-           sfrm_gsw2.fullagn_df.hdelta_lick.iloc[sy2_1], 
-           minx=-10, maxx=10, miny=-10, maxy=10, setplotlims=True, lim=True ,
-           xlabel=r'H$_{\delta \mathrm{Lick, Match}}$',ylabel=r'H$_{\delta \mathrm{Lick, AGN}}$')
-plt.plot([-10,10], [-10,10], 'k-.')
-plt.tight_layout()
-plt.savefig('./plots/sfrmatch/pdf/diagnostic/sfrm_hdelta.pdf', format='pdf', bbox_inches='tight', dpi=250)
-plt.savefig('./plots/sfrmatch/png/diagnostic/sfrm_hdelta.png', format='png', bbox_inches='tight', dpi=250)
-
-plot2dhist(d4000mhd_gsw2.allmatch_df.hdelta_lick.iloc[sy2_1_hd],
-           d4000mhd_gsw2.allagn_df.hdelta_lick.iloc[sy2_1_hd], 
-           minx=-10, maxx=10, miny=-10, maxy=10, setplotlims=True, lim=True ,
-           xlabel=r'H$_{\delta \mathrm{Lick, Match}}$',ylabel=r'H$_{\delta \mathrm{Lick, AGN}}$')
-plt.plot([-10,10], [-10,10], 'k-.')
-plt.tight_layout()
-plt.savefig('./plots/sfrmatch/pdf/diagnostic/d4hd_hdelta.pdf', format='pdf', bbox_inches='tight', dpi=250)
-plt.savefig('./plots/sfrmatch/png/diagnostic/d4hd_hdelta.png', format='png', bbox_inches='tight', dpi=250)
-
-plot2dhist(d4000m_gsw2.allmatch_df.hdelta_lick.iloc[d4000m_gsw2.sn2_filt_sy2],
-           d4000m_gsw2.allagn_df.hdelta_lick.iloc[d4000m_gsw2.sn2_filt_sy2], 
-           minx=-10, maxx=10, miny=-10, maxy=10, setplotlims=True, lim=True ,
-           xlabel=r'H$_{\delta \mathrm{Lick, Match}}$',ylabel=r'H$_{\delta \mathrm{Lick, AGN}}$')
-plt.plot([-10,10], [-10,10], 'k-.')
-plt.tight_layout()
-plt.savefig('./plots/sfrmatch/pdf/diagnostic/d4_hdelta.pdf', format='pdf', bbox_inches='tight', dpi=250)
-plt.savefig('./plots/sfrmatch/png/diagnostic/d4_hdelta.png', format='png', bbox_inches='tight', dpi=250)
-
-
-
-#sandy mass cuts
-mass_min=10.2
-mass_max=10.4
-nonagn_massfilt = np.where( (EL_m2.allnonagn_df.mass>mass_min)&(EL_m2.allnonagn_df.mass<mass_max)&(EL_m2.allnonagn_df.sigma1>0))[0]
-match_sy2_massfilt = np.where( (sfrm_gsw2.fullmatch_df.mass.iloc[sy2_1]>mass_min)&
-                              (sfrm_gsw2.fullmatch_df.mass.iloc[sy2_1]<mass_max) &
-                              (sfrm_gsw2.fullagn_df.sigma1.iloc[sy2_1]>0)&
-                              (sfrm_gsw2.fullmatch_df.sigma1.iloc[sy2_1]>0))[0]
-
-sy2_massfilt = np.where( (sfrm_gsw2.fullagn_df.mass.iloc[sy2_1]>mass_min)&
-                        (sfrm_gsw2.fullagn_df.mass.iloc[sy2_1]<mass_max)&
-                        (sfrm_gsw2.fullagn_df.sigma1.iloc[sy2_1]>0)
-                        #(sfrm_gsw2.fullmatch_df.sigma1.iloc[sy2_1]>0)
-                        )[0]
-
-hliner_massfilt = np.where( (sfrm_gsw2.fullagn_df.mass.iloc[hliner_1]>mass_min)&
-                           (sfrm_gsw2.fullagn_df.mass.iloc[hliner_1]<mass_max)&
-                           (sfrm_gsw2.fullagn_df.sigma1.iloc[hliner_1]>0)#&
-                           #(sfrm_gsw2.fullmatch_df.sigma1.iloc[hliner_1]>0)
-                           )[0]
-sliner_massfilt = np.where( (sfrm_gsw2.fullagn_df.mass.iloc[sliner_1]>mass_min)&
-                           (sfrm_gsw2.fullagn_df.mass.iloc[sliner_1]<mass_max)&
-                           (sfrm_gsw2.fullagn_df.sigma1.iloc[sliner_1]>0)
-                           #(sfrm_gsw2.fullmatch_df.sigma1.iloc[sliner_1]>0)
-                           )[0]
-both_liners=np.append(sliner_1, hliner_1)
-
-liner_massfilt = np.where((sfrm_gsw2.fullagn_df.mass.iloc[both_liners] >mass_min)&
-                          (sfrm_gsw2.fullagn_df.mass.iloc[both_liners]<mass_max)&#&
-                          (sfrm_gsw2.fullagn_df.sigma1.iloc[both_liners] >0)
-                          #(sfrm_gsw2.fullmatch_df.sigma1.iloc[both_liners]<mass_max)
-                          )[0]
-
-massfilt = np.where( (sfrm_gsw2.fullagn_df.mass.iloc[val1]>mass_min)&
-                        (sfrm_gsw2.fullagn_df.mass.iloc[val1]<mass_max)&
-                        (sfrm_gsw2.fullagn_df.sigma1.iloc[val1]>0)
-                        #(sfrm_gsw2.fullmatch_df.sigma1>0)
-                        )[0]
-
-plot2dhist(EL_m2.allnonagn_df.sigma1.iloc[nonagn_massfilt], EL_m2.allnonagn_df.ssfr.iloc[nonagn_massfilt], 
-           minx=7, maxx=11, maxy=-8, miny=-14,setplotlims=True, lim=True, nx=50,ny=50, xlabel=r'$\Sigma_{1}$', ylabel='log(sSFR)')
-plt.gca().invert_yaxis()
-plt.scatter(sfrm_gsw2.fullagn_df.sigma1.iloc[sy2_1[sy2_massfilt]], 
-            sfrm_gsw2.fullagn_df.ssfr.iloc[sy2_1[sy2_massfilt]], s=7, c='r', label='Sy2')
-plt.tight_layout()
-
-
-
-plt.scatter(sfrm_gsw2.fullmatch_df.sigma1.iloc[sy2_1[match_sy2_massfilt]], 
-            sfrm_gsw2.fullmatch_df.ssfr.iloc[sy2_1[match_sy2_massfilt]], s=7, facecolor='none', edgecolor='r')
-
-plot2dhist(EL_m2.allnonagn_df.sigma1.iloc[nonagn_massfilt], EL_m2.allnonagn_df.ssfr.iloc[nonagn_massfilt], 
-           minx=7, maxx=11, maxy=-8, miny=-14,setplotlims=True, lim=True, nx=50,ny=50)
-plot2dhist(sfrm_gsw2.fullagn_df.sigma1.iloc[hliner_1[hliner_massfilt]], 
-            sfrm_gsw2.fullagn_df.ssfr.iloc[hliner_1[hliner_massfilt]], minx=7, maxx=11, maxy=-8, miny=-14,setplotlims=True, lim=True, nx=50,ny=50)
-plot2dhist(sfrm_gsw2.fullagn_df.sigma1.iloc[np.append(sliner_1, hliner_1)[liner_massfilt]], 
-            sfrm_gsw2.fullagn_df.ssfr.iloc[np.append(sliner_1, hliner_1)[liner_massfilt]], minx=7, maxx=11, maxy=-8, miny=-14,setplotlims=True, lim=True, nx=50,ny=50)
-
-plot2dhist(EL_m2.allnonagn_df.sigma1.iloc[nonagn_massfilt], EL_m2.allnonagn_df.ssfr.iloc[nonagn_massfilt], 
-           minx=7, maxx=11, maxy=-8, miny=-14,setplotlims=True, lim=True, nx=50,ny=50)
-plt.scatter(sfrm_gsw2.fullagn_df.sigma1.iloc[sy2_1[sy2_massfilt]], 
-            sfrm_gsw2.fullagn_df.ssfr.iloc[sy2_1[sy2_massfilt]], s=7, facecolor='none', edgecolor='r')
-
-
-'''
 
 #%% 
 def match_xrgal_to_sfrm_obj(xrids, sfrmids):
