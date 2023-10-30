@@ -4,124 +4,64 @@ from astropy.coordinates import SkyCoord
 import astropy.coordinates as coords
 import astropy.cosmology as apc
 cosmo = apc.Planck15
+from Fits_set import Fits_set
 
-class XMM:
-    def __init__(self, xmmcat):
-        self.sourceids = xmmcat.getcol('Source')
-        
-        self.flux1 = xmmcat.getcol('Flux1') #0.2-0.5 keV
-        self.eflux1 = xmmcat.getcol('e_Flux1')
-        self.flux2 = xmmcat.getcol('Flux2') #0.5-1 keV
-        self.eflux2 = xmmcat.getcol('e_Flux2')
-        self.flux3 = xmmcat.getcol('Flux3') #1-2 keV
-        self.eflux3 = xmmcat.getcol('e_Flux3')
-        self.flux4  = xmmcat.getcol('Flux4') #2-4.5
-        self.eflux4 = xmmcat.getcol('e_Flux4')
-        self.flux5 = xmmcat.getcol('Flux5') #4.5-12
-        self.eflux5 = xmmcat.getcol('e_Flux5')
 
+class XMM(Fits_set):
+    def __init__(self, filename):
+        super().__init__(filename)
+        self.data['sourceids'] = self.data['Source']
         
-        self.flux8 = xmmcat.getcol('Flux8') #0.2-12
-        self.eflux8  = xmmcat.getcol('e_Flux8')
-        self.HR1 = xmmcat.getcol('HR1')
-        self.eHR1 = xmmcat.getcol('e_HR1')
-        self.HR2 = xmmcat.getcol('HR2')
-        self.eHR2 = xmmcat.getcol('e_HR2')
-        self.HR3 = xmmcat.getcol('HR3')
-        self.eHR3 = xmmcat.getcol('e_HR3')
-        self.HR4 = xmmcat.getcol('HR4')
-        self.eHR4 = xmmcat.getcol('e_HR4')
-        self.qualflag = xmmcat.getcol('S')
-        self.ext = xmmcat.getcol('ext')
-        self.extML = xmmcat.getcol('ext')
-        self.hardflux2 = (self.flux4 + self.flux5)*0.87 #2.547/2.92097
-        self.ehardflux2 =  np.sqrt(self.eflux4**2+self.eflux5**2)*0.87
-        self.hardflux = (self.flux8 - (self.flux1 + self.flux2 + self.flux3))*0.87 #2.547/2.92097
-        self.ehardflux = np.sqrt(self.eflux8**2+self.eflux1**2+self.eflux2**2+self.eflux3**2)*0.87
-        self.softflux = self.flux2 + self.flux3
-        self.esoftflux = np.sqrt(self.eflux2**2+self.eflux3**2)
-        self.fullflux = (self.flux8-self.flux1)*0.91    #3.94337/4.31728
-        self.efullflux = np.sqrt(self.eflux8**2+self.eflux1**2)*0.91
-        
-        self.hardflux_sn = self.hardflux/self.ehardflux
-        self.fullflux_sn = self.fullflux/self.efullflux
-        self.softflux_sn = self.softflux/self.esoftflux
-        #self.flux8 = xmmcat.getcol
+        self.data['hardflux2'] = (self.data['Flux4'] + self.data['Flux5']) * 0.87
+        self.data['ehardflux2'] = np.sqrt(self.data['e_Flux4'] ** 2 + self.data['e_Flux5'] ** 2) * 0.87
+        self.data['hardflux'] = (self.data['Flux8'] - (self.data['Flux1'] + self.data['Flux2'] + self.data['Flux3'])) * 0.87
+        self.data['ehardflux'] = np.sqrt(self.data['e_Flux8'] ** 2 + self.data['e_Flux1'] ** 2 + self.data['e_Flux2'] ** 2 + self.data['e_Flux3'] ** 2) * 0.87
+        self.data['softflux'] = self.data['Flux2'] + self.data['Flux3']
+        self.data['esoftflux'] = np.sqrt(self.data['e_Flux2'] ** 2 + self.data['e_Flux3'] ** 2)
+        self.data['fullflux'] = (self.data['Flux8'] - self.data['Flux1']) * 0.91
+        self.data['efullflux'] = np.sqrt(self.data['e_Flux8'] ** 2 + self.data['e_Flux1'] ** 2) * 0.91
+        self.data['hardflux_sn'] = self.data['hardflux'] / self.data['ehardflux']
+        self.data['fullflux_sn'] = self.data['fullflux'] / self.data['efullflux']
+        self.data['softflux_sn'] = self.data['softflux'] / self.data['esoftflux']
+        self.data['qualflag'] = self.data['S']
 
     def get_texp(self, matchinds):
         texps = []
-        for k, source in enumerate(self.sourceids[matchinds]):
-            if k%1000 ==0:
+        for k, source in enumerate(self.data['Source'].iloc[matchinds]):
+            if k % 1000 == 0:
                 print(k)
             source_obs = str(np.int64(str(source)[2:11]))
-            obsids = np.array(np.array(self.obsids,dtype=np.int64), dtype='str')
-            obs_ = np.where(obsids == source_obs)[0]
-            #print(source_obs, obsids[obs_])
-            exp = np.array([self.tpn[obs_], self.tmos1[obs_], self.tmos2[obs_]])
+            obsids = self.data['obsids'].astype(str)
+            obs_ = obsids[obsids == source_obs].index
+            exp = np.array([self.data.loc[obs_, 'tpn'], self.data.loc[obs_, 'tmos1'], self.data.loc[obs_, 'tmos2']])
             try:
                 texps.append(np.max(exp))
             except:
                 texps.append(np.nan)
-        return np.array(texps)
-class XMM3obs(XMM):
-    def __init__(self, xmmcat, xmmcatobs):
-        super().__init__(xmmcat)
-        self.obsids = xmmcatobs.getcol(1)
-        self.ra = xmmcat.getcol('RAJ2000')
-
-        self.dec = xmmcat.getcol('DEJ2000')
-        self.obs_ra = xmmcatobs.getcol('RAJ2000')
-        self.obs_dec = xmmcatobs.getcol('DEJ2000')
-        self.tpn = xmmcatobs.getcol('t_PN')
-        self.tmos1 = xmmcatobs.getcol('t_M1')
-        self.tmos2 = xmmcatobs.getcol('t_M2')
-class XMM4obs(XMM):
-    def __init__(self, xmmcat, xmmcatobs):
-        super().__init__(xmmcat)
-        self.ra = xmmcat.getcol('RA_ICRS')
-        self.dec = xmmcat.getcol('DE_ICRS')
-        self.obs_ra = xmmcatobs.RAJ2000
-        self.obs_dec = xmmcatobs.DEJ2000
-        self.obsids = np.array(xmmcatobs.ObsID, dtype=np.int64)
-        self.tpn = np.array(xmmcatobs['t.PN'])
-        self.tmos1 = np.array(xmmcatobs['t.M1'])
-        self.tmos2 = np.array(xmmcatobs['t.M2'])
-        exp = np.vstack([self.tpn, self.tmos1, self.tmos2])
-        self.texps  = np.max(exp, axis=0)
+        return np.array(texps)                
         
+class XMM3obs(Fits_set):
+    def __init__(self, filename):
+        super().__init__(filename)
+        self.data['obsids'] = self.obs_data[1]  # Assuming '1' is the column name for obsids in fits_set_obs
+        self.data['tpn'] = self.obs_data['t_PN']
+        self.data['tmos1'] = self.obs_data['t_M1']
+        self.data['tmos2'] = self.obs_data['t_M2']
 
-class CSC:
-    def __init__(self, csccat):
-
-        self.fluxu = csccat['Fluxu'] #0.2-0.5 keV
-        #self.eflux1 = xmmcat['e_Flux1']
-        self.fluxs = csccat['Fluxs']#0.5-1.2 keV
-        #self.eflux2 = xmmcat.getcol('e_Flux2')
-        self.fluxm = csccat['Fluxm'] #1.2-2 keV
-        #self.eflux3 = xmmcat.getcol('e_Flux3')
-        self.fluxh  = csccat['Fluxh'] #2-7
-        #self.eflux4 = xmmcat.getcol('e_Flux4')
-        self.fluxb = csccat['Fluxb'] #0.5-7
-        #self.eflux5 = xmmcat.getcol('e_Flux5')
-        '''
-        self.HR1 = xmmcat.getcol('HR1')
-        self.eHR1 = xmmcat.getcol('e_HR1')
-        self.HR2 = xmmcat.getcol('HR2')
-        self.eHR2 = xmmcat.getcol('e_HR2')
-        self.HR3 = xmmcat.getcol('HR3')
-        self.eHR3 = xmmcat.getcol('e_HR3')
-        self.HR4 = xmmcat.getcol('HR4')
-        self.eHR4 = xmmcat.getcol('e_HR4')
+class XMM4obs(Fits_set):
+    def __init__(self, filename):
+        super().__init__(filename)
+        self.data['obsids'] = self.obs_data['ObsID'].astype(np.int64)
+        self.data['tpn'] = self.obs_data['t.PN']
+        self.data['tmos1'] = self.obs_data['t.M1']
+        self.data['tmos2'] = self.obs_data['t.M2']
+        exp = np.vstack([self.data['tpn'], self.data['tmos1'], self.data['tmos2']])
+        self.data['texps'] = np.max(exp, axis=0)
         
-        self.qualflag = xmmcat.getcol('S')
-        self.ext = xmmcat.getcol('ext')
-        self.extML = xmmcat.getcol('ext')
-        '''
-        self.hardflux = (self.fluxh)*1.15 #convert from 2-7 to 2-10 
-        #self.ehardflux = np.sqrt(self.eflux8**2+self.eflux1**2+self.eflux2**2+self.eflux3**2)*0.87
-        self.softflux = self.fluxs + self.fluxm
-        #self.esoftflux = np.sqrt(self.eflux2**2+self.eflux3**2)
-        self.fullflux = (self.fluxb)*1.04    #3.94337/4.31728
-        #self.efullflux = np.sqrt(self.eflux8**2+self.eflux1**2)*0.91
-        #self.flux8 = xmmcat.getcol
-    
+class CSC(Fits_set):
+    def __init__(self, filename):
+        super().__init__(filename)
+        self.data['hardflux'] = self.data['Fluxh'] * 1.15
+        self.data['softflux'] = self.data['Fluxs'] + self.data['Fluxm']
+        self.data['fullflux'] = self.data['Fluxb'] * 1.04
+        # Continue for other calculated fields
