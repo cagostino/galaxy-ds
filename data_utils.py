@@ -11,11 +11,11 @@ class DBConnector:
         self.db_name = db_name
         self.conn = sqlite3.connect(f"{self.db_name}")
         self.cursor = self.conn.cursor()
-    def query(self, query, load_results = True):
+    def query(self, query_text, load_results = True):
         if load_results:
-            return pd.read_sql_query(query, self.conn)
+            return pd.read_sql_query(query_text, self.conn)
         else:
-            self.cursor.execute(query)    
+            self.cursor.execute(query_text)    
     def create_table(self, table_name, columns):
         # Create table as per requirement
         column_definitions = ', '.join([f"{col} {dtype}" for col, dtype in columns.items()])
@@ -28,10 +28,12 @@ class DBConnector:
         self.query(f"ALTER TABLE {table_name} ADD COLUMN {column.name} {column.dtype}", load_results=False)
 
 
+from astroquery.sdss import SDSS
 
+class SDSS_DB(SDSS):
+    def query(self, query_text):
+        return SDSS.query_sql(query_text)
         
-
-            
 
 def coordinate_matching(left_df, 
                         right_df, 
