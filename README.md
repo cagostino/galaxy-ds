@@ -6,7 +6,8 @@ This repository hosts a variety of Python scripts and utilities for analyzing an
 Repository Structure
 ---dist_met_procedures/: Contains procedures for distance metric calculations.
 
----observations/: Hosts configuration files and scripts related to galaxy observations, particularly using the MUSE instrument.
+---observations/: Hosts configuration files and scripts related to galaxy observations and analysis thereafter. Some of the scripts therein and procedures will be further integrated into these updated core scripts but remain as-is for now.
+
 
 ---plotting_codes/: Includes scripts for generating plots and visualizations of the data.  See also the [chroptiks plotting package](https://github.com/cagostino/chroptiks) that was a result of the work contained here.
 
