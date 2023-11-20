@@ -23,6 +23,7 @@ from ast_utils import oiii_oii_to_U, nii_oii_to_oh,nii_oii_to_oh_ke02,getlumfrom
 cosmo = apc.Planck15
 
 
+from chroptiks.plotting_utils import hist1d, hist2d, scat, plt
 from ast_utils import dustcorrect, extinction, get_bptplus_niigroups, get_bpt1_groups,get_bptplus_groups,get_classifiability, get_thom_dist
 
 
@@ -116,6 +117,8 @@ class AstroTablePD:
         elif dataframe is not None:
             self.data = dataframe          
         print(self.fname, self.data.columns)
+        
+        
 catfold='catalogs/'
 import numpy as np
 print('loading GSW')
@@ -272,103 +275,115 @@ class Gal_Line(AstroTablePD):
             self.data[line+'_FLUX_SN'] = self.data[line+'_FLUX']/self.data[line+'_FLUX_ERR']    
             self.data[line + '_SN_PASS'] = self.data[line+'_FLUX_SN']>line_sncut
             self.data[line+'_FLUX_corr_a19'] = dustcorrect(self.data[line+'_FLUX'], self.data['av_bd_agn'],self.lines[line])
+            self.data[line+'_FLUX_ERR_corr_a19'] = dustcorrect(self.data[line+'_FLUX_ERR'], self.data['av_bd_agn'],self.lines[line])
+
 
     #        self.data[line+'_FLUX_corr_a21'] = dustcorrect(self.data[line+'_FLUX'], elf.data['av_bd_agn'],self.lines[line])
-    def add_dust_corrected_fluxes_by_model(self, *args,modelfn=get_av_bd_a21, model='a21', **kwargs):
-        self.data['av_'+model] = modelfn(self.data['av_bd_agn'], self.data['H_BETA_FLUX_SN'], *args, **kwargs)
-
-        for line in self.lines:
-            self.data[line+'_FLUX_corr_'+model] = dustcorrect(self.data[line+'_FLUX'], self.data['av_'+model],self.lines[line])
-
-    def get_dust_correction_quantities(self, model='a19'):
-        self.data['oiii_oii'] = np.log10(self.data['OIII_5007_FLUX_corr_'+model]/self.data['OII_3726_FLUX_corr_'+model])
-        self.data['oiii_oi'] = np.log10(self.data['OIII_5007_FLUX_corr_'+model]/self.data['OI_6300_FLUX_corr_'+model])
-        self.data['oiii_nii'] = np.log10(self.data['OIII_5007_FLUX_corr_'+model]/self.data['NII_6584_FLUX_corr_'+model])
-
-        self.data['U'] =oiii_oii_to_U(self.data['oiii_oii'] )
-        self.data['nii_oii'] =np.log10(self.data['NII_6584_FLUX_corr_'+model]/self.data['OII_3726_FLUX_corr'+model])
-        self.data['log_oh'] = nii_oii_to_oh(self.data['NII_6584_FLUX_corr_'+model], self.data['OII_3726_FLUX_corr_'+model])  
         
-        self.data['log_oh_ke02'] = nii_oii_to_oh_ke02(self.data['NII_6584_FLUX_corr_'+model], self.data['oiiflux_corr'])             
-        self.data['sii_ratio'] =(self.data['SII_6717_FLUX_corr_'+model]/self.data['SII_6717_FLUX_corr_'+model])
-        self.data['sii_oii'] =np.log10(self.data['SII_FLUX_corr_'+model]/self.data['OII_3726_FLUX_corr_'+model])
-        self.data['oi_sii'] =np.log10(self.data['OI_6300_FLUX_corr_'+model]/self.data['SII_FLUX_corr_'+model])
         
-        self.data['oiiilum'] = np.log10(getlumfromflux(self.data['OIII_5007_FLUX_corr_'+model],self.data['z']))
-        self.data['edd_ratio'] = self.data['oiiilum']+np.log10(600)-self.data['edd_lum']
-
-        self.data['oilum'] = np.log10(getlumfromflux(self.data['OI_6300_FLUX_corr_'+model],self.data['z']))
-        self.data['oiilum'] = np.log10(getlumfromflux(self.data['OII_3726_FLUX_corr_'+model],self.data['z']))
-        self.data['niilum'] = np.log10(getlumfromflux(self.data['NII_6584_FLUX_corr_'+model],self.data['z']))
-        self.data['siilum'] = np.log10(getlumfromflux(self.data['SII_FLUX_corr_'+''],self.data['z']))
-
-        #self.data['oiiilum_sfsub_samir'] = np.log10(getlumfromflux(self.data['oiiiflux_corr_sf_sub_samir'],self.data['z']))
-
-        self.data['oiiilum_up'] = np.log10(getlumfromflux(self.data['OIII_5007_FLUX_corr_'+model]+self.data['OIII_5007_FLUX_ERR_corr_'],self.data['z']))
-        self.data['oiiilum_up2'] = np.log10(getlumfromflux(self.data['OIII_5007_FLUX_corr_'+model]+2*self.data['OIII_5007_FLUX_ERR_corr_'],self.data['z']))
-
-        self.data['oiiilum_down'] = np.log10(getlumfromflux(self.data['OIII_5007_FLUX_corr_'+model]-self.data['OIII_5007_FLUX_ERR_corr_'],self.data['z']))
-        self.data['e_oiiilum_down'] = self.data['oiiilum']-self.data['oiiilum_down']
-        self.data['e_oiiilum_up'] = self.data['oiiilum_up']- self.data['oiiilum']
-
-        self.data['nlr_rad_from_lo3'] = self.data['oiiilum']*(0.42)-13.97
+            
+def add_dust_corrected_fluxes_by_model(data, lines, modelfn=get_av_bd_a21, av_col = 'av_bd_agn', model='a21', **kwargs):
+    if model =='a21':
         
-        self.data['fibsize'] = cosmo.angular_diameter_distance(self.data['z']/206265.)*1000.*1.5 #in kpc
-        self.data['nlr_fib_ratio'] = self.data['nlr_rad_from_lo3']/self.data['fibsize']
-        self.data['halplum'] = np.log10(getlumfromflux(self.data['H_ALPHA_FLUX_corr_'+model], self.data['z']))
-        self.data['edd_par'] = self.data['oiiilum']-self.data['mbh']
-        self.data['halpfibsfr'] = halptofibsfr_corr(10**self.data['halplum'])
-        self.data['halpfibsfr_uncorr'] = halptofibsfr_corr(10**self.data['halplum_uncorr'])  
-    def get_line_filters(self, data=None,subset=[], sncut=2):
-        if data is None:
-            data = self.data
-        if subset:
-            data= data[subset]
+        data['av_'+model] = modelfn(data, av_col, data['H_BETA_FLUX_SN'], 'av_gsw', **kwargs)
+    elif model =='a19':
+        data['av_'+model] = modelfn(data['H_ALPHA_FLUX'], data['H_BETA_FLUX'], **kwargs)
     
-        data['bpt_sn_filt_bool'] = (data['H_ALPHA_FLUX_SN']>2) & (data['H_BETA_FLUX_SN'] > sncut) & (data['OIII_5007_FLUX_SN'] > sncut) & (data['NII_6584_FLUX_SN'] > sncut)
-        data['high_sn_o3'] =data['OIII_5007_FLUX_SN'] > sncut        
-        data['not_bpt_sn_filt_bool']  = np.logical_not(data['bpt_sn_filt_bool'])
-        data['halp_nii_filt_bool'] = ( (data['H_ALPHA_FLUX_SN'] > sncut) & (data['NII_6584_FLUX_SN']> sncut) &( (data['OIII_5007_FLUX_SN']<=sncut) | (data['H_BETA_FLUX_SN']<=sncut) ) )        
-        self.data['neither_filt_bool'] = np.logical_not( ( (data['bpt_sn_filt_bool']) | (data['halp_nii_filt_bool']) ))#neither classifiable by BPT, or just by NII        
-        data['vo87_1_filt_bool'] = (data['SII_FLUX_SN']>sncut) &(data['bpt_sn_filt_bool'])
-        data['vo87_2_filt_bool'] =(data['OI_6300_FLUX_SN']>sncut) &(data['bpt_sn_filt_bool'])
-        data['high_sn_all7 ']= (data['bpt_sn_filt_bool']) &( data['OII_3726_FLUX_SN']>sncut) &(data['OI_6300_FLUX_SN']>2) &(data['SII_FLUX_SN']>sncut)
+    for line in list(lines.keys()):
+        data[line+'_FLUX_corr_'+model] = dustcorrect(data[line+'_FLUX'], data["av_" +model ],lines[line])
+        data[line+'_FLUX_ERR_corr_'+model] = dustcorrect(data[line+'_FLUX'], data["av_" +model ],lines[line])
 
-        return data,         
-    def apply_line_filter(self):
+    return data
+def get_dust_correction_quantities(data, model='a19', z='Z'):
+    data['oiii_oii'] = np.log10(data['OIII_5007_FLUX_corr_'+model]/data['OII_3726_FLUX_corr_'+model])
+    data['oiii_oi'] = np.log10(data['OIII_5007_FLUX_corr_'+model]/data['OI_6300_FLUX_corr_'+model])
+    data['oiii_nii'] = np.log10(data['OIII_5007_FLUX_corr_'+model]/data['NII_6584_FLUX_corr_'+model])
 
-        self.bpt_EL_gsw_df = self.data.iloc[self.data['bpt_sn_filt_bool']]
-        
-        self.alllines_bpt_EL_gsw_df = self.data.iloc['high_sn_all7']
-        
-        self.vo87_1_EL_gsw_df = self.data['vo87_1_filt_bool']
-        self.vo87_2_EL_gsw_df = self.data['vo87_2_filt_bool']
-        bptgroups, bptsf, bptagn = get_bpt1_groups( np.log10(self.bpt_EL_gsw_df['xvals1_bpt']), np.log10(self.bpt_EL_gsw_df['yvals_bpt'] ) )
-        bptplsugroups, bptplssf, bptplsagn = get_bptplus_groups(np.log10(self.bpt_EL_gsw_df['xvals1_bpt']), np.log10(self.bpt_EL_gsw_df['yvals_bpt']))
-                
-        self.bpt_sf_df = self.bpt_EL_gsw_df.iloc[bptsf]
+    data['U'] =oiii_oii_to_U(data['oiii_oii'] )
+    data['nii_oii'] =np.log10(data['NII_6584_FLUX_corr_'+model]/data['OII_3726_FLUX_corr_'+model])
+    data['log_oh'] = nii_oii_to_oh(data['NII_6584_FLUX_corr_'+model], data['OII_3726_FLUX_corr_'+model])  
+    
+    data['log_oh_ke02'] = nii_oii_to_oh_ke02(data['NII_6584_FLUX_corr_'+model], data['OII_3726_FLUX_corr_'+model])             
+    data['sii_ratio'] =(data['SII_6717_FLUX_corr_'+model]/data['SII_6717_FLUX_corr_'+model])
+    data['sii_oii'] =np.log10(data['SII_FLUX_corr_'+model]/data['OII_3726_FLUX_corr_'+model])
+    data['oi_sii'] =np.log10(data['OI_6300_FLUX_corr_'+model]/data['SII_FLUX_corr_'+model])
+    
+    data['oiiilum'] = np.log10(getlumfromflux(data['OIII_5007_FLUX_corr_'+model],data[z]))
+    #data['edd_ratio'] = data['oiiilum']+np.log10(600)-data['edd_lum']
 
-        high_sn_all7_sf = np.where(( self.bpt_sf_df.oiiflux_sn>2) &(self.bpt_sf_df.oiflux_sn>2) &(self.bpt_sf_df.siiflux_sn>2))
+    data['oilum'] = np.log10(getlumfromflux(data['OI_6300_FLUX_corr_'+model],data[z]))
+    data['oiilum'] = np.log10(getlumfromflux(data['OII_3726_FLUX_corr_'+model],data[z]))
+    data['niilum'] = np.log10(getlumfromflux(data['NII_6584_FLUX_corr_'+model],data[z]))
+    data['siilum'] = np.log10(getlumfromflux(data['SII_FLUX_corr_'+model],data[z]))
 
-        self.alllines_bpt_sf_df = self.bpt_sf_df.iloc[high_sn_all7_sf]
-        self.bpt_agn_df = self.bpt_EL_gsw_df.iloc[bptagn]
-        self.bptplus_sf_df = self.bpt_EL_gsw_df.iloc[bptplssf]
-        self.bptplus_agn_df = self.bpt_EL_gsw_df.iloc[bptplsagn]
-        high_sn_all7_bptplussf = np.where(( self.bptplus_sf_df.oiiflux_sn>2) &(self.bptplus_sf_df.oiflux_sn>2) &(self.bptplus_sf_df.siiflux_sn>2))
-        self.alllines_bptplus_sf_df = self.bptplus_sf_df.iloc[high_sn_all7_bptplussf]
-                                                                        
-        self.plus_EL_gsw_df = self.EL_gsw_df.iloc[self.halp_nii_filt]
+    #data['oiiilum_sfsub_samir'] = np.log10(getlumfromflux(data['oiiiflux_corr_sf_sub_samir'],data[z]))
 
-        #self.plus_EL_gsw_df['bptplusniigroups'] = groups_bptplusnii
-        '''
-        self.bptplusnii_sf_df = self.plus_EL_gsw_df.iloc[bptplsnii_sf].copy()
-        self.bptplusnii_agn_df = self.plus_EL_gsw_df.iloc[bptplsnii_agn].copy()        
-        self.neither_EL_gsw_df = self.EL_gsw_df.iloc[self.neither_filt].copy()
-        self.allnonagn_df=pd.concat([self.bptplus_sf_df,self.bptplusnii_sf_df, self.neither_EL_gsw_df],join='outer')
-        '''
+    data['oiiilum_up'] = np.log10(getlumfromflux(data['OIII_5007_FLUX_corr_'+model]+data['OIII_5007_FLUX_ERR_corr_'+model],data[z]))
+    data['oiiilum_up2'] = np.log10(getlumfromflux(data['OIII_5007_FLUX_corr_'+model]+2*data['OIII_5007_FLUX_ERR_corr_'+model],data[z]))
+
+    data['oiiilum_down'] = np.log10(getlumfromflux(data['OIII_5007_FLUX_corr_'+model]-data['OIII_5007_FLUX_ERR_corr_'+model],data[z]))
+    data['e_oiiilum_down'] = data['oiiilum']-data['oiiilum_down']
+    data['e_oiiilum_up'] = data['oiiilum_up']- data['oiiilum']
+
+    data['nlr_rad_from_lo3'] = data['oiiilum']*(0.42)-13.97
+    
+    data['fibsize'] = np.array(cosmo.angular_diameter_distance(data[z]/206265.).value)*1000/2. #in kpc
+    data['nlr_fib_ratio'] = data['nlr_rad_from_lo3']/data['fibsize']
+    #data['edd_par'] = data['oiiilum']-data['mbh']
+
+    data['halplum'] = np.log10(getlumfromflux(data['H_ALPHA_FLUX_corr_'+model], data[z]))
+
+    data['halpfibsfr'] = halptofibsfr_corr(10**data['halplum'])
+    #data['halpfibsfr_uncorr'] = halptofibsfr_corr(10**data['halplum_uncorr'])  
+    return data
+def get_line_filters(data, sncut=2):
         
-        
-        
+    data['bpt_sn_filt_bool'] = (data['H_ALPHA_FLUX_SN']>2) & (data['H_BETA_FLUX_SN'] > sncut) & (data['OIII_5007_FLUX_SN'] > sncut) & (data['NII_6584_FLUX_SN'] > sncut)
+    data['high_sn_o3'] =data['OIII_5007_FLUX_SN'] > sncut        
+    data['not_bpt_sn_filt_bool']  = np.logical_not(data['bpt_sn_filt_bool'])
+    data['halp_nii_filt_bool'] = ( (data['H_ALPHA_FLUX_SN'] > sncut) & (data['NII_6584_FLUX_SN']> sncut) &( (data['OIII_5007_FLUX_SN']<=sncut) | (data['H_BETA_FLUX_SN']<=sncut) ) )        
+    data['neither_filt_bool'] = np.logical_not( ( (data['bpt_sn_filt_bool']) | (data['halp_nii_filt_bool']) ))#neither classifiable by BPT, or just by NII        
+    data['vo87_1_filt_bool'] = (data['SII_FLUX_SN']>sncut) &(data['bpt_sn_filt_bool'])
+    data['vo87_2_filt_bool'] =(data['OI_6300_FLUX_SN']>sncut) &(data['bpt_sn_filt_bool'])
+    data['high_sn_all7 ']= (data['bpt_sn_filt_bool']) &( data['OII_3726_FLUX_SN']>sncut) &(data['OI_6300_FLUX_SN']>2) &(data['SII_FLUX_SN']>sncut)
+
+    return data
+def apply_line_filter(data, subset = None, subset_name = ''):
+    if subset is not None:
+        data = data[subset]
+    
+    bpt_EL_df = data.iloc[data['bpt_sn_filt_bool']]
+    
+    alllines_bpt_EL_df = data.iloc['high_sn_all7']
+    
+    vo87_1_EL_df = data['vo87_1_filt_bool']
+    vo87_2_EL_df = data['vo87_2_filt_bool']
+    bptgroups, bptsf, bptagn = get_bpt1_groups( np.log10(bpt_EL_df['xvals1_bpt']), np.log10(bpt_EL_df['yvals_bpt'] ) )
+    bptplsugroups, bptplssf, bptplsagn = get_bptplus_groups(np.log10(bpt_EL_df['xvals1_bpt']), np.log10(bpt_EL_df['yvals_bpt']))
+            
+    bpt_sf_df = bpt_EL_df.iloc[bptsf]
+
+    high_sn_all7_sf = np.where(( bpt_sf_df.oiiflux_sn>2) &(bpt_sf_df.oiflux_sn>2) &(bpt_sf_df.siiflux_sn>2))
+
+    alllines_bpt_sf_df = bpt_sf_df.iloc[high_sn_all7_sf]
+    bpt_agn_df = bpt_EL_df.iloc[bptagn]
+    bptplus_sf_df = bpt_EL_df.iloc[bptplssf]
+    bptplus_agn_df = bpt_EL_df.iloc[bptplsagn]
+    high_sn_all7_bptplussf = np.where(( bptplus_sf_df.oiiflux_sn>2) &(bptplus_sf_df.oiflux_sn>2) &(bptplus_sf_df.siiflux_sn>2))
+    alllines_bptplus_sf_df = bptplus_sf_df.iloc[high_sn_all7_bptplussf]
+                                                                    
+    plus_EL_df = data.iloc[halp_nii_filt]
+    
+    return
+
+    #self.plus_EL_gsw_df['bptplusniigroups'] = groups_bptplusnii
+    '''
+    self.bptplusnii_sf_df = self.plus_EL_gsw_df.iloc[bptplsnii_sf].copy()
+    self.bptplusnii_agn_df = self.plus_EL_gsw_df.iloc[bptplsnii_agn].copy()        
+    self.neither_EL_gsw_df = self.EL_gsw_df.iloc[self.neither_filt].copy()
+    self.allnonagn_df=pd.concat([self.bptplus_sf_df,self.bptplusnii_sf_df, self.neither_EL_gsw_df],join='outer')
+    '''
+
 
 class Gal_Indx(AstroTablePD):
     def __init__(self, filename):
@@ -534,38 +549,12 @@ class GSWCat:
         self.gsw_df['irx'][np.where(self.gsw_df['ssfr']<-11)] = np.nan
         self.gsw_df['irx'][np.where(self.gsw_df['irx']==-99)] = np.nan
         self.gsw_df['axisrat'][np.where(self.gsw_df['axisrat']==100)] = np.nan        
-        self.data['dmpc_samir']=np.log10(samircosmo.luminosity_distance(self.data['z']).value)        
+        self.data['dmpc_samir']=np.array(np.log10(samircosmo.luminosity_distance(self.data['z']).value))
 
-class GSW_SDSS:
-    def __init__(self, gswcat, sdss_cat, gsw_inds, sdss_inds):        
-        sdss_cat['ids']=''
-        sdss_cat.loc[sdss_inds,'ids'] = gswcat.loc[gsw_inds,'ids']
-        self.data = gswcat.merge(sdss_cat, on='ids', how='outer')
 
-        self.data['massfracgsw'] = 10**( sdss_cat['fibmass'])/10**(self.data['mass'])
-        self.data['fibsfr']= self.data['sfr']+np.log10(self.data['massfrac'])
-        self.data['fibsfrgsw']= self.data['sfr']+np.log10(self.data['massfracgsw'])
-
-class GSWCatmatch_XMM(GSWCat):
-    def __init__(self, 
-                 goodinds, 
-                 gsw_table, 
-                 xray_table,
-                 sedflag=0):
-        super().__init__(goodinds, gsw_table, sedflag=sedflag)
-        
-        self.gsw_df['softflux'] = xray_table.loc[self.sedfilt, 'softflux']
-        self.gsw_df['hardflux'] = xray_table.loc[self.sedfilt,'hardflux']
-        self.gsw_df['fullflux'] = xray_table.loc[self.sedfilt,'fullflux']        
-
-        self.gsw_df['esoftflux'] = xray_table.loc[self.sedfilt,'esoftflux']
-        self.gsw_df['ehardflux'] = xray_table.loc[self.sedfilt,'ehardflux']
-        self.gsw_df['efullflux'] = xray_table.loc[self.sedfilt, 'efullflux']
-        
-        self.gsw_df['fullflux_sn'] = self.gsw_df.fullflux/self.gsw_df.efullflux
-        self.gsw_df['hardflux_sn'] = self.gsw_df.hardflux/self.gsw_df.ehardflux
-        self.gsw_df['softflux_sn'] = self.gsw_df.softflux/self.gsw_df.esoftflux
-        
+class GSWCatmatch_XMM:
+    def __init__(self, gsw_df):
+        self.gsw_df = gsw_df
         self.gsw_df['softlums'] =getlumfromflux(self.gsw_df['softflux'], self.gsw_df['z'])
         self.gsw_df['hardlums'] =getlumfromflux(self.gsw_df['hardflux'], self.gsw_df['z'])
         self.gsw_df['fulllums'] = getlumfromflux(self.gsw_df['fullflux'], self.gsw_df['z'])
@@ -575,66 +564,48 @@ class GSWCatmatch_XMM(GSWCat):
         
         self.gsw_df['softlumsrf'] = np.log10(self.gsw_df.softlums*(1+self.gsw_df['z'])**(1.7-2))
         self.gsw_df['hardlumsrf'] = np.log10(self.gsw_df.hardlums*(1+self.gsw_df['z'])**(1.7-2))
-        self.gsw_df['fulllumsrf'] = np.log10(self.gsw_df.fulllums*(1+self.z)**(1.7-2))
-        self.gsw_df['efulllumsrf_down'] = np.log10(self.gsw_df.efulllums_down*(1+self.z)**(1.7-2))
-        self.gsw_df['efulllumsrf_up'] = np.log10(self.gsw_df.efulllums_up*(1+self.z)**(1.7-2))        
+        self.gsw_df['fulllumsrf'] = np.log10(self.gsw_df.fulllums*(1+self.gsw_df['z'])**(1.7-2))
+        self.gsw_df['efulllumsrf_down'] = np.log10(self.gsw_df.efulllums_down*(1+self.gsw_df['z'])**(1.7-2))
+        self.gsw_df['efulllumsrf_up'] = np.log10(self.gsw_df.efulllums_up*(1+self.gsw_df['z'])**(1.7-2))        
         
         self.gsw_df['ehardlums_up'] =   getlumfromflux(self.gsw_df['hardflux']+self.gsw_df['ehardflux'],self.gsw_df['z'])
         self.gsw_df['ehardlums_down'] = getlumfromflux(self.gsw_df['hardflux']-self.gsw_df['ehardflux'],self.gsw_df['z'])
-        self.gsw_df['ehardlumsrf_down'] = np.log10(self.gsw_df.ehardlums_down*(1+self.z)**(1.7-2))
-        self.gsw_df['ehardlumsrf_up'] = np.log10(self.gsw_df.ehardlums_up*(1+self.z)**(1.7-2))        
+        self.gsw_df['ehardlumsrf_down'] = np.log10(self.gsw_df.ehardlums_down*(1+self.gsw_df['z'])**(1.7-2))
+        self.gsw_df['ehardlumsrf_up'] = np.log10(self.gsw_df.ehardlums_up*(1+self.gsw_df['z'])**(1.7-2))                
+        #self.data['edd_par_xr'] = self.data['hard_xraylum']-self.data['edd_lum']
 
-
-        self.gsw_df['hr1'] = xray_table.loc[self.sedfilt, 'hr1']
-        self.gsw_df['hr2'] = xray_table.loc[self.sedfilt, 'hr2']
-        self.gsw_df['hr3'] = xray_table.loc[self.sedfilt, 'hr3']
-        self.gsw_df['hr4'] = xray_table.loc[self.sedfilt, 'hr4']
-        
-        #self.ext = ext[self.sedfilt]
-        #self.xrayflag = xrayflag[self.sedfilt]
-        self.gsw_df['exptimes'] = xray_table.loc[self.sedfilt, 'logtimes']
-        self.gsw_df['matchxrayra'] =  xray_table.loc[self.sedfilt, 'ra']
-        self.gsw_df['matchxraydec'] =  xray_table.loc[self.sedfilt, 'logtimes']
-        
-        
-        if self.xr:
-            self.data['full_xraylum'] = self.gswcat.gsw_df.fulllumsrf.iloc[self.make_spec]
-            self.data['soft_xraylum'] = self.gswcat.gsw_df.softlumsrf.iloc[self.make_spec]
-            self.data['hard_xraylum'] = self.gswcat.gsw_df.hardlumsrf.iloc[self.make_spec]
-            self.data['edd_par_xr'] = self.data['hard_xraylum']-self.data['edd_lum']
-
-            self.data['lo3_pred_fromlx'] = (self.data['hard_xraylum']+7.55)/(1.22)
-            self.data['nlr_rad_from_lo3_pred_fromlx'] = self.data['lo3_pred_fromlx']*(0.42)-13.97
-            self.data['nlr_fib_ratio_pred_fromlx'] = 10**self.data['nlr_rad_from_lo3_pred_fromlx']/1000/self.data['fibsize']
+        self.gsw_df['lo3_pred_fromlx'] = (self.gsw_df['hardlumsrf']+7.55)/(1.22)
+        self.gsw_df['nlr_rad_from_lo3_pred_fromlx'] = self.gsw_df['lo3_pred_fromlx']*(0.42)-13.97
+        self.gsw_df['nlr_fib_ratio_pred_fromlx'] = 10**self.gsw_df['nlr_rad_from_lo3_pred_fromlx']/1000/self.gsw_df['fibsize']
                     
-            self.data['lo3_offset'] = -(self.data['lo3_pred_fromlx']-self.data['oiiilum']    )  
-            self.data['lo3_offset_up'] = -(self.data['lo3_pred_fromlx']-self.data['oiiilum_up']    )  
-            self.data['lo3_offset_up2'] = -(self.data['lo3_pred_fromlx']-self.data['oiiilum_up2']    )  
+        self.gsw_df['lo3_offset'] = -(self.gsw_df['lo3_pred_fromlx']-self.gsw_df['oiiilum']    )  
+        self.gsw_df['lo3_offset_up'] = -(self.gsw_df['lo3_pred_fromlx']-self.gsw_df['oiiilum_up']    )  
+        self.gsw_df['lo3_offset_up2'] = -(self.gsw_df['lo3_pred_fromlx']-self.gsw_df['oiiilum_up2']    )  
             
-            self.data['fo3_pred_fromlx'] = redden(getfluxfromlum(10**self.data['lo3_pred_fromlx'], self.data['z']),
-                                                         self.data['corrected_presub_av'], 5007.0)
-            self.data['lo3_minus_pred_fromlx'] = (self.data['hard_xraylum']+7.55)/(1.22)-0.587 #subtracting dispersion?
-            self.data['fo3_minus_pred_fromlx'] = redden(getfluxfromlum(10**self.data['lo3_minus_pred_fromlx'], self.data['z']),
-                                                               self.data['corrected_presub_av'], 5007.0 )            
-            self.data['fo3_dev'] = (self.data['fo3_pred_fromlx']-self.data['oiiiflux'])/(self.data['fo3_pred_fromlx']-self.data['fo3_minus_pred_fromlx'])
+        self.gsw_df['fo3_pred_fromlx'] = redden(getfluxfromlum(10**self.gsw_df['lo3_pred_fromlx'], self.gsw_df['z']),
+                                                         self.gsw_df['corrected_presub_av'], 5007.0)
+        self.gsw_df['lo3_minus_pred_fromlx'] = (self.gsw_df['hardlumsrf']+7.55)/(1.22)-0.587 #subtracting dispersion?
+        self.gsw_df['fo3_minus_pred_fromlx'] = redden(getfluxfromlum(10**self.gsw_df['lo3_minus_pred_fromlx'], self.gsw_df['z']),
+                                                               self.gsw_df['corrected_presub_av'], 5007.0 )            
+        self.gsw_df['fo3_dev'] = (self.gsw_df['fo3_pred_fromlx']-self.gsw_df['oiiiflux'])/(self.gsw_df['fo3_pred_fromlx']-self.gsw_df['fo3_minus_pred_fromlx'])
             
-            self.data['full_lxsfr'] = np.log10(xrayranallidict['full']*10**(self.data['sfr']))
-            self.data['hard_lxsfr'] = np.log10(xrayranallidict['hard']*10**(self.data['sfr']))
-            self.data['xray_agn_status'] = self.data['full_xraylum']-0.6 > self.data['full_lxsfr']
-            self.data['xray_excess'] = self.data['full_xraylum']- self.data['full_lxsfr']
-            self.data['hardlx_gas'] = np.log10(7.3e39*10**(self.data['sfr'])) #mineo+2012
-            self.data['hardlx_xrb'] = np.log10( (10**(29.37)*(10**self.data['mass'])*(1+self.data['z'])**2.03 )+
-                                                              (10**self.data['sfr'])*(10**39.28)*(1+self.data['z'])**1.31)
-            self.data['softlx_xrb'] = np.log10( (10**(29.04)*(10**self.data['mass'])*(1+self.data['z'])**3.78 )+
-                                                              (10**self.data['sfr'])*(10**39.28)*(1+self.data['z'])**0.99)
-            self.data['fulllx_xrb'] = np.log10(10**self.data['softlx_xrb']+10**self.data['hardlx_xrb'])
-            self.data['hardlx_xrb_local'] = np.log10( 10**(28.96)*(10**self.data['mass'])+
-                                                              10**self.data['sfr']*(10**39.21))            
-            self.data['hardlx_sfr'] = np.log10(xrayranallidict['hard']*10**(self.data['sfr']))
-            self.data['softlx_sfr'] = np.log10(xrayranallidict['soft']*10**(self.data['sfr']))
-            self.data['full_lxagn'] = np.log10(10**self.data['full_xraylum']-10**self.data['full_lxsfr'])
-            self.data['hard_lxagn'] = np.log10(10**self.data['hard_xraylum']-10**self.data['hardlx_sfr'])
-            self.data['soft_lxagn'] = np.log10(10**self.data['soft_xraylum']-10**self.data['softlx_sfr'])
+        self.gsw_df['full_lxsfr'] = np.log10(xrayranallidict['full']*10**(self.gsw_df['sfr']))
+        self.gsw_df['hard_lxsfr'] = np.log10(xrayranallidict['hard']*10**(self.gsw_df['sfr']))
+        self.gsw_df['xray_agn_status'] = self.gsw_df['fulllumsrf']-0.6 > self.gsw_df['full_lxsfr']
+        self.gsw_df['xray_excess'] = self.gsw_df['fulllumsrf']- self.gsw_df['full_lxsfr']
+        self.gsw_df['hardlx_gas'] = np.log10(7.3e39*10**(self.gsw_df['sfr'])) #mineo+2012
+        self.gsw_df['hardlx_xrb'] = np.log10( (10**(29.37)*(10**self.gsw_df['mass'])*(1+self.gsw_df['z'])**2.03 )+
+                                                              (10**self.gsw_df['sfr'])*(10**39.28)*(1+self.gsw_df['z'])**1.31)
+        self.gsw_df['softlx_xrb'] = np.log10( (10**(29.04)*(10**self.gsw_df['mass'])*(1+self.gsw_df['z'])**3.78 )+
+                                                              (10**self.gsw_df['sfr'])*(10**39.28)*(1+self.gsw_df['z'])**0.99)
+        self.gsw_df['fulllx_xrb'] = np.log10(10**self.gsw_df['softlx_xrb']+10**self.gsw_df['hardlx_xrb'])
+        self.gsw_df['hardlx_xrb_local'] = np.log10( 10**(28.96)*(10**self.gsw_df['mass'])+
+                                                              10**self.gsw_df['sfr']*(10**39.21))            
+        self.gsw_df['hardlx_sfr'] = np.log10(xrayranallidict['hard']*10**(self.gsw_df['sfr']))
+        self.gsw_df['softlx_sfr'] = np.log10(xrayranallidict['soft']*10**(self.gsw_df['sfr']))
+        self.gsw_df['full_lxagn'] = np.log10(10**self.gsw_df['fulllumsrf']-10**self.gsw_df['full_lxsfr'])
+        self.gsw_df['hard_lxagn'] = np.log10(10**self.gsw_df['hardlumsrf']-10**self.gsw_df['hardlx_sfr'])
+        self.gsw_df['soft_lxagn'] = np.log10(10**self.gsw_df['softlumsrf']-10**self.gsw_df['softlx_sfr'])
         
         
         

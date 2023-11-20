@@ -65,7 +65,7 @@ import extinction
 import pandas as pd
 from sklearn.linear_model import LinearRegression
 import matplotlib.pyplot as plt
-from plotting_utils import plot2dhist
+from chroptiks.plotting_utils import plot2dhist
 import extinction as ext
 
 ext.ccm89(np.array([3727.0]), 1.0, 3.1)/ext.ccm89(np.array([6563.0]), 1.0, 3.1)
@@ -90,29 +90,29 @@ def get_extinction(ha, hb, dec_rat=2.86, dustlaw='cardelli', zeroed=False, ha_hb
     return np.array(av)
 
 
-def get_av_bd_a21(self,  av_balm, hb_sn,av_gal, sn_cut=10):
+def get_av_bd_a21( data, av_balm_col, hb_sn, av_gal_col, sn_cut=10):
 
-    def fix_av_balm(row, x_test, reg):
+    def fix_av_balm(row, reg):
         i = row.name
         if row['hb_sn'] < 10:
-            x_samp = np.array([x_test[:, i]])
+            x_samp = np.array([row[av_gal_col]]).reshape(1,-1)
             av_fix = np.float64(reg.predict(x_samp))
             if av_fix < 0:
                 av_fix = 0
-        elif row['av_balm'] < 0:
+        elif row[av_balm_col] < 0:
             av_fix = 0
         else:
-            av_fix = row['av_balm']
+            av_fix = row[av_balm_col]
         return av_fix
 
-    y_reg = np.array(self.data.loc[hb_sn>sn_cut,'av_agn'])
-    X_reg_av = np.vstack([av_gal[hb_sn>sn_cut]]).transpose()
+    condition = (hb_sn > sn_cut) & (np.isfinite(hb_sn)) & (~hb_sn.isna()) & (~data[av_gal_col].isna() &(np.isfinite(data[av_gal_col]))) & (~data[av_balm_col].isna() & (np.isfinite(data[av_balm_col])))    
+    y_reg = np.array(data.loc[condition,av_balm_col])
+    X_reg_av = np.vstack([data.loc[condition,av_gal_col]]).transpose()
     reg_av = LinearRegression().fit(X_reg_av,y_reg)
             
-    df = pd.DataFrame({'hb_sn': hb_sn, 'av_balm': av_balm})
-    x_test = np.vstack([av_gal])
+    df = pd.DataFrame({'hb_sn': hb_sn, av_balm_col: data[av_balm_col], av_gal_col: data[av_gal_col]})
+    output = df.apply(lambda row: fix_av_balm(row, reg_av) if np.isfinite(row[av_gal_col]) else 0, axis=1)
 
-    output = df.apply(fix_av_balm, axis=1, x_test=x_test, reg=reg)
     return output           
 
 def dustcorrect(flux, av, wl):
@@ -243,203 +243,201 @@ def get_classifiability(n2_sn, ha_sn, o3_sn, hb_sn, sncut=2):
     
     
 
-def get_bpt1_groups_ke01(x,y):
-    groups =[]
-    if type(x)!=np.array:
-        xvals = np.copy(np.array(x))
-    if type(y)!=np.array:
-        yvals = np.copy(np.array(y))
-    for i in range(len(xvals)):
-        if xvals[i] < 0:
-            if yvals[i] < np.log10(y1_kauffmann(xvals[i])):
-                groups.append('HII')
-            elif yvals[i] < np.log10(y1_kewley(xvals[i])):
-                groups.append('COMP')
-            else:
-                if yvals[i] > np.log10(y1_schawinski(xvals[i])):
-                    groups.append('Sy2')
-                else:
-                    groups.append('LINER')
-        else:
-            if xvals[i] < 0.43:
-                if yvals[i] < np.log10(y1_kewley(xvals[i])):
-                    groups.append('COMP')
-                else:
-                    if yvals[i] > np.log10(y1_schawinski(xvals[i])):
-                        groups.append('Sy2')
-                    else:
-                        groups.append('LINER')
-            else:
-                if yvals[i] > np.log10(y1_schawinski(xvals[i])):
-                    groups.append('Sy2')
-                else:
-                    groups.append('LINER')
-            
-    groups=np.array(groups)    
-    sy2 = np.where(groups == 'Sy2')[0]
-    liner = np.where(groups=='LINER')[0]
-    comp = np.where(groups== 'COMP')[0]
-    nonagn = np.where(groups == 'HII')[0]
-    return groups,nonagn, comp, sy2, liner   
-    
-def get_bpt1_groups(x,y):
-    groups =[]
-    if type(x)!=np.array:
-        xvals = np.copy(np.array(x))
-    if type(y)!=np.array:
-        yvals = np.copy(np.array(y))
-    for i in range(len(xvals)):
-        if np.isnan(xvals[i]) or np.isnan(yvals[i]):
-            groups.append('NO')
-        else:
-            if xvals[i] < 0:
-                if yvals[i] <np.log10(y1_kauffmann(xvals[i])):
-                    groups.append('HII')
-                else:
-                    groups.append('AGN')
-            else:
-                groups.append('AGN')
-    groups=np.array(groups)    
-    agn = np.where(groups == 'AGN')[0]
-    nonagn = np.where(groups == 'HII')[0]
-    return groups,nonagn, agn
-def get_bpt2_groups( x, y, filt=[]):
-    groups=[]
-    if type(x)!=np.array:
-        xvals = np.copy(np.array(x))
-    if type(y)!=np.array:
-        yvals = np.copy(np.array(y))
-    for i in range(len(xvals)):
-        if xvals[i] < 0.32:
-            if yvals[i] < np.log10(y2_agn(xvals[i])):
-                groups.append('HII')
-                continue
-        if yvals[i] > np.log10(y2_linersy2(xvals[i])):
-            groups.append('Seyfert')
-        else:
-            groups.append('LINER')
-    groups = np.array(groups)
-    hii = np.where(groups == 'HII')[0]
-    seyf = np.where(groups == 'Seyfert')[0]
-    liner = np.where(groups == 'LINER')[0]
+import numpy as np
+import pandas as pd
+
+def get_bpt1_groups_ke01(x, y):
+    # Convert to numpy arrays
+    xvals = np.asarray(x)
+    yvals = np.asarray(y)
+
+    # Vectorized condition checks
+    condition_hii = (xvals < 0) & (yvals < np.log10(y1_kauffmann(xvals)))
+    condition_comp = (xvals < 0.43) & (yvals >= np.log10(y1_kauffmann(xvals))) & (yvals < np.log10(y1_kewley(xvals)))
+    condition_sy2 = (yvals > np.log10(y1_schawinski(xvals)))
+    condition_liner = ~condition_hii & ~condition_comp & ~condition_sy2
+
+    # Assign groups
+    groups = np.full_like(xvals, 'LINER', dtype=object)
+    groups[condition_hii] = 'HII'
+    groups[condition_comp] = 'COMP'
+    groups[condition_sy2] = 'Sy2'
+
+    # Index arrays for each group
+    sy2_indices = np.where(groups == 'Sy2')[0]
+    liner_indices = np.where(groups == 'LINER')[0]
+    comp_indices = np.where(groups == 'COMP')[0]
+    nonagn_indices = np.where(groups == 'HII')[0]
+
+    return groups, nonagn_indices, comp_indices, sy2_indices, liner_indices
+
+
+def get_bpt1_groups(x, y):
+    # Convert to numpy arrays
+    xvals = np.asarray(x)
+    yvals = np.asarray(y)
+
+    # Vectorized condition checks
+    condition_hii = (xvals < 0) & (yvals < np.log10(y1_kauffmann(xvals)))
+    condition_agn = ~np.isnan(xvals) & ~np.isnan(yvals) & ~condition_hii
+
+    # Assign groups
+    groups = np.full_like(xvals, 'NO', dtype=object)
+    groups[condition_hii] = 'HII'
+    groups[condition_agn] = 'AGN'
+
+    # Index arrays for each group
+    agn_indices = np.where(groups == 'AGN')[0]
+    nonagn_indices = np.where(groups == 'HII')[0]
+
+    return groups, nonagn_indices, agn_indices
+
+def get_bpt2_groups(x, y):
+    # Convert to numpy arrays
+    xvals = np.asarray(x)
+    yvals = np.asarray(y)
+
+    # Vectorized condition checks
+    condition_hii = (xvals < 0.32) & (yvals < np.log10(y2_agn(xvals)))
+    condition_seyfert = yvals > np.log10(y2_linersy2(xvals))
+    condition_liner = ~condition_hii & ~condition_seyfert
+
+    # Assign groups
+    groups = np.full_like(xvals, 'LINER', dtype=object)
+    groups[condition_hii] = 'HII'
+    groups[condition_seyfert] = 'Seyfert'
+
+    # Index arrays for each group
+    hii_indices = np.where(groups == 'HII')[0]
+    seyf_indices = np.where(groups == 'Seyfert')[0]
+    liner_indices = np.where(groups == 'LINER')[0]
+
+    return groups, hii_indices, seyf_indices, liner_indices
+
     return groups,hii, seyf, liner
-def get_bpt3_groups( x, y, filt=[]):
-    groups=[]
-    if type(x)!=np.array:
-        xvals = np.copy(np.array(x))
-    if type(y)!=np.array:
-        yvals = np.copy(np.array(y))
-    for i in range(len(xvals)):
-        if np.isnan(xvals[i]):
-            groups.append('NO')
-            continue
-        if xvals[i] < -0.59:
-            if yvals[i] < np.log10(y3_agn(xvals[i])):
-                groups.append('HII')
-                continue
-        if  yvals[i] > np.log10(y3_linersy2(xvals[i])):
-            groups.append('Seyfert')
-        else:
-            groups.append('LINER')
-    groups = np.array(groups)
-    hii = np.where(groups == 'HII')[0]
-    seyf = np.where(groups=='Seyfert')[0]
-    liner = np.where(groups=='LINER')[0]
-    return groups,hii,seyf,liner#hii,seyf,liner
-def get_whan_groups(x,y):
-    groups = []
-    if type(x)!=np.array:
-        xvals = np.copy(np.array(x))
-    if type(y)!=np.array:
-        yvals = np.copy(np.array(y))
-    for i in range(len(xvals)):
-        if np.isnan(xvals[i]):
-            groups.append('NO')
-        elif yvals[i] < 0.5:
-            groups.append('PG')
-        elif  yvals[i] < 3:
-            groups.append('RG')
-        elif yvals[i] <6 and xvals[i] >-0.4:
-            groups.append('wAGN')
-        elif yvals[i]>6 and xvals[i]>-0.4:
-            groups.append('sAGN')
-        elif yvals[i]>3 and xvals[i]<-0.4:
-            groups.append('SF')
-    groups = np.array(groups)
-    sf = np.where(groups == 'SF')[0]
-    sagn = np.where(groups=='sAGN')[0]
-    wagn = np.where(groups=='wAGN')[0]
-    pg = np.where(groups=='PG')[0]
-    rg = np.where(groups=='RG')[0]
-    
-    return groups,sf,sagn,wagn, rg, pg#hii,seyf,liner
+def get_bpt3_groups(x, y):
+    # Convert to numpy arrays
+    xvals = np.asarray(x)
+    yvals = np.asarray(y)
+
+    # Vectorized condition checks
+    condition_no = np.isnan(xvals)
+    condition_hii = (xvals < -0.59) & (yvals < np.log10(y3_agn(xvals)))
+    condition_seyfert = yvals > np.log10(y3_linersy2(xvals))
+    condition_liner = ~condition_no & ~condition_hii & ~condition_seyfert
+
+    # Assign groups
+    groups = np.full_like(xvals, 'NO', dtype=object)
+    groups[condition_hii] = 'HII'
+    groups[condition_seyfert] = 'Seyfert'
+    groups[condition_liner] = 'LINER'
+
+    # Index arrays for each group
+    hii_indices = np.where(groups == 'HII')[0]
+    seyf_indices = np.where(groups == 'Seyfert')[0]
+    liner_indices = np.where(groups == 'LINER')[0]
+
+    return groups, hii_indices, seyf_indices, liner_indices
+
+def get_whan_groups(x, y):
+    # Convert to numpy arrays
+    xvals = np.asarray(x)
+    yvals = np.asarray(y)
+
+    # Vectorized condition checks
+    condition_no = np.isnan(xvals)
+    condition_pg = ~condition_no & (yvals < 0.5)
+    condition_rg = ~condition_no & (yvals >= 0.5) & (yvals < 3)
+    condition_wagn = ~condition_no & (yvals >= 3) & (yvals < 6) & (xvals > -0.4)
+    condition_sagn = ~condition_no & (yvals >= 6) & (xvals > -0.4)
+    condition_sf = ~condition_no & (yvals >= 3) & (xvals < -0.4)
+
+    # Assign groups
+    groups = np.full_like(xvals, 'NO', dtype=object)
+    groups[condition_pg] = 'PG'
+    groups[condition_rg] = 'RG'
+    groups[condition_wagn] = 'wAGN'
+    groups[condition_sagn] = 'sAGN'
+    groups[condition_sf] = 'SF'
+
+    # Index arrays for each group
+    sf_indices = np.where(groups == 'SF')[0]
+    sagn_indices = np.where(groups == 'sAGN')[0]
+    wagn_indices = np.where(groups == 'wAGN')[0]
+    pg_indices = np.where(groups == 'PG')[0]
+    rg_indices = np.where(groups == 'RG')[0]
+
+    return groups, sf_indices, sagn_indices, wagn_indices, rg_indices, pg_indices
 
 
-def get_ooo_groups( x, y, filt=[]):
-    groups=[]
-    if type(x)!=np.array:
-        xvals = np.copy(np.array(x))
-    if type(y)!=np.array:
-        yvals = np.copy(np.array(y))
-    for i in range(len(xvals)):
-        if np.isnan(xvals[i]) or np.isnan(yvals[i]):
-            groups.append('NO')
-            continue
-        elif yvals[i] < np.log10(ooo_agn(xvals[i])):
-            groups.append('HII')
-            continue
-        elif  yvals[i] > np.log10(ooo_linersy2(xvals[i])):
-            groups.append('Seyfert')
-        else:
-            groups.append('LINER')
-    groups = np.array(groups)
-    hii = np.where(groups == 'HII')[0]
-    seyf = np.where(groups=='Seyfert')[0]
-    liner = np.where(groups=='LINER')[0]
-    return groups,hii,seyf,liner#hii,seyf,liner
-def get_bptplus_groups(x,y, filt=[]):
-    groups =[]
-    if type(x)!=np.array:
-        xvals = np.copy(np.array(x))
-    if type(y)!=np.array:
-        yvals = np.copy(np.array(y))
-    for i in range(len(xvals)):
-        if np.isnan(xvals[i]) or np.isnan(yvals[i]):
-            groups.append('NO')
-        else:
-            if xvals[i] < -0.35:
-                if yvals[i] > np.log10(y1_kauffmann(xvals[i])):
-                    groups.append('AGN')
-                elif xvals[i]<-0.4:
-                    groups.append('HII')
-                else:
-                    groups.append('MIX')
-            else:
-                groups.append('AGN')
-    groups=np.array(groups)
-    agn = np.where(groups == 'AGN')[0]
-    nonagn = np.where(groups == 'HII')[0]
-    return groups,nonagn, agn
-def get_bptplus_niigroups( x, filt=[]):
-    groups =[]
-    if type(x)!=np.array:
-        xvals = np.copy(np.array(x))
-    for i in range(len(xvals)):
-        if np.isnan(xvals[i]):
-            groups.append('NO')
-        else:
-            if xvals[i] < -0.4:
-                groups.append('HII')
-            elif xvals[i] >-0.35:
-                groups.append('AGN')
-            else:
-                groups.append('MIX')
-    groups=np.array(groups)
-    agn = np.where(groups == 'AGN')[0]
-    nonagn = np.where(groups == 'HII')[0]
-    return groups,nonagn, agn
+
+def get_ooo_groups(x, y):
+    # Convert to numpy arrays
+    xvals = np.asarray(x)
+    yvals = np.asarray(y)
+
+    # Vectorized condition checks
+    condition_no = np.isnan(xvals) | np.isnan(yvals)
+    condition_hii = ~condition_no & (yvals < np.log10(ooo_agn(xvals)))
+    condition_seyfert = ~condition_no & (yvals > np.log10(ooo_linersy2(xvals)))
+    condition_liner = ~condition_no & ~condition_hii & ~condition_seyfert
+
+    # Assign groups
+    groups = np.full_like(xvals, 'NO', dtype=object)
+    groups[condition_hii] = 'HII'
+    groups[condition_seyfert] = 'Seyfert'
+    groups[condition_liner] = 'LINER'
+
+    # Index arrays for each group
+    hii_indices = np.where(groups == 'HII')[0]
+    seyf_indices = np.where(groups == 'Seyfert')[0]
+    liner_indices = np.where(groups == 'LINER')[0]
+
+    return groups, hii_indices, seyf_indices, liner_indices
+def get_bptplus_groups(x, y):
+    # Convert to numpy arrays
+    xvals = np.asarray(x)
+    yvals = np.asarray(y)
+
+    # Vectorized condition checks
+    condition_no = np.isnan(xvals) | np.isnan(yvals)
+    condition_agn = ~condition_no & (xvals >= -0.35)
+    condition_hii = ~condition_no & (xvals < -0.35) & (yvals < np.log10(y1_kauffmann(xvals)))
+    condition_mix = ~condition_no & ~condition_agn & ~condition_hii
+
+    # Assign groups
+    groups = np.full_like(xvals, 'NO', dtype=object)
+    groups[condition_agn] = 'AGN'
+    groups[condition_hii] = 'HII'
+    groups[condition_mix] = 'MIX'
+
+    # Index arrays for each group
+    agn_indices = np.where(groups == 'AGN')[0]
+    nonagn_indices = np.where(groups == 'HII')[0]
+
+    return groups, nonagn_indices, agn_indices
 
 
+def get_bptplus_niigroups(x):
+    # Convert to numpy array if not already
+    xvals = pd.Series(x).to_numpy()
+
+    # Define conditions
+    hii_condition = xvals < -0.4
+    agn_condition = xvals > -0.35
+    mix_condition = ~hii_condition & ~agn_condition
+
+    # Apply conditions
+    groups = np.full(xvals.shape, 'NO', dtype=object)  # Default to 'NO'
+    groups[hii_condition] = 'HII'
+    groups[agn_condition] = 'AGN'
+    groups[mix_condition] = 'MIX'
+
+    # Get indices
+    agn_indices = np.where(groups == 'AGN')[0]
+    nonagn_indices = np.where(groups == 'HII')[0]
+
+    return groups, nonagn_indices, agn_indices
 
 
 

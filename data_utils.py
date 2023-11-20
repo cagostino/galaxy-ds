@@ -4,6 +4,35 @@ import numpy as np
 from astropy.coordinates import SkyCoord
 from astropy import units as u
 import os
+
+#class 
+class DBConnector:
+    def __init__(self, db_name):
+        self.db_name = db_name
+        self.conn = sqlite3.connect(f"{self.db_name}")
+        self.cursor = self.conn.cursor()
+    def query(self, query, load_results = True):
+        if load_results:
+            return pd.read_sql_query(query, self.conn)
+        else:
+            self.cursor.execute(query)    
+    def create_table(self, table_name, columns):
+        # Create table as per requirement
+        column_definitions = ', '.join([f"{col} {dtype}" for col, dtype in columns.items()])
+        self.query(f"CREATE TABLE IF NOT EXISTS {table_name} ({column_definitions})", load_results=False)
+    def delete_table(self, table_name):
+        self.query(f"DROP TABLE IF EXISTS {table_name}", load_results=False)
+    def list_tables(self):
+        return self.query("SELECT name FROM sqlite_master WHERE type='table';")
+    def add_column_to_table(self, table_name,column ):
+        self.query(f"ALTER TABLE {table_name} ADD COLUMN {column.name} {column.dtype}", load_results=False)
+
+
+
+        
+
+            
+
 def coordinate_matching(left_df, 
                         right_df, 
                         ra_dec_1, 
@@ -52,8 +81,11 @@ def coordinate_matching(left_df,
         
         # Create a DataFrame for the matches
         matched_df = left_df.iloc[matches_within_threshold].copy()
-        matched_df['matched_index'] = matched_indices
+        matched_df['r_matched_index'] = matched_indices
+        matched_df['l_matched_index'] = matched_df.index
+
         matched_df['separation_arcsec'] = separations    
+        
         # If matches_filename exists, load it, otherwise save the new matches
         matched_df.to_csv(fullpath, index=False)
     
@@ -87,8 +119,9 @@ def coordinate_matching_and_join(left_df,
         matches_df = coordinate_matching(left_df, right_df, ra_dec_1, ra_dec_2, dist_threshold, matches_filename)
 
         # Perform an outer join on the indices
-        merged_df = pd.merge(left_df, matches_df, how='left', left_index=True, right_on='X_index')
-        merged_df = pd.merge(merged_df, right_df, how='outer', left_on='R_index', right_index=True, suffixes=('', '_right'), indicator=True)
+        
+        merged_df = pd.merge(left_df, matches_df[['l_matched_index', 'r_matched_index', 'separation_arcsec']], how='left', left_index=True, right_on='l_matched_index')
+        merged_df = pd.merge(merged_df, right_df, how='outer', left_on='r_matched_index', right_index=True, suffixes=('', '_right'), indicator=True)
 
         # Save the merged DataFrame to disk
         merged_df.to_csv(fullpath, index=False)
@@ -140,6 +173,7 @@ def iterative_merge(dataframes):
 
     Returns:
     pd.DataFrame: The merged DataFrame with all unique columns from the list of DataFrames.
+    
     """
     # Start with the first DataFrame as the base
     merged_df = dataframes[0]
