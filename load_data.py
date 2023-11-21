@@ -153,12 +153,43 @@ insert_dataframe_to_table(d, 'efeds_hard_sdss_gsw', 'catalogs/catalog_database.d
 
 
 
-comp_ssfr_U = db_conn.query("""SELECT U,  sfr-mass as ssfr from gsw_m2_sdss where bpt_sn_filt_bool ==1""")
+comp_ssfr_U = db_conn.query("""SELECT U,  sfr-mass_gsw as ssfr, bptclass, H_ALPHA_EQW as halp_eqw, v_disp from gsw_m2_sdss where bpt_sn_filt_bool ==1 and OII_3726_FLUX_SN>2""")
 
 
+agn_subset = comp_ssfr_U[comp_ssfr_U['bptclass']=='AGN']
+sf_subset = comp_ssfr_U[comp_ssfr_U['bptclass']=='HII']
 
 #CREATE INDEX idx_sdss_gsw_index ON gsw_m2_sdss(sdss_gsw_index);
 
+
+
+hist2d.plot(np.log10(sf_subset.V_DISP), sf_subset.U, xlim =[0, 3], ylim =[-4, -2], ylabel='log(U)',
+        xlabel=r'log($\sigma$)', ccode=sf_subset.ssfr, nx=25, ny=25 , ccodename="log(sSFR)")
+plt.tight_layout()
+plt.savefig('./plots/sigma_U_ssfr_ccode.png')
+
+
+hist2d.plot(np.log10(sf_subset.V_DISP), sf_subset.ssfr, xlim =[0, 3], ylim =[-14, -8], ylabel='log(U)', xlabel=r'log($\sigma$)', nx=50, ny=50, 
+                ccode=sf_subset.U, ccodename="log(sSFR)")
+plt.tight_layout()
+plt.savefig('./plots/sigma_ssfr_U_ccode_sf_subset.png')
+
+
+hist2d.plot(np.log10(agn_subset.V_DISP), agn_subset.ssfr, xlim =[0, 3], ylim =[-14, -8], ylabel='log(U)', xlabel=r'log($\sigma$)', nx=50, ny=50)
+plt.tight_layout()
+plt.savefig('./plots/sigma_ssfr_agn_subset.png')
+
+hist2d.plot(np.log10(comp_ssfr_U.V_DISP)- comp_ssfr_U.ssfr, comp_ssfr_U.U, xlim =[8, 16], ylim =[-4, -1], ylabel='log($\sigma$/sSFR)', xlabel=r'log($\sigma$)', nx=250, ny=250)
+plt.tight_layout()
+plt.savefig('./plots/sigma_ssfr_all.png')
+
+hist2d.plot(np.log10(comp_ssfr_U.V_DISP), comp_ssfr_U.U, xlim =[0, 3], ylim =[-4, -1], ylabel='log(U)', xlabel=r'log($\sigma$)', nx=250, ny=250)
+plt.tight_layout()
+plt.savefig('./plots/sigma_U_all.png')
+
+\
 '''
+
+
 
 
