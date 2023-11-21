@@ -73,7 +73,7 @@ xrayranallidict = {'soft':1/(1.39e-40),'hard':1/(1.26e-40),'full':1/(0.66e-40)}
 
 
 def get_extinction(ha, hb, dec_rat=2.86, dustlaw='cardelli', zeroed=False, ha_hb_err =[]):
-    ha=np.copy(np.array(ha))
+    ha=np.copy(np.array(ha))ipyt
     hb=np.copy(np.array(hb))
     
     if dustlaw=='cardelli':

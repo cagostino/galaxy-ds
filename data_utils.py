@@ -27,13 +27,13 @@ class DBConnector:
     def add_column_to_table(self, table_name,column ):
         self.query(f"ALTER TABLE {table_name} ADD COLUMN {column.name} {column.dtype}", load_results=False)
 
-
+'''
 from astroquery.sdss import SDSS
 
 class SDSS_DB(SDSS):
     def query(self, query_text):
         return SDSS.query_sql(query_text)
-        
+'''        
 
 def coordinate_matching(left_df, 
                         right_df, 
@@ -113,22 +113,18 @@ def coordinate_matching_and_join(left_df,
     '''
     fullpath = 'catalogs/'+full_output_name
     print(fullpath)
-    if os.path.exists(fullpath):
-        matched_df = pd.read_csv(fullpath)
-        return matched_df
-    else:
-        # Get the matches indices DataFrame
-        matches_df = coordinate_matching(left_df, right_df, ra_dec_1, ra_dec_2, dist_threshold, matches_filename)
+    # Get the matches indices DataFrame
+    matches_df = coordinate_matching(left_df, right_df, ra_dec_1, ra_dec_2, dist_threshold, matches_filename)
 
-        # Perform an outer join on the indices
-        
-        merged_df = pd.merge(left_df, matches_df[['l_matched_index', 'r_matched_index', 'separation_arcsec']], how='left', left_index=True, right_on='l_matched_index')
-        merged_df = pd.merge(merged_df, right_df, how='outer', left_on='r_matched_index', right_index=True, suffixes=('', '_right'), indicator=True)
+    # Perform an outer join on the indices
+    
+    merged_df = pd.merge(left_df, matches_df[['l_matched_index', 'r_matched_index', 'separation_arcsec']], how='left', left_index=True, right_on='l_matched_index')
+    merged_df = pd.merge(merged_df, right_df, how='outer', left_on='r_matched_index', right_index=True, suffixes=('', '_right'), indicator=True)
 
-        # Save the merged DataFrame to disk
-        merged_df.to_csv(fullpath, index=False)
-        print(f"Saved merged DataFrame to '{fullpath}'.")
-        return merged_df
+    # Save the merged DataFrame to disk
+    merged_df.to_csv(fullpath, index=False)
+    print(f"Saved merged DataFrame to '{fullpath}'.")
+    return merged_df
 
 # Usage example
 # d = coordinate_matching_and_join(x3.data, ea, ra_dec_1=['RAJ2000','DEJ2000'], ra_dec_2=['RA', 'DEC'], matches_filename='catalogs/test_xr_sdss_10000.csv')
@@ -137,7 +133,7 @@ def coordinate_matching_and_join(left_df,
 
 
 
-def match_and_merge(left_df, right_df, left_on, right_on, how='outer'):
+def match_and_merge(left_df, right_df, left_on, right_on, how='outer', left_suffix='', right_suffix=''):
     """
     Match two DataFrames based on a set of columns and perform an outer merge.
 
@@ -155,7 +151,7 @@ def match_and_merge(left_df, right_df, left_on, right_on, how='outer'):
 
     right_df = right_df.reset_index().rename({'index':'right_index'})
 
-    merged_df = pd.merge(left_df, right_df, left_on=left_on, right_on=right_on, how=how, indicator=True)
+    merged_df = pd.merge(left_df, right_df, left_on=left_on, right_on=right_on, how=how, indicator=True, suffixes=(left_suffix, right_suffix))
     return merged_df
 
 # Example usage:
@@ -225,7 +221,7 @@ def create_database(db_name):
 
     # Close the connection
     conn.close()
-def insert_dataframe_to_table(df, table_name, db_name, chunksize=10000):
+def insert_dataframe_to_table(df, table_name, db_name, chunksize=10000,write_mode='replace'):
     # Connect to the SQLite database
     conn = sqlite3.connect(db_name)
 
@@ -236,7 +232,7 @@ def insert_dataframe_to_table(df, table_name, db_name, chunksize=10000):
     duplicates = normalized_cols.duplicated(keep=False)
 
     # Create a dictionary to count the occurrences of the normalized column names
-    col_counts = {}
+    col_counts = {} 
 
     # Rename duplicate columns
     new_columns = []
@@ -257,6 +253,9 @@ def insert_dataframe_to_table(df, table_name, db_name, chunksize=10000):
         raise Exception("Duplicate column names detected after renaming.")
 
     # Insert the DataFrame data to the table in chunks
+    if write_mode=='replace':
+        df.iloc[0:0].to_sql(table_name, conn, if_exists='replace', index=False)
+        
     for i in range(0, df.shape[0], chunksize):
         df.iloc[i:i+chunksize].to_sql(table_name, conn, if_exists='append', index=False)
         print(f"Inserted chunk {i//chunksize + 1}")

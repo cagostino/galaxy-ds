@@ -56,6 +56,7 @@ def load_gsw_catalog(filename, catfold='./catalogs/'):
         'ab', 'ab_error', 'av_gsw', 'av_gsw_error', 'flag_sed',
         'uv_survey', 'flag_uv', 'flag_midir', 'flag_mgs'
     ]    
+    
     # Load data into Pandas DataFrames
     gsw_df = read_data( filename, columns)
     gsw_df.reset_index(drop=True, inplace=True)
@@ -75,6 +76,14 @@ def load_gsw_catalog(filename, catfold='./catalogs/'):
             additional_df = read_data( file, cols)
             additional_df.reset_index(drop=True, inplace=True)
             gsw_df[new_col_name] = additional_df.iloc[:, 0]
+        #gsw_table['uv_col'] = gsw_df['fuv']-gsw_df['nuv'] 
+        gsw_df['ssfr'] = gsw_df['sfr'] - gsw_df['mass']
+        gsw_df['delta_ssfr'] = get_deltassfr(gsw_df['mass'], gsw_df['ssfr'])
+        
+        gsw_df.loc[gsw_df['ssfr']<-11, 'irx_m'] = np.nan
+        gsw_df.loc[gsw_df['irx_m']==-99, 'irx_m'] = np.nan
+        gsw_df.loc[gsw_df['axisrat']==100, 'axisrat'] = np.nan        
+        gsw_df['dmpc_samir']=np.array(np.log10(samircosmo.luminosity_distance(gsw_df['z']).value))
 
     return gsw_df
         
@@ -347,6 +356,11 @@ def get_line_filters(data, sncut=2):
     data['vo87_2_filt_bool'] =(data['OI_6300_FLUX_SN']>sncut) &(data['bpt_sn_filt_bool'])
     data['high_sn_all7 ']= (data['bpt_sn_filt_bool']) &( data['OII_3726_FLUX_SN']>sncut) &(data['OI_6300_FLUX_SN']>2) &(data['SII_FLUX_SN']>sncut)
 
+    bptgroups, bptsf, bptagn = get_bpt1_groups( np.log10(data['xvals1_bpt']), np.log10(data['yvals_bpt'] ) )
+    bptplusgroups, bptplssf, bptplsagn = get_bptplus_groups(np.log10(data['xvals1_bpt']), np.log10(data['yvals_bpt']))
+    data['bptclass'] = bptgroups
+    data['bptplsclass'] = bptplusgroups
+
     return data
 def apply_line_filter(data, subset = None, subset_name = ''):
     if subset is not None:
@@ -538,18 +552,6 @@ class GSWCat:
         self.gsw_df = gsw_table.iloc[self.inds].iloc[self.sedfilt]
         
 
-
-        self.gsw_table['uv_col'] = self.gsw_df['fuv']-self.gsw_df['nuv']
-        bad_uv = np.where((self.gsw_df['nuv']==-99) |(self.gsw_df['nuv']==-999) |(self.gsw_df['fuv']==-99) |(self.gsw_df['nuv']==-999) )[0]
-        self.gsw_df['uv_col'][bad_uv] = np.nan        
- 
-        self.gsw_df['ssfr'] = self.gsw_df['sfr'] - self.gsw_df['mass']
-        self.gsw_df['delta_ssfr'] = get_deltassfr(self.gsw_df['mass'], self.gsw_df['ssfr'])
-        
-        self.gsw_df['irx'][np.where(self.gsw_df['ssfr']<-11)] = np.nan
-        self.gsw_df['irx'][np.where(self.gsw_df['irx']==-99)] = np.nan
-        self.gsw_df['axisrat'][np.where(self.gsw_df['axisrat']==100)] = np.nan        
-        self.data['dmpc_samir']=np.array(np.log10(samircosmo.luminosity_distance(self.data['z']).value))
 
 
 class GSWCatmatch_XMM:

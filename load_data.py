@@ -47,13 +47,18 @@ galmass = Gal_Fib(catfold+'totlgm_dr7_v5_2b.fit', 'mass')
 fibmass = Gal_Fib(catfold+'fiblgm_dr7_v5_2.fit', 'fibmass')
 fibsfr = Gal_Fib(catfold+'gal_fibsfr_dr7_v5_2.fits','fibsfr')
 fibssfr = Gal_Fib(catfold+'gal_fibspecsfr_dr7_v5_2.fits', 'fibssfr')
+
 m2_gsw = AstroTablePD(catfold+'GSWLC-M2.dat')
+#insert_dataframe_to_table(m2_gsw.data, 'm2_gsw', 'catalogs/catalog_database.db')
 
 a2_gsw = AstroTablePD(catfold+'GSWLC-A2.dat')
+#insert_dataframe_to_table(a2_gsw.data, 'a2_gsw', 'catalogs/catalog_database.db')
 
 x2_gsw = AstroTablePD(catfold+'GSWLC-X2.dat')
+#insert_dataframe_to_table(x2_gsw.data, 'x2_gsw', 'catalogs/catalog_database.db')
 
 d2_gsw = AstroTablePD(catfold+'GSWLC-D2.dat')
+#insert_dataframe_to_table(d2_gsw.data, 'd2_gsw', 'catalogs/catalog_database.db')
 
 left_id_columns = ['plate', 'MJD', 'fiber_ID']  # replace with actual column names in left_dfplate', 'MJD', 'fiber_ID'
 right_id_columns = ['PLATEID', 'MJD', 'FIBERID']  # replace with actual column names in right_df
@@ -76,8 +81,8 @@ merged_sdss.data = merged_sdss.data.rename(columns={'index': 'sdss_index'})
 
 ### match and merge sdss and gsw
 
-m2_sdss = match_and_merge(m2_gsw.data, merged_sdss.data, left_on=left_id_columns, right_on=right_id_columns)
-m2_sdss['RA_span'] =m2_sdss['RA_y'].combine_first(m2_sdss['RA_x'])
+m2_sdss = match_and_merge(m2_gsw.data, merged_sdss.data, left_on=left_id_columns, right_on=right_id_columns, left_suffix='_gsw', right_suffix='_sdss')
+m2_sdss['RA_span'] =m2_sdss['RA_sdss'].combine_first(m2_sdss['RA_gsw'])
 
 m2_sdss['dec_span'] =m2_sdss['DEC'].combine_first(m2_sdss['Decl'])
 
@@ -105,24 +110,54 @@ d = d.rename(columns={'index': 'xmm_sdss_gsw_index'})
 #insert_dataframe_to_table(d, 'xmm4_gsw_sdss', 'catalogs/catalog_database.db')
 
 
-
+###
 
 xr_m2_sdss = db_conn.query("""SELECT xr.*, m2.* from gsw_m2_sdss as m2 join xmm4_gsw_m2_sdss as xr on m2.sdss_gsw_index = xr.sdss_gsw_index where xr._merge =="both" """)
 insert_dataframe_to_table(xr_m2_sdss, 'xmm4_gsw_sdss_combined', 'catalogs/catalog_database.db')
     
 
 xr_m2_sdss_texp_p1_ = db_conn.query("""SELECT xr.*, m2.* from gsw_m2_sdss as m2 join xmm4_gsw_m2_sdss as xr on m2.sdss_gsw_index = xr.sdss_gsw_index where xr._merge =="both" and texp<31622 and texp>12589 and flag_sed==0""")
-insert_dataframe_to_table(xr_m2_sdss_texp_p1_, 'xmm4_gsw_sdss_combined_texp_limit', 'catalogs/catalog_database.db')
+insert_dataframe_to_table(xr_m2_sdss_texp_p1_, 'xmm4_gsw_sdss_combined_texp_limit', 'catalogs/catalog_database.db', write_mode='replace')
 
 
 xr_m2_sdss_sed0 = db_conn.query("""SELECT xr.*, m2.* from gsw_m2_sdss as m2 join xmm4_gsw_m2_sdss as xr on m2.sdss_gsw_index = xr.sdss_gsw_index where xr._merge =="both" and flag_sed==0""")
-insert_dataframe_to_table(xr_m2_sdss_sed0, 'xmm4_gsw_sdss_sed0_combined', 'catalogs/catalog_database.db')
+insert_dataframe_to_table(xr_m2_sdss_sed0, 'xmm4_gsw_sdss_sed0_combined', 'catalogs/catalog_database.db', write_mode='replace')
 
 
 xr_m2_sdss_sed1 = db_conn.query("""SELECT xr.*, m2.* from gsw_m2_sdss as m2 join xmm4_gsw_m2_sdss as xr on m2.sdss_gsw_index = xr.sdss_gsw_index where xr._merge =="both" and flag_sed ==1 
     """)
-insert_dataframe_to_table(xr_m2_sdss_sed1, 'xmm4_gsw_sdss_sed1_combined', 'catalogs/catalog_database.db')
+insert_dataframe_to_table(xr_m2_sdss_sed1, 'xmm4_gsw_sdss_sed1_combined', 'catalogs/catalog_database.db', write_mode='replace')
     
+
+
+
+###
+m2_sdss_inds = db_conn.query("""SELECT sdss_gsw_index, RA_span, dec_span from gsw_m2_sdss""")
+efeds_hard = AstroTablePD(catfold+'eFEDS_c001_hard_V7.5.fits')
+
+efeds_main = AstroTablePD(catfold+'eFEDS_c001_main_V7.4.fits')
+
+d = coordinate_matching_and_join(efeds_main.data, m2_sdss_inds, ra_dec_1=['RA','DEC'], ra_dec_2=['RA_span', 'dec_span'], matches_filename='efeds_sdss_gsw.csv')
+d = d.reset_index()
+d = d.rename(columns={'index': 'efeds_sdss_gsw_index'})
+insert_dataframe_to_table(d, 'efeds_sdss_gsw', 'catalogs/catalog_database.db', write_mode='replace')
+
+
+
+d = coordinate_matching_and_join(efeds_hard.data, m2_sdss_inds, ra_dec_1=['RA','DEC'], ra_dec_2=['RA_span', 'dec_span'], matches_filename='efeds_sdsshard_gsw.csv')
+d = d.reset_index()
+d = d.rename(columns={'index': 'efeds_hard_sdss_gsw_index'})
+insert_dataframe_to_table(d, 'efeds_hard_sdss_gsw', 'catalogs/catalog_database.db'  , write_mode='replace')
+
+
+
+
+
+comp_ssfr_U = db_conn.query("""SELECT U,  sfr-mass as ssfr from gsw_m2_sdss where bpt_sn_filt_bool ==1""")
+
+
+
+#CREATE INDEX idx_sdss_gsw_index ON gsw_m2_sdss(sdss_gsw_index);
 
 '''
 
