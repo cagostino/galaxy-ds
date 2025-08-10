@@ -756,8 +756,3 @@ errorbar.capsize : 1             ## length of end cap on error bars in pixels
                                   # animation in HTML (i.e. IPython notebook)
 
 #mpl_toolkits.legacy_colorbar: True
-
-toucan-icon
-Over 100 word limit
-We’re working to increase this limit and keep load times short. In the meantime, try highlighting up to 100 words at one time to translate.
-Don’t show again
