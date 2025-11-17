@@ -1,9 +1,22 @@
 import pandas as pd
-import pandas as pd
 import numpy as np
 from astropy.coordinates import SkyCoord
 from astropy import units as u
 import os
+import sqlite3
+import logging
+from typing import List, Tuple, Optional
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('data_pipeline.log'),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
 
 #class 
 class DBConnector:
@@ -35,95 +48,161 @@ class SDSS_DB(SDSS):
         return SDSS.query_sql(query_text)
 '''        
 
-def coordinate_matching(left_df, 
-                        right_df, 
-                        ra_dec_1, 
-                        ra_dec_2, 
-                        dist_threshold=7, 
-                        matches_filename='coord_matches.csv'):
+def coordinate_matching(left_df,
+                        right_df,
+                        ra_dec_1,
+                        ra_dec_2,
+                        dist_threshold=7,
+                        matches_filename='coord_matches.csv',
+                        force_recompute=False):
     '''
-    Match two catalogs based on their coordinates.
-    
+    Match two catalogs based on their coordinates using sky coordinate matching.
+
     Parameters:
+    -----------
     left_df (DataFrame): DataFrame with the first set of coordinates (e.g., X-ray sources).
     right_df (DataFrame): DataFrame with the second set of coordinates (e.g., optical sources).
     ra_dec_1 (tuple): Tuple of strings for RA and Dec column names in left_df.
     ra_dec_2 (tuple): Tuple of strings for RA and Dec column names in right_df.
     dist_threshold (float): Matching distance threshold in arcseconds.
-    matches_filename (str): Path to save the matches CSV file.
-    
+    matches_filename (str): Filename to save the matches CSV file.
+    force_recompute (bool): If True, ignore cached results and recompute.
+
     Returns:
+    --------
     DataFrame: A DataFrame with matched coordinates and additional data.
     '''
-    fullpath = 'catalogs/'+matches_filename
-    if os.path.exists(fullpath):
-        matched_df = pd.read_csv(fullpath)
-    else:
+    fullpath = 'catalogs/' + matches_filename
+    logger.info(f"Coordinate matching: {matches_filename}")
 
-        # Convert RA and Dec to SkyCoord objects
-        def validate_dec(df, dec_col):
-            # Filter out any declination values that are not within the valid range
-            return df[(df[dec_col] >= -90) & (df[dec_col] <= 90)]
+    # Check for cached results
+    if os.path.exists(fullpath) and not force_recompute:
+        logger.info(f"Loading cached coordinate matches from {fullpath}")
+        try:
+            matched_df = pd.read_csv(fullpath)
+            logger.info(f"Loaded {len(matched_df)} cached matches")
+            return matched_df
+        except Exception as e:
+            logger.warning(f"Failed to load cached matches: {e}. Recomputing...")
 
-        # Validate declination values
-        left_df_valid = validate_dec(left_df, ra_dec_1[1])
-        right_df_valid = validate_dec(right_df, ra_dec_2[1])
+    logger.info(f"Computing coordinate matches (threshold={dist_threshold} arcsec)")
+    logger.info(f"Left catalog: {len(left_df)} sources, Right catalog: {len(right_df)} sources")
 
-        # Create SkyCoord objects for valid entries
-        left_coords = SkyCoord(ra=left_df_valid[ra_dec_1[0]].values*u.degree, dec=left_df_valid[ra_dec_1[1]].values*u.degree)
-        right_coords = SkyCoord(ra=right_df_valid[ra_dec_2[0]].values*u.degree, dec=right_df_valid[ra_dec_2[1]].values*u.degree)
+    # Convert RA and Dec to SkyCoord objects
+    def validate_dec(df, dec_col):
+        # Filter out any declination values that are not within the valid range
+        valid_df = df[(df[dec_col] >= -90) & (df[dec_col] <= 90)]
+        invalid_count = len(df) - len(valid_df)
+        if invalid_count > 0:
+            logger.warning(f"Filtered out {invalid_count} sources with invalid declination values")
+        return valid_df
 
-        # Find the nearest neighbors for each source in the left catalog within the right catalog
-        idx, d2d, _ = left_coords.match_to_catalog_sky(right_coords)
-        
-        # Filter matches within the threshold distance
-        matches_within_threshold = d2d.arcsec < dist_threshold
-        matched_indices = idx[matches_within_threshold]
-        separations = d2d.arcsec[matches_within_threshold]
-        
-        # Create a DataFrame for the matches
-        matched_df = left_df.iloc[matches_within_threshold].copy()
-        matched_df['r_matched_index'] = matched_indices
-        matched_df['l_matched_index'] = matched_df.index
+    # Validate declination values
+    left_df_valid = validate_dec(left_df, ra_dec_1[1])
+    right_df_valid = validate_dec(right_df, ra_dec_2[1])
 
-        matched_df['separation_arcsec'] = separations    
-        
-        # If matches_filename exists, load it, otherwise save the new matches
+    logger.info(f"Valid sources - Left: {len(left_df_valid)}, Right: {len(right_df_valid)}")
+
+    # Create SkyCoord objects for valid entries
+    try:
+        left_coords = SkyCoord(ra=left_df_valid[ra_dec_1[0]].values*u.degree,
+                              dec=left_df_valid[ra_dec_1[1]].values*u.degree)
+        right_coords = SkyCoord(ra=right_df_valid[ra_dec_2[0]].values*u.degree,
+                               dec=right_df_valid[ra_dec_2[1]].values*u.degree)
+    except Exception as e:
+        logger.error(f"Failed to create SkyCoord objects: {e}")
+        raise
+
+    # Find the nearest neighbors for each source in the left catalog within the right catalog
+    logger.info("Performing sky coordinate matching...")
+    idx, d2d, _ = left_coords.match_to_catalog_sky(right_coords)
+
+    # Filter matches within the threshold distance
+    matches_within_threshold = d2d.arcsec < dist_threshold
+    matched_indices = idx[matches_within_threshold]
+    separations = d2d.arcsec[matches_within_threshold]
+
+    logger.info(f"Found {len(matched_indices)} matches within {dist_threshold} arcsec")
+
+    # Create a DataFrame for the matches
+    matched_df = left_df_valid.iloc[matches_within_threshold].copy()
+    matched_df['r_matched_index'] = matched_indices
+    matched_df['l_matched_index'] = matched_df.index
+    matched_df['separation_arcsec'] = separations
+
+    # Log separation statistics
+    if len(separations) > 0:
+        logger.info(f"Separation statistics - Mean: {separations.mean():.2f}\", "
+                   f"Median: {np.median(separations):.2f}\", "
+                   f"Max: {separations.max():.2f}\"")
+
+    # Save the matches
+    try:
         matched_df.to_csv(fullpath, index=False)
-    
+        logger.info(f"Saved matches to {fullpath}")
+    except Exception as e:
+        logger.error(f"Failed to save matches: {e}")
+        raise
+
     return matched_df
 
 
-def coordinate_matching_and_join(left_df, 
-                                 right_df, 
-                                 ra_dec_1, 
-                                 ra_dec_2, 
-                                 dist_threshold=7, 
-                                 matches_filename='coord_matches.csv', full_output_name = 'combined_output.csv'):
+def coordinate_matching_and_join(left_df,
+                                 right_df,
+                                 ra_dec_1,
+                                 ra_dec_2,
+                                 dist_threshold=7,
+                                 matches_filename='coord_matches.csv',
+                                 full_output_name='combined_output.csv',
+                                 force_recompute=False):
     '''
     Perform an outer join on the left and right DataFrames using the matched indices from coordinate_matching.
+
+    Parameters:
+    -----------
     left_df: DataFrame with RA and Dec of the first catalog.
     right_df: DataFrame with RA and Dec of the second catalog.
     ra_dec_1: Tuple of column names for RA and Dec in the first catalog.
     ra_dec_2: Tuple of column names for RA and Dec in the second catalog.
     dist_threshold: Maximum distance in arcseconds for a match.
     matches_filename: Filename to save the matches to.
-    
-    Returns a merged DataFrame from an outer join of left_df and right_df.
+    full_output_name: Full output filename for merged results.
+    force_recompute: If True, ignore cached results and recompute.
+
+    Returns:
+    --------
+    merged_df: A merged DataFrame from an outer join of left_df and right_df.
     '''
-    fullpath = 'catalogs/'+full_output_name
-    print(fullpath)
+    fullpath = 'catalogs/' + full_output_name
+    logger.info(f"Coordinate matching and join: {full_output_name}")
+
+    # Check for cached results
+    if os.path.exists(fullpath) and not force_recompute:
+        logger.info(f"Loading cached results from {fullpath}")
+        try:
+            merged_df = pd.read_csv(fullpath)
+            logger.info(f"Successfully loaded {len(merged_df)} rows from cache")
+            return merged_df
+        except Exception as e:
+            logger.warning(f"Failed to load cached file: {e}. Recomputing...")
+
     # Get the matches indices DataFrame
+    logger.info(f"Computing coordinate matches with threshold={dist_threshold} arcsec")
     matches_df = coordinate_matching(left_df, right_df, ra_dec_1, ra_dec_2, dist_threshold, matches_filename)
+    logger.info(f"Found {len(matches_df)} matches")
 
     # Perform an outer join on the indices
-    
-    merged_df = pd.merge(left_df, matches_df[['l_matched_index', 'r_matched_index', 'separation_arcsec']], how='left', left_index=True, right_on='l_matched_index')
-    merged_df = pd.merge(merged_df, right_df, how='outer', left_on='r_matched_index', right_index=True, suffixes=('', '_right'), indicator=True)
+    logger.info("Performing outer join on matched indices")
+    merged_df = pd.merge(left_df, matches_df[['l_matched_index', 'r_matched_index', 'separation_arcsec']],
+                        how='left', left_index=True, right_on='l_matched_index')
+    merged_df = pd.merge(merged_df, right_df, how='outer', left_on='r_matched_index',
+                        right_index=True, suffixes=('', '_right'), indicator=True)
 
     # Save the merged DataFrame to disk
+    logger.info(f"Saving merged DataFrame to {fullpath}")
     merged_df.to_csv(fullpath, index=False)
-    print(f"Saved merged DataFrame to '{fullpath}'.")
+    logger.info(f"Successfully saved {len(merged_df)} rows to {fullpath}")
+
     return merged_df
 
 # Usage example
@@ -135,23 +214,49 @@ def coordinate_matching_and_join(left_df,
 
 def match_and_merge(left_df, right_df, left_on, right_on, how='outer', left_suffix='', right_suffix=''):
     """
-    Match two DataFrames based on a set of columns and perform an outer merge.
+    Match two DataFrames based on a set of columns and perform a merge.
 
     Parameters:
+    -----------
     left_df (pd.DataFrame): The left DataFrame.
     right_df (pd.DataFrame): The right DataFrame.
     left_on (list of str): The column names in the left DataFrame to match on.
     right_on (list of str): The column names in the right DataFrame to match on.
     how (str): Type of merge to perform. Defaults to 'outer'.
+    left_suffix (str): Suffix to add to overlapping column names from left DataFrame.
+    right_suffix (str): Suffix to add to overlapping column names from right DataFrame.
 
     Returns:
+    --------
     pd.DataFrame: A DataFrame with the matched and merged results.
     """
-    left_df = left_df.reset_index().rename({'index':'left_index'})
+    logger.info(f"Matching and merging DataFrames - Left: {len(left_df)} rows, Right: {len(right_df)} rows")
+    logger.info(f"Merge type: {how}, Match columns: {left_on} <-> {right_on}")
 
-    right_df = right_df.reset_index().rename({'index':'right_index'})
+    # Validate input columns exist
+    missing_left = [col for col in left_on if col not in left_df.columns]
+    missing_right = [col for col in right_on if col not in right_df.columns]
 
-    merged_df = pd.merge(left_df, right_df, left_on=left_on, right_on=right_on, how=how, indicator=True, suffixes=(left_suffix, right_suffix))
+    if missing_left:
+        raise ValueError(f"Left DataFrame missing columns: {missing_left}")
+    if missing_right:
+        raise ValueError(f"Right DataFrame missing columns: {missing_right}")
+
+    # Reset indices and preserve them
+    left_df = left_df.reset_index().rename(columns={'index': 'left_index'})
+    right_df = right_df.reset_index().rename(columns={'index': 'right_index'})
+
+    # Perform merge
+    merged_df = pd.merge(left_df, right_df, left_on=left_on, right_on=right_on,
+                        how=how, indicator=True, suffixes=(left_suffix, right_suffix))
+
+    # Log merge statistics
+    if '_merge' in merged_df.columns:
+        merge_stats = merged_df['_merge'].value_counts()
+        logger.info(f"Merge statistics: {dict(merge_stats)}")
+
+    logger.info(f"Merged DataFrame: {len(merged_df)} rows, {len(merged_df.columns)} columns")
+
     return merged_df
 
 # Example usage:
